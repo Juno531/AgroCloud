@@ -1,0 +1,170 @@
+/* ==================== RESPONSIVE UTILITIES ==================== */
+
+/* Display Utilities */
+.mobile-only {
+    display: block;
+}
+
+.desktop-only {
+    display: none;
+}
+
+@media (min-width: 768px) {
+    .mobile-only {
+        display: none;
+    }
+
+    .desktop-only {
+        display: block;
+    }
+}
+
+/* Layout Utilities */
+.mobile-stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+@media (min-width: 768px) {
+    .mobile-stack {
+        flex-direction: row;
+    }
+}
+
+/* Touch Target */
+.touch-target {
+    min-height: var(--min-touch-target);
+    min-width: var(--min-touch-target);
+    padding: var(--min-touch-spacing);
+}
+
+/* Mobile Card Layout */
+.mobile-card {
+    display: block;
+    padding: var(--spacing-md);
+    background-color: var(--color-surface);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    margin-bottom: var(--spacing-sm);
+}
+
+.mobile-card-label {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.25rem;
+}
+
+.mobile-card-value {
+    font-size: 0.875rem;
+    color: var(--color-text);
+    margin-bottom: var(--spacing-sm);
+}
+
+/* Table to Card Conversion */
+.mobile-table {
+    display: block;
+    overflow-x: auto;
+}
+
+@media (max-width: 767px) {
+    .mobile-table table {
+        display: none;
+    }
+
+    .mobile-table .mobile-card-view {
+        display: block;
+    }
+}
+
+@media (min-width: 768px) {
+    .mobile-table .mobile-card-view {
+        display: none;
+    }
+}
+
+/* Responsive Grid */
+.responsive-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+}
+
+@media (min-width: 768px) {
+    .responsive-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1024px) {
+    .responsive-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* Responsive Padding */
+.responsive-padding {
+    padding: var(--spacing-mobile-md);
+}
+
+@media (min-width: 768px) {
+    .responsive-padding {
+        padding: var(--spacing-lg);
+    }
+}
+
+@media (min-width: 1024px) {
+    .responsive-padding {
+        padding: var(--spacing-xl);
+    }
+}
+
+/* Mobile Container */
+.mobile-container {
+    width: 100%;
+    padding-left: var(--spacing-md);
+    padding-right: var(--spacing-md);
+}
+
+@media (min-width: 768px) {
+    .mobile-container {
+        padding-left: var(--spacing-lg);
+        padding-right: var(--spacing-lg);
+    }
+}
+
+@media (min-width: 1024px) {
+    .mobile-container {
+        padding-left: var(--spacing-xl);
+        padding-right: var(--spacing-xl);
+        max-width: 1400px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+}
+
+/* Horizontal Scroll Container */
+.horizontal-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.horizontal-scroll::-webkit-scrollbar {
+    height: 6px;
+}
+
+.horizontal-scroll::-webkit-scrollbar-track {
+    background: var(--color-background);
+}
+
+.horizontal-scroll::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: var(--radius-sm);
+}
+
+.horizontal-scroll::-webkit-scrollbar-thumb:hover {
+    background: var(--color-text-secondary);
+}
