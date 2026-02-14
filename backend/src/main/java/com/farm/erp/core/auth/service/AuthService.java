@@ -70,15 +70,26 @@ public class AuthService {
                         throw new RuntimeException("Invalid register type");
                 }
 
+                String adminCode = null;
+                String employeeCode = null;
+
+                if (userRole == Role.ADMIN) {
+                        adminCode = "ADM-" + java.util.UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+                } else {
+                        employeeCode = "EMP-" + java.util.UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+                }
+
                 // 3. 사용자 생성
                 User user = User.builder()
                                 .email(request.getEmail())
                                 .password(passwordEncoder.encode(request.getPassword()))
                                 .name(request.getName())
                                 .role(userRole)
+                                .adminCode(adminCode)
+                                .employeeCode(employeeCode)
                                 .build();
 
-                User savedUser = userRepository.save(user);
+                User savedUser = userRepository.saveAndFlush(user);
 
                 // 4. 인증 토큰 생성
                 org.springframework.security.core.userdetails.User userDetails = new org.springframework.security.core.userdetails.User(
@@ -94,26 +105,28 @@ public class AuthService {
                 SecurityContextHolder.getContext().setAuthentication(authentication);
                 String jwt = tokenProvider.createToken(authentication);
 
-                // 6. USER 역할인 경우 자동으로 Employee 프로필 생성 (별도 트랜잭션)
+                // 6. 모든 역할에 대해 Employee 프로필 생성
+                Long farmId = null;
                 if (userRole == Role.USER) {
-                        // 농장 초대 코드 (임시: farm ID 사용)로 Farm 조회
+                        // 작업자는 농장 초대 코드 필수
                         if (request.getFarmInviteCode() == null || request.getFarmInviteCode().isBlank()) {
                                 throw new RuntimeException("작업자 가입 시 농장 초대 코드가 필요합니다");
                         }
-
-                        Long farmId;
                         try {
                                 farmId = Long.parseLong(request.getFarmInviteCode());
                         } catch (NumberFormatException e) {
                                 throw new RuntimeException("유효하지 않은 농장 초대 코드입니다");
                         }
-
-                        Farm farm = farmRepository.findById(farmId)
-                                        .orElseThrow(() -> new RuntimeException("유효하지 않은 농장 초대 코드입니다"));
-
-                        // 별도 서비스를 통해 Employee 프로필 생성
-                        employeeAutoCreationService.createEmployeeProfileForNewUser(savedUser, farm);
                 }
+                
+                Farm farm = null;
+                if (farmId != null) {
+                        farm = farmRepository.findById(farmId)
+                                .orElseThrow(() -> new RuntimeException("유효하지 않은 농장 초대 코드입니다"));
+                }
+
+                // 별도 서비스를 통해 Employee 프로필 생성 (Admin은 farm이 null일 수 있음)
+                employeeAutoCreationService.createEmployeeProfileForNewUser(savedUser, farm);
 
                 return new AuthResponse(jwt, new UserDto(savedUser));
         }

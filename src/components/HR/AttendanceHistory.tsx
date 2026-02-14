@@ -116,7 +116,7 @@ const AttendanceHistory = () => {
                         >
                             {employees.map(emp => (
                                 <option key={emp.id} value={emp.userId}>
-                                    {emp.userName}
+                                    {emp.name}
                                 </option>
                             ))}
                         </select>
@@ -181,16 +181,15 @@ const AttendanceHistory = () => {
                             backgroundColor: 'var(--color-primary)',
                             color: 'white',
                             display: 'flex',
-                            alignItems: 'center',
                             justifyContent: 'center',
                             fontSize: '1.5rem',
                             fontWeight: 700
                         }}>
-                            {selectedEmployee.userName.charAt(0)}
+                            {(selectedEmployee.name || '?').charAt(0)}
                         </div>
                         <div>
                             <h3 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.25rem' }}>
-                                {selectedEmployee.userName}
+                                {selectedEmployee.name || '미등록'}
                             </h3>
                             <p style={{ color: 'var(--color-text-secondary)' }}>
                                 {selectedEmployee.phone} | 시급: {selectedEmployee.hourlyWage.toLocaleString()}원

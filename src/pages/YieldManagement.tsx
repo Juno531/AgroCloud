@@ -11,7 +11,7 @@ import { LayoutDashboard, History } from 'lucide-react';
 import { HarvestService, ProductionService } from '../services/api';
 import { useFarm } from '../context/FarmContext';
 
-const YieldManagement = ({ activeFarm }) => {
+const YieldManagement = ({ activeFarm }: { activeFarm?: any }) => {
     const [activeTab, setActiveTab] = useState('dashboard');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingYield, setEditingYield] = useState(null);

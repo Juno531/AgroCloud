@@ -19,4 +19,5 @@ public class EmployeeProfileResponse {
     private String accountHolder;
     private Integer paymentDate;
     private BigDecimal hourlyWage;
+    private String employeeCode;
 }

@@ -10,7 +10,7 @@ interface EmployeeFormProps {
 
 interface FormData {
     userId: number;
-    userName: string;
+    name: string;
     phone: string;
     hireDate: string;
     hourlyWage: number;
@@ -22,7 +22,7 @@ interface FormData {
 const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onClose, onSuccess }) => {
     const [formData, setFormData] = useState<FormData>({
         userId: employee?.userId || 0,
-        userName: employee?.userName || '',
+        name: employee?.name || '',
         phone: employee?.phone || '',
         hireDate: employee?.hireDate || new Date().toISOString().split('T')[0],
         hourlyWage: employee?.hourlyWage || 10000,
@@ -183,16 +183,18 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onClose, onSucces
                                 </label>
                                 <input
                                     type="text"
-                                    name="userName"
-                                    value={formData.userName}
+                                    name="name"
+                                    value={formData.name}
                                     onChange={handleChange}
                                     required
+                                    readOnly={!!employee} // Name is not updatable via this form
                                     style={{
                                         width: '100%',
                                         padding: isMobile ? '0.875rem' : '0.75rem',
                                         borderRadius: 'var(--radius-md)',
                                         border: '1px solid var(--color-border)',
-                                        fontSize: isMobile ? '1rem' : '1rem'
+                                        fontSize: isMobile ? '1rem' : '1rem',
+                                        backgroundColor: employee ? 'var(--color-background)' : 'white'
                                     }}
                                 />
                             </div>

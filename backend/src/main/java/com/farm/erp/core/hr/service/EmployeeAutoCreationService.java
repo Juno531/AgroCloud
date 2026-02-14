@@ -23,10 +23,10 @@ public class EmployeeAutoCreationService {
     private final EmployeeProfileRepository employeeProfileRepository;
 
     /**
-     * Employee 프로필을 별도 트랜잭션으로 생성
-     * 실패해도 회원가입은 성공하도록 함
+     * Employee 프로필을 생성
+     * 같은 트랜잭션 내에서 처리하여 User가 롤백되면 함께 롤백됨 (또는 User 저장 후 바로 조회 가능)
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public void createEmployeeProfileForNewUser(User user, Farm farm) {
         try {
             // 이미 Employee 프로필이 있는지 확인
@@ -34,6 +34,8 @@ public class EmployeeAutoCreationService {
                 System.out.println("Employee profile already exists for user: " + user.getId());
                 return;
             }
+
+            String code = user.getRole() == User.Role.ADMIN ? user.getAdminCode() : user.getEmployeeCode();
 
             EmployeeProfile employeeProfile = EmployeeProfile.builder()
                     .user(user)
@@ -44,6 +46,7 @@ public class EmployeeAutoCreationService {
                     .bankAccount("") // 사용자가 나중에 입력
                     .accountHolder(user.getName()) // 사용자 이름을 예금주로
                     .paymentDate(25) // 기본 급여 지급일 25일
+                    .employeeCode(code)
                     .build();
 
             employeeProfileRepository.save(employeeProfile);

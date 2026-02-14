@@ -1,0 +1,7 @@
+{
+    "email": "admin5@test.com",
+    "password": "password",
+    "name": "Admin User 5",
+    "registerType": "admin",
+    "inviteCode": "ADMIN123"
+}

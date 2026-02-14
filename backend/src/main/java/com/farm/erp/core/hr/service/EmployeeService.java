@@ -108,6 +108,7 @@ public class EmployeeService {
                 .accountHolder(profile.getAccountHolder())
                 .paymentDate(profile.getPaymentDate())
                 .hourlyWage(profile.getHourlyWage())
+                .employeeCode(profile.getEmployeeCode())
                 .build();
     }
 }

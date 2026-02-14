@@ -73,7 +73,7 @@ const TopNav: React.FC = () => {
             {/* Logo */}
             <div className="top-nav-logo">
                 <div className="logo-icon">
-                    <img src="/plant-logo.svg" alt="Farm ERP" style={{ width: '24px', height: '24px' }} />
+                    <img src="/logo.svg" alt="Farm ERP" style={{ width: '32px', height: '32px' }} />
                 </div>
                 <h1 className="logo-text">Farm ERP</h1>
             </div>

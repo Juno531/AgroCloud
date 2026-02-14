@@ -23,3 +23,12 @@ logging:
     org.hibernate.SQL: INFO
     org.springframework.security: INFO
     org.springframework.web: INFO
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always

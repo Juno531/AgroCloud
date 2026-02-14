@@ -7,7 +7,7 @@ import ConfirmDialog from '../UI/ConfirmDialog';
 interface EmployeeProfile {
     id: number;
     userId: number;
-    userName: string;
+    name: string;
     phone: string;
     hireDate: string;
     hourlyWage: number;
@@ -62,7 +62,7 @@ const EmployeeList = () => {
         setConfirmDialog({
             isOpen: true,
             title: '작업자 삭제',
-            message: `"${employee.userName}" 작업자를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`,
+            message: `"${employee.name}" 작업자를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`,
             variant: 'danger',
             onConfirm: async () => {
                 try {
@@ -170,9 +170,9 @@ const EmployeeList = () => {
                                         fontWeight: 600,
                                         fontSize: '1.125rem'
                                     }}>
-                                        {employee.userName.charAt(0)}
+                                        {employee.name ? employee.name.charAt(0) : '?'}
                                     </div>
-                                    <strong style={{ fontSize: '1.125rem' }}>{employee.userName}</strong>
+                                    <strong style={{ fontSize: '1.125rem' }}>{employee.name || '미등록'}</strong>
                                 </div>
                                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                                     <button
@@ -283,9 +283,9 @@ const EmployeeList = () => {
                                                     justifyContent: 'center',
                                                     fontWeight: 600
                                                 }}>
-                                                    {employee.userName.charAt(0)}
+                                                    {(employee.name || '?').charAt(0)}
                                                 </div>
-                                                <strong>{employee.userName}</strong>
+                                                <strong>{employee.name || '미등록'}</strong>
                                             </div>
                                         </td>
                                         <td style={{ padding: '1rem' }}>

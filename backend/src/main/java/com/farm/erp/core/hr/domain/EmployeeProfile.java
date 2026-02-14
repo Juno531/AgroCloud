@@ -31,6 +31,9 @@ public class EmployeeProfile {
     @Column(length = 20)
     private String phone;
 
+    @Column(name = "employee_code", unique = true)
+    private String employeeCode;
+
     @Column(name = "hire_date")
     private LocalDate hireDate;
 
@@ -66,7 +69,7 @@ public class EmployeeProfile {
     @Builder
     public EmployeeProfile(User user, Farm farm, String phone, LocalDate hireDate,
             String bankAccount, String accountHolder,
-            Integer paymentDate, BigDecimal hourlyWage) {
+            Integer paymentDate, BigDecimal hourlyWage, String employeeCode) {
         this.user = user;
         this.farm = farm;
         this.phone = phone;
@@ -75,6 +78,7 @@ public class EmployeeProfile {
         this.accountHolder = accountHolder;
         this.paymentDate = paymentDate;
         this.hourlyWage = hourlyWage;
+        this.employeeCode = employeeCode;
     }
 
     public void updateProfile(String phone, LocalDate hireDate, String bankAccount,

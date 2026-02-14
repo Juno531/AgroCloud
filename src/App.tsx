@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Layout from './components/Layout/Layout'
 import Login from './pages/Login'
+import Register from './pages/Register'
 import PrivateRoute from './components/Auth/PrivateRoute'
 import YieldManagement from './pages/YieldManagement'
 import SalesManagement from './pages/SalesManagement'
@@ -22,6 +23,7 @@ function App() {
           <BrowserRouter>
             <Routes>
               <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
               <Route path="/" element={
                 <PrivateRoute allowedRoles={['ADMIN']}>
                   <Layout>

@@ -23,15 +23,23 @@ public class User {
     @Column(nullable = false)
     private String name;
 
+    @Column(name = "admin_code")
+    private String adminCode;
+
+    @Column(name = "employee_code")
+    private String employeeCode;
+
     @Enumerated(EnumType.STRING)
     private Role role;
 
     @Builder
-    public User(String email, String password, String name, Role role) {
+    public User(String email, String password, String name, Role role, String adminCode, String employeeCode) {
         this.email = email;
         this.password = password;
         this.name = name;
         this.role = role;
+        this.adminCode = adminCode;
+        this.employeeCode = employeeCode;
     }
 
     public enum Role {
