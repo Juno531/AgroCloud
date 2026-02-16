@@ -24,4 +24,9 @@ public class AuthController {
     public ResponseEntity<AuthResponse> register(@RequestBody RegisterRequest request) {
         return ResponseEntity.ok(authService.register(request));
     }
+
+    @GetMapping("/me")
+    public ResponseEntity<com.farm.erp.core.auth.dto.UserDto> getMe(@org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails) {
+        return ResponseEntity.ok(authService.me(userDetails.getUsername()));
+    }
 }

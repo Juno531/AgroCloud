@@ -3,6 +3,7 @@ import Layout from './components/Layout/Layout'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import PrivateRoute from './components/Auth/PrivateRoute'
+import Dashboard from './pages/Dashboard'
 import YieldManagement from './pages/YieldManagement'
 import SalesManagement from './pages/SalesManagement'
 import CultivationManagement from './pages/CultivationManagement'
@@ -14,6 +15,7 @@ import { ThemeProvider } from './context/ThemeContext'
 import { AuthProvider } from './context/AuthContext'
 
 import Attendance from './pages/Attendance'
+import SuperAdmin from './pages/SuperAdmin'
 
 function App() {
   return (
@@ -24,10 +26,17 @@ function App() {
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/super-admin/*" element={
+                <PrivateRoute allowedRoles={['SUPER_ADMIN']}>
+                  <Layout>
+                    <SuperAdmin />
+                  </Layout>
+                </PrivateRoute>
+              } />
               <Route path="/" element={
                 <PrivateRoute allowedRoles={['ADMIN']}>
                   <Layout>
-                    <YieldManagement />
+                    <Dashboard />
                   </Layout>
                 </PrivateRoute>
               } />

@@ -1,5 +1,9 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
-import type { LoginRequest, RegisterRequest, AuthResponse } from '../types';
+import type {
+    LoginRequest, RegisterRequest, AuthResponse,
+    Company, CompanyCreateRequest, CompanyUpdateRequest,
+    RegistrationCode, CodeGenerateRequest, ApiResponse
+} from '../types';
 
 // Use VITE_API_BASE_URL if set (for mobile access), otherwise use '/api/v1' (for PC with proxy)
 const BASE_URL = import.meta.env.VITE_API_BASE_URL
@@ -138,6 +142,7 @@ export const CultivationService = {
 
 export const EmployeeService = {
     getAllEmployees: () => api.get('/employees'),
+    getEmployeesByFarm: (farmId: number) => api.get('/employees', { params: { farmId } }),
     getEmployee: (id: number) => api.get(`/employees/${id}`),
     getEmployeeByUserId: (userId: number) => api.get(`/employees/user/${userId}`),
     createEmployee: (data: any) => api.post('/employees', data),
@@ -155,6 +160,22 @@ export const AttendanceService = {
         return api.get(`/attendance/farm/${farmId}`, { params });
     },
     getUserStatus: () => api.get('/attendance/status')
+};
+
+// Super Admin Services
+export const CompanyService = {
+    getAllCompanies: () => api.get<ApiResponse<Company[]>>('/super-admin/companies'),
+    getCompany: (id: number) => api.get<ApiResponse<Company>>(`/super-admin/companies/${id}`),
+    createCompany: (data: CompanyCreateRequest) => api.post<ApiResponse<Company>>('/super-admin/companies', data),
+    updateCompany: (id: number, data: CompanyUpdateRequest) => api.put<ApiResponse<Company>>(`/super-admin/companies/${id}`, data),
+    deleteCompany: (id: number) => api.delete(`/super-admin/companies/${id}`)
+};
+
+export const RegistrationCodeService = {
+    generateCode: (data: CodeGenerateRequest) => api.post<ApiResponse<RegistrationCode>>('/super-admin/registration-codes', data),
+    getCodes: (companyId?: number) => api.get<ApiResponse<RegistrationCode[]>>('/super-admin/registration-codes', { params: { companyId } }),
+    deleteCode: (id: number) => api.delete(`/super-admin/registration-codes/${id}`),
+    validateCode: (code: string) => api.post<ApiResponse<RegistrationCode>>('/super-admin/registration-codes/validate', { code })
 };
 
 export default api;

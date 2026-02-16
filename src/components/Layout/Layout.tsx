@@ -1,25 +1,27 @@
-import React, { useState } from 'react';
-import { useLocation } from 'react-router-dom';
-import TopNav from './TopNav';
-import FarmListSidebar from './FarmListSidebar';
+import React from 'react';
+import Sidebar from './Sidebar';
+import { LayoutProvider } from '../../context/LayoutContext';
 
-const Layout = ({ children }) => {
-    const [activeFarm, setActiveFarm] = useState('All');
-    const location = useLocation();
-    const isDashboard = location.pathname === '/';
+interface LayoutProps {
+    children: React.ReactNode;
+}
 
+const LayoutContent: React.FC<LayoutProps> = ({ children }) => {
     return (
-        <div className="app-layout top-nav-layout">
-            <TopNav />
-            <div className="app-body">
-                {isDashboard && <FarmListSidebar activeFarm={activeFarm} onFarmSelect={setActiveFarm} />}
-                <main className="app-content">
-                    {React.Children.map(children, child =>
-                        React.cloneElement(child, { activeFarm, setActiveFarm })
-                    )}
-                </main>
-            </div>
+        <div className="flex h-screen overflow-hidden bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-100 font-display">
+            <Sidebar />
+            <main className="flex-1 flex flex-col overflow-hidden w-full relative">
+                {children}
+            </main>
         </div>
+    );
+};
+
+const Layout: React.FC<LayoutProps> = ({ children }) => {
+    return (
+        <LayoutProvider>
+            <LayoutContent>{children}</LayoutContent>
+        </LayoutProvider>
     );
 };
 

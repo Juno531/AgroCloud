@@ -2,6 +2,7 @@ package com.farm.erp.core.auth.service;
 
 import com.farm.erp.core.auth.domain.User;
 import com.farm.erp.core.auth.domain.User.Role;
+import com.farm.erp.core.company.domain.Company;
 import com.farm.erp.core.auth.dto.*;
 import com.farm.erp.core.auth.repository.UserRepository;
 import com.farm.erp.core.auth.security.JwtTokenProvider;
@@ -31,103 +32,114 @@ public class AuthService {
         private final AuthenticationManager authenticationManager;
         private final UserRepository userRepository;
         private final PasswordEncoder passwordEncoder;
-        private final JwtTokenProvider tokenProvider;
+        private final JwtTokenProvider jwtService;
         private final EmployeeAutoCreationService employeeAutoCreationService;
         private final FarmRepository farmRepository;
+        private final LoginAttemptService loginAttemptService;
+        private final com.farm.erp.core.audit.service.AuditLogService auditLogService;
+        private final com.farm.erp.core.company.service.RegistrationCodeService registrationCodeService;
 
         @Transactional
         public AuthResponse login(LoginRequest request) {
-                Authentication authentication = authenticationManager.authenticate(
-                                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
+                // Check if account is locked due to too many attempts
+                if (loginAttemptService.isBlocked(request.getEmail())) {
+                        throw new RuntimeException("Account temporarily locked due to too many failed login attempts. Please try again later.");
+                }
 
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-                String jwt = tokenProvider.createToken(authentication);
+                try {
+                        Authentication authentication = authenticationManager.authenticate(
+                                        new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
 
-                User user = userRepository.findByEmail(request.getEmail())
-                                .orElseThrow(() -> new RuntimeException("User not found"));
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                        String jwt = jwtService.createToken(authentication);
 
-                return new AuthResponse(jwt, new UserDto(user));
+                        User user = userRepository.findByEmail(request.getEmail())
+                                        .orElseThrow(() -> new RuntimeException("User not found"));
+
+                        // Login succeeded - clear attempt counter
+                        loginAttemptService.loginSucceeded(request.getEmail());
+
+                        // Log successful login
+                        auditLogService.logLogin(user, "N/A", "N/A");
+
+                        Long farmId = getFarmIdForUser(user);
+
+                        return new AuthResponse(jwt, new UserDto(user, farmId));
+                } catch (Exception e) {
+                        // Login failed - increment attempt counter
+                        loginAttemptService.loginFailed(request.getEmail());
+                        throw e;
+                }
         }
 
         @Transactional
-        public AuthResponse register(RegisterRequest request) {
-                // 1. 이메일 중복 체크
-                if (userRepository.existsByEmail(request.getEmail())) {
-                        throw new RuntimeException("Email already in use");
-                }
+    public AuthResponse register(RegisterRequest request) {
+        // 1. 이메일 중복 체크
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new RuntimeException("Email already in use");
+        }
 
-                // 2. 초대 코드 검증 및 역할 결정
-                Role userRole;
-                if ("admin".equalsIgnoreCase(request.getRegisterType())) {
-                        if (!adminInviteCode.equals(request.getInviteCode())) {
-                                throw new RuntimeException("Invalid admin invite code");
-                        }
-                        userRole = Role.ADMIN;
-                } else if ("worker".equalsIgnoreCase(request.getRegisterType())) {
-                        // 작업자는 farmInviteCode(농장 ID)로만 검증
-                        userRole = Role.USER;
+        // 2. 가입 코드 검증
+        var registrationCode = registrationCodeService.validateCode(request.getRegistrationCode());
+        Company company = registrationCode.getCompany();
+
+        // 3. 역할 결정
+        Role role = registrationCode.getType() == com.farm.erp.core.company.domain.RegistrationCode.CodeType.ADMIN
+                ? Role.ADMIN
+                : Role.USER;
+
+        // 4. 사용자 생성
+        User user = User.builder()
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .name(request.getName())
+                .role(role)
+                .company(company)
+                .build();
+
+        userRepository.save(user);
+
+        // 5. 코드 사용 처리 (옵션)
+        // registrationCodeService.markCodeAsUsed(request.getRegistrationCode());
+
+        // 6. 인증 토큰 생성
+        org.springframework.security.core.userdetails.UserDetails userDetails = new org.springframework.security.core.userdetails.User(
+                user.getEmail(),
+                user.getPassword(),
+                java.util.Collections.singletonList(
+                        new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_" + user.getRole().name())
+                )
+        );
+
+        Authentication authentication = new UsernamePasswordAuthenticationToken(
+                userDetails, null, userDetails.getAuthorities()
+        );
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        String jwt = jwtService.createToken(authentication);
+
+        return new AuthResponse(jwt, new UserDto(user, company.getId()));
+    }
+
+        @Transactional(readOnly = true)
+        public UserDto me(String email) {
+                User user = userRepository.findByEmail(email)
+                                .orElseThrow(() -> new RuntimeException("User not found"));
+                Long farmId = getFarmIdForUser(user);
+                return new UserDto(user, farmId);
+        }
+
+        private Long getFarmIdForUser(User user) {
+                if (user.getRole() == Role.ADMIN) {
+                        return farmRepository.findByUserId(user.getId()).stream()
+                                        .findFirst()
+                                        .map(Farm::getId)
+                                        .orElse(null);
                 } else {
-                        throw new RuntimeException("Invalid register type");
+                        return employeeAutoCreationService.getEmployeeProfileRepository()
+                                        .findByUserId(user.getId())
+                                        .map(profile -> profile.getFarm() != null ? profile.getFarm().getId() : null)
+                                        .orElse(null);
                 }
-
-                String adminCode = null;
-                String employeeCode = null;
-
-                if (userRole == Role.ADMIN) {
-                        adminCode = "ADM-" + java.util.UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-                } else {
-                        employeeCode = "EMP-" + java.util.UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-                }
-
-                // 3. 사용자 생성
-                User user = User.builder()
-                                .email(request.getEmail())
-                                .password(passwordEncoder.encode(request.getPassword()))
-                                .name(request.getName())
-                                .role(userRole)
-                                .adminCode(adminCode)
-                                .employeeCode(employeeCode)
-                                .build();
-
-                User savedUser = userRepository.saveAndFlush(user);
-
-                // 4. 인증 토큰 생성
-                org.springframework.security.core.userdetails.User userDetails = new org.springframework.security.core.userdetails.User(
-                                savedUser.getEmail(),
-                                savedUser.getPassword(),
-                                java.util.Collections.singletonList(
-                                                new org.springframework.security.core.authority.SimpleGrantedAuthority(
-                                                                "ROLE_" + savedUser.getRole().name())));
-
-                Authentication authentication = new UsernamePasswordAuthenticationToken(
-                                userDetails, null, userDetails.getAuthorities());
-
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-                String jwt = tokenProvider.createToken(authentication);
-
-                // 6. 모든 역할에 대해 Employee 프로필 생성
-                Long farmId = null;
-                if (userRole == Role.USER) {
-                        // 작업자는 농장 초대 코드 필수
-                        if (request.getFarmInviteCode() == null || request.getFarmInviteCode().isBlank()) {
-                                throw new RuntimeException("작업자 가입 시 농장 초대 코드가 필요합니다");
-                        }
-                        try {
-                                farmId = Long.parseLong(request.getFarmInviteCode());
-                        } catch (NumberFormatException e) {
-                                throw new RuntimeException("유효하지 않은 농장 초대 코드입니다");
-                        }
-                }
-                
-                Farm farm = null;
-                if (farmId != null) {
-                        farm = farmRepository.findById(farmId)
-                                .orElseThrow(() -> new RuntimeException("유효하지 않은 농장 초대 코드입니다"));
-                }
-
-                // 별도 서비스를 통해 Employee 프로필 생성 (Admin은 farm이 null일 수 있음)
-                employeeAutoCreationService.createEmployeeProfileForNewUser(savedUser, farm);
-
-                return new AuthResponse(jwt, new UserDto(savedUser));
         }
 }

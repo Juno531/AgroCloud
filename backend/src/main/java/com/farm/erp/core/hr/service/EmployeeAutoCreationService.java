@@ -22,6 +22,10 @@ public class EmployeeAutoCreationService {
 
     private final EmployeeProfileRepository employeeProfileRepository;
 
+    public EmployeeProfileRepository getEmployeeProfileRepository() {
+        return employeeProfileRepository;
+    }
+
     /**
      * Employee 프로필을 생성
      * 같은 트랜잭션 내에서 처리하여 User가 롤백되면 함께 롤백됨 (또는 User 저장 후 바로 조회 가능)
@@ -35,7 +39,8 @@ public class EmployeeAutoCreationService {
                 return;
             }
 
-            String code = user.getRole() == User.Role.ADMIN ? user.getAdminCode() : user.getEmployeeCode();
+            // Employee 코드 자동 생성 (예: EMP-{userId})
+            String code = "EMP-" + user.getId();
 
             EmployeeProfile employeeProfile = EmployeeProfile.builder()
                     .user(user)

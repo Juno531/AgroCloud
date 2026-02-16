@@ -189,23 +189,22 @@
     gap: var(--spacing-sm);
 }
 
-.logo-icon {
+/* .logo-icon {
     width: 60px;
     height: 60px;
-    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
     border-radius: var(--radius-lg);
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-}
+} */
 
 .logo-text {
-    font-size: 0.75rem;
-    font-weight: 700;
+    font-size: 0.5rem;
+    font-weight: 600;
     color: var(--color-text);
     text-align: center;
-    line-height: 1.2;
+    line-height: 1;
 }
 
 .sidebar-nav {

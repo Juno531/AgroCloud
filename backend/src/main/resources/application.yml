@@ -100,6 +100,10 @@ app:
   invite-codes:
     admin: ${ADMIN_INVITE_CODE:ADMIN123}
     farm: ${FARM_INVITE_CODE:FARM123}
+  super-admin:
+    email: ${SUPER_ADMIN_EMAIL:super@farmerp.com}
+    password: ${SUPER_ADMIN_PASSWORD:1234}
+    name: ${SUPER_ADMIN_NAME:Super Administrator}
 
 # Logging Configuration
 logging:

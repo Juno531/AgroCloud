@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 
 interface PrivateRouteProps {
     children: ReactNode;
-    allowedRoles?: ('ADMIN' | 'USER')[];
+    allowedRoles?: ('ADMIN' | 'USER' | 'SUPER_ADMIN')[];
 }
 
 const PrivateRoute: React.FC<PrivateRouteProps> = ({ children, allowedRoles }) => {
@@ -21,14 +21,19 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({ children, allowedRoles }) =
 
     // Role-based access control
     if (allowedRoles && user) {
-        if (!allowedRoles.includes(user.role as 'ADMIN' | 'USER')) {
+        // SUPER_ADMIN은 모든 ADMIN 경로에 접근 가능하도록 설정하거나 별도 처리
+        const userRole = user.role as 'ADMIN' | 'USER' | 'SUPER_ADMIN';
+        const isAuthorized = allowedRoles.includes(userRole) ||
+            (userRole === 'SUPER_ADMIN' && allowedRoles.includes('ADMIN'));
+
+        if (!isAuthorized) {
             // Redirect based on user role
-            if (user.role === 'USER') {
-                // Workers can only access attendance
-                return <Navigate to="/attendance" replace />;
-            } else {
-                // Admins can access everything, but if somehow blocked, go to dashboard
+            if (userRole === 'SUPER_ADMIN') {
+                return <Navigate to="/super-admin" replace />;
+            } else if (userRole === 'ADMIN') {
                 return <Navigate to="/" replace />;
+            } else {
+                return <Navigate to="/attendance" replace />;
             }
         }
     }

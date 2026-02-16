@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import api, { AuthService } from '../services/api';
-import type { User, AuthContextType } from '../types';
+import type { User, AuthContextType, LoginRequest, RegisterRequest } from '../types';
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -35,9 +35,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         initAuth();
     }, [token]);
 
-    const login = async (email: string, password: string): Promise<void> => {
+    const login = async (data: LoginRequest): Promise<void> => {
         try {
-            const response = await AuthService.login({ email, password });
+            const response = await AuthService.login(data);
             const { token: newToken, user: userData } = response.data;
 
             setToken(newToken);
@@ -47,6 +47,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
         } catch (error) {
             console.error("Login failed:", error);
+            throw error;
+        }
+    };
+
+    const register = async (data: RegisterRequest): Promise<void> => {
+        try {
+            const response = await AuthService.register(data);
+            const { token: newToken, user: userData } = response.data;
+
+            setToken(newToken);
+            setUser(userData);
+            localStorage.setItem('token', newToken);
+            localStorage.setItem('user', JSON.stringify(userData));
+            api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+        } catch (error) {
+            console.error("Register failed:", error);
             throw error;
         }
     };
@@ -63,6 +79,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         user,
         token,
         login,
+        register,
         logout,
         isAuthenticated: !!token,
         loading

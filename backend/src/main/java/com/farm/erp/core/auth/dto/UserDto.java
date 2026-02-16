@@ -9,15 +9,17 @@ public class UserDto {
     private String email;
     private String name;
     private String role;
-    private String adminCode;
-    private String employeeCode;
+    private Long farmId;
 
     public UserDto(User user) {
         this.id = user.getId();
         this.email = user.getEmail();
         this.name = user.getName();
         this.role = user.getRole().name();
-        this.adminCode = user.getAdminCode();
-        this.employeeCode = user.getEmployeeCode();
+    }
+
+    public UserDto(User user, Long farmId) {
+        this(user);
+        this.farmId = farmId;
     }
 }

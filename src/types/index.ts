@@ -3,7 +3,30 @@ export interface User {
     id: number;
     email: string;
     name: string;
-    role: 'USER' | 'ADMIN';
+    role: 'USER' | 'ADMIN' | 'SUPER_ADMIN';
+    farmId: number;
+    companyId?: number;
+}
+
+export interface Company {
+    id: number;
+    name: string;
+    code: string;
+    businessNumber?: string;
+    address?: string;
+    phoneNumber?: string;
+    status: 'ACTIVE' | 'INACTIVE';
+    createdAt: string;
+}
+
+export interface RegistrationCode {
+    id: number;
+    companyName: string;
+    code: string;
+    type: 'ADMIN' | 'EMPLOYEE';
+    status: 'ACTIVE' | 'USED' | 'EXPIRED';
+    expiresAt?: string;
+    createdAt: string;
 }
 
 export interface Farm {
@@ -50,7 +73,6 @@ export interface Bed {
 // API Response Types
 export interface AuthResponse {
     token: string;
-    type: string;
     user: User;
 }
 
@@ -63,9 +85,29 @@ export interface RegisterRequest {
     email: string;
     password: string;
     name: string;
-    inviteCode: string;
-    farmInviteCode?: string;  // 작업자 가입 시 농장 코드
-    registerType: 'admin' | 'worker';
+    registrationCode: string;
+}
+
+// Company API Requests
+export interface CompanyCreateRequest {
+    name: string;
+    code: string;
+    businessNumber?: string;
+    address?: string;
+    phoneNumber?: string;
+}
+
+export interface CompanyUpdateRequest {
+    name: string;
+    address?: string;
+    phoneNumber?: string;
+    status: 'ACTIVE' | 'INACTIVE';
+}
+
+export interface CodeGenerateRequest {
+    companyId: number;
+    type: 'ADMIN' | 'EMPLOYEE';
+    expiresAt?: string;
 }
 
 export interface ApiResponse<T> {
@@ -78,7 +120,8 @@ export interface ApiResponse<T> {
 export interface AuthContextType {
     user: User | null;
     token: string | null;
-    login: (email: string, password: string) => Promise<void>;
+    login: (data: LoginRequest) => Promise<void>;
+    register: (data: RegisterRequest) => Promise<void>;
     logout: () => void;
     isAuthenticated: boolean;
     loading?: boolean;

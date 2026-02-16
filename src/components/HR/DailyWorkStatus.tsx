@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Calendar, RefreshCw } from 'lucide-react';
 import { EmployeeService, AttendanceService } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
+
 
 interface DailyWorkRecord {
     userName: string;
@@ -17,6 +19,7 @@ interface DailyWorkRecord {
 }
 
 const DailyWorkStatus = () => {
+    const { user } = useAuth();
     const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
     const [workRecords, setWorkRecords] = useState<DailyWorkRecord[]>([]);
     const [loading, setLoading] = useState(false);
@@ -26,18 +29,21 @@ const DailyWorkStatus = () => {
     }, [selectedDate]);
 
     const fetchDailyStatus = async () => {
+        if (!user?.farmId) return;
+
         setLoading(true);
         try {
-            // Fetch all employees
-            const employeesResponse = await EmployeeService.getAllEmployees();
+            // Fetch all employees for this farm
+            const employeesResponse = await EmployeeService.getEmployeesByFarm(user.farmId);
             const employees = employeesResponse.data;
 
             // Fetch attendance records for the selected date
-            const startOfDay = selectedDate;
-            const endOfDay = selectedDate;
+            // Convert to ISO datetime format
+            const startOfDay = `${selectedDate}T00:00:00`;
+            const endOfDay = `${selectedDate}T23:59:59`;
 
             const attendanceResponse = await AttendanceService.getFarmAttendance(
-                1,
+                user.farmId,
                 startOfDay,
                 endOfDay
             );
@@ -71,7 +77,7 @@ const DailyWorkStatus = () => {
                 }
 
                 return {
-                    userName: employee.userName,
+                    userName: employee.name,
                     userId: employee.userId,
                     phone: employee.phone,
                     hourlyWage: employee.hourlyWage,
@@ -93,7 +99,7 @@ const DailyWorkStatus = () => {
         }
     };
 
-    const formatTime = (timestamp: string | null) => {
+    const formatTime = (timestamp: string | null | undefined) => {
         if (!timestamp) return '-';
         return new Date(timestamp).toLocaleTimeString('ko-KR', {
             hour: '2-digit',
@@ -101,13 +107,13 @@ const DailyWorkStatus = () => {
         });
     };
 
-    const formatHours = (hours: number | null) => {
-        if (hours === null) return '-';
+    const formatHours = (hours: number | null | undefined) => {
+        if (hours === null || hours === undefined) return '0.0시간';
         return `${hours.toFixed(1)}시간`;
     };
 
-    const formatCurrency = (amount: number | null) => {
-        if (amount === null) return '-';
+    const formatCurrency = (amount: number | null | undefined) => {
+        if (amount === null || amount === undefined) return '0원';
         return new Intl.NumberFormat('ko-KR', {
             style: 'currency',
             currency: 'KRW'

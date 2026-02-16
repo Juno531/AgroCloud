@@ -1,5 +1,6 @@
 package com.farm.erp.core.auth.domain;
 
+import com.farm.erp.core.company.domain.Company;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,26 +24,25 @@ public class User {
     @Column(nullable = false)
     private String name;
 
-    @Column(name = "admin_code")
-    private String adminCode;
-
-    @Column(name = "employee_code")
-    private String employeeCode;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "company_id")
+    private Company company;
 
     @Enumerated(EnumType.STRING)
     private Role role;
 
     @Builder
-    public User(String email, String password, String name, Role role, String adminCode, String employeeCode) {
+    public User(String email, String password, String name, Role role, Company company) {
         this.email = email;
         this.password = password;
         this.name = name;
         this.role = role;
-        this.adminCode = adminCode;
-        this.employeeCode = employeeCode;
+        this.company = company;
     }
 
     public enum Role {
-        USER, ADMIN
+        USER,        // 일반 작업자
+        ADMIN,       // 농장 관리자
+        SUPER_ADMIN  // 시스템 전체 관리자
     }
 }

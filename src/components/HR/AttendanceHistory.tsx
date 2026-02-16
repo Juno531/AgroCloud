@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Calendar, Search, Clock, LogIn, LogOut } from 'lucide-react';
 import { EmployeeService, AttendanceService } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 
 interface AttendanceRecord {
     id: number;
@@ -12,6 +13,7 @@ interface AttendanceRecord {
 }
 
 const AttendanceHistory = () => {
+    const { user } = useAuth();
     const [employees, setEmployees] = useState<any[]>([]);
     const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
     const [records, setRecords] = useState<AttendanceRecord[]>([]);
@@ -46,18 +48,26 @@ const AttendanceHistory = () => {
     };
 
     const fetchAttendanceRecords = async () => {
-        if (!selectedUserId) return;
+        if (!selectedUserId || !user?.farmId) return;
 
         setLoading(true);
         try {
+            // Convert date strings to ISO datetime format (yyyy-MM-ddT00:00:00)
+            const startDateTime = `${startDate}T00:00:00`;
+            const endDateTime = `${endDate}T23:59:59`;
+
             // Fetch all farm attendance and filter by user
-            const response = await AttendanceService.getFarmAttendance(1, startDate, endDate);
+            const response = await AttendanceService.getFarmAttendance(user.farmId, startDateTime, endDateTime);
             const filteredRecords = response.data.filter(
                 (record: AttendanceRecord) => record.userId === selectedUserId
             );
             setRecords(filteredRecords);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to fetch attendance records:', error);
+            if (error.response) {
+                console.error('Error response data:', error.response.data);
+                console.error('Error response status:', error.response.status);
+            }
         } finally {
             setLoading(false);
         }
@@ -167,7 +177,7 @@ const AttendanceHistory = () => {
             {/* Employee Info Card */}
             {selectedEmployee && (
                 <div style={{
-                    backgroundColor: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%)',
+                    backgroundColor: 'rgba(16, 185, 129, 0.05)',
                     padding: 'var(--spacing-lg)',
                     borderRadius: 'var(--radius-lg)',
                     marginBottom: 'var(--spacing-lg)',
@@ -181,6 +191,7 @@ const AttendanceHistory = () => {
                             backgroundColor: 'var(--color-primary)',
                             color: 'white',
                             display: 'flex',
+                            alignItems: 'center',
                             justifyContent: 'center',
                             fontSize: '1.5rem',
                             fontWeight: 700
@@ -192,7 +203,7 @@ const AttendanceHistory = () => {
                                 {selectedEmployee.name || '미등록'}
                             </h3>
                             <p style={{ color: 'var(--color-text-secondary)' }}>
-                                {selectedEmployee.phone} | 시급: {selectedEmployee.hourlyWage.toLocaleString()}원
+                                {selectedEmployee.phone || '-'} | 시급: {(selectedEmployee.hourlyWage || 0).toLocaleString()}원
                             </p>
                         </div>
                     </div>

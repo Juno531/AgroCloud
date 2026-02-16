@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Edit, Trash2, User, Phone, Calendar, DollarSign, CreditCard } from 'lucide-react';
 import { EmployeeService } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 import EmployeeForm from './EmployeeForm';
 import ConfirmDialog from '../UI/ConfirmDialog';
 
@@ -17,6 +18,7 @@ interface EmployeeProfile {
 }
 
 const EmployeeList = () => {
+    const { user } = useAuth();
     const [employees, setEmployees] = useState<EmployeeProfile[]>([]);
     const [loading, setLoading] = useState(true);
     const [isFormOpen, setIsFormOpen] = useState(false);
@@ -39,12 +41,17 @@ const EmployeeList = () => {
 
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
-    }, []);
+    }, [user?.farmId]);
 
     const fetchEmployees = async () => {
+        if (!user?.farmId) {
+            setLoading(false);
+            return;
+        }
+
         setLoading(true);
         try {
-            const response = await EmployeeService.getAllEmployees();
+            const response = await EmployeeService.getEmployeesByFarm(user.farmId);
             setEmployees(response.data);
         } catch (error) {
             console.error('Failed to fetch employees:', error);
@@ -86,14 +93,16 @@ const EmployeeList = () => {
         fetchEmployees();
     };
 
-    const formatCurrency = (amount: number) => {
+    const formatCurrency = (amount: number | undefined) => {
+        if (amount === undefined || amount === null) return '-';
         return new Intl.NumberFormat('ko-KR', {
             style: 'currency',
             currency: 'KRW'
         }).format(amount);
     };
 
-    const formatDate = (dateString: string) => {
+    const formatDate = (dateString: string | undefined) => {
+        if (!dateString) return '-';
         return new Date(dateString).toLocaleDateString('ko-KR');
     };
 

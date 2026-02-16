@@ -58,15 +58,13 @@ public class AttendanceController {
     @GetMapping("/farm/{farmId}")
     public ResponseEntity<List<AttendanceResponse>> getFarmAttendance(
             @PathVariable Long farmId,
-            @RequestParam(required = false) String startDate,
-            @RequestParam(required = false) String endDate) {
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime startDate,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime endDate) {
 
         List<AttendanceRecord> records;
 
         if (startDate != null && endDate != null) {
-            LocalDateTime start = LocalDateTime.parse(startDate);
-            LocalDateTime end = LocalDateTime.parse(endDate);
-            records = attendanceService.getFarmAttendanceInRange(farmId, start, end);
+            records = attendanceService.getFarmAttendanceInRange(farmId, startDate, endDate);
         } else {
             records = attendanceService.getFarmAttendance(farmId);
         }

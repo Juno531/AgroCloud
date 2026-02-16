@@ -20,8 +20,22 @@ const Login: React.FC = () => {
         setIsLoading(true);
 
         try {
-            await login(email, password);
-            navigate(from, { replace: true });
+            await login({ email, password });
+
+            // Get user role from localStorage to determine redirect path
+            const storedUser = localStorage.getItem('user');
+            if (storedUser) {
+                const userData = JSON.parse(storedUser);
+                if (userData.role === 'SUPER_ADMIN') {
+                    navigate('/super-admin', { replace: true });
+                } else if (userData.role === 'ADMIN') {
+                    navigate('/', { replace: true });
+                } else {
+                    navigate('/attendance', { replace: true });
+                }
+            } else {
+                navigate(from, { replace: true });
+            }
         } catch (err: any) {
             console.error('Auth error:', err);
 
@@ -74,9 +88,13 @@ const Login: React.FC = () => {
                 <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
                     <div style={{
                         display: 'inline-flex',
-                        marginBottom: '1rem'
+                        marginBottom: '1rem',
+                        padding: '4px',
+                        backgroundColor: '#ffffff',
+                        borderRadius: '50%',
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)'
                     }}>
-                        <img src="/logo.svg" alt="Farm ERP" style={{ width: '64px', height: '64px' }} />
+                        <img src="/logo.png" alt="Farm ERP" style={{ width: '84px', height: '84px', objectFit: 'contain', borderRadius: '50%' }} />
                     </div>
                     <h1 style={{ fontSize: '1.75rem', fontWeight: 700, marginBottom: '0.5rem' }}>Farm ERP</h1>
                     <p style={{ color: 'var(--color-text-secondary)' }}>
