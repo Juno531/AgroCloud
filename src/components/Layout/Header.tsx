@@ -3,9 +3,11 @@ import { Bell, User, Sun, Moon, LogOut, ChevronDown } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { useLayout } from '../../context/LayoutContext';
 
 const Header: React.FC = () => {
     const { theme, toggleTheme } = useTheme();
+    const { title } = useLayout();
     const { user, logout } = useAuth();
     const navigate = useNavigate();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -32,17 +34,21 @@ const Header: React.FC = () => {
 
     return (
         <header className="app-header">
-            <h2 className="header-title">농장 ERP 대시보드</h2>
+            <h2 className="header-title" style={{
+                color: 'var(--color-text)',
+                fontWeight: 800,
+                letterSpacing: '-0.025em'
+            }}>{title}</h2>
             <div className="header-actions">
                 <button
                     className="icon-btn theme-toggle"
                     onClick={toggleTheme}
                     title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
                 >
-                    {theme === 'light' ? <Moon size={20} color="var(--color-text)" /> : <Sun size={20} color="var(--color-text)" />}
+                    {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
                 </button>
-                <button className="icon-btn">
-                    <Bell size={20} color="var(--color-text)" />
+                <button className="icon-btn" style={{ color: 'var(--color-text)' }}>
+                    <Bell size={20} />
                 </button>
                 <div className="user-profile-wrapper" ref={dropdownRef}>
                     <button

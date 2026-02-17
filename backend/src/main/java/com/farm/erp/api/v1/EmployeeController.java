@@ -17,11 +17,17 @@ public class EmployeeController {
 
     private final EmployeeService employeeService;
 
+    private final com.farm.erp.core.auth.repository.UserRepository userRepository;
+
     @GetMapping
     public ResponseEntity<List<EmployeeProfileResponse>> getAllEmployees(
-            @RequestParam(required = false) Long farmId) {
+            @RequestParam(required = false) Long farmId,
+            @RequestParam(required = false) String companyCode) {
         if (farmId != null) {
             return ResponseEntity.ok(employeeService.getEmployeesByFarm(farmId));
+        }
+        if (companyCode != null) {
+            return ResponseEntity.ok(employeeService.getEmployeesByCompanyCode(companyCode));
         }
         return ResponseEntity.ok(employeeService.getAllEmployees());
     }
@@ -37,9 +43,15 @@ public class EmployeeController {
     }
 
     @PostMapping
-    public ResponseEntity<EmployeeProfileResponse> createEmployee(@RequestBody EmployeeProfileRequest request) {
+    public ResponseEntity<EmployeeProfileResponse> registerEmployee(
+            @org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails,
+            @RequestBody com.farm.erp.core.hr.dto.EmployeeRegistrationRequest request) {
+
+        com.farm.erp.core.auth.domain.User adminUser = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("Admin user not found"));
+
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(employeeService.createEmployee(request));
+                .body(employeeService.registerEmployee(request, adminUser));
     }
 
     @PutMapping("/{id}")

@@ -15,6 +15,7 @@ public class AttendanceResponse {
     private String type;
     private LocalDateTime timestamp;
     private Long farmId;
+    private String companyCode;
 
     public static AttendanceResponse from(AttendanceRecord record) {
         return AttendanceResponse.builder()
@@ -24,6 +25,7 @@ public class AttendanceResponse {
                 .type(record.getType().name())
                 .timestamp(record.getTimestamp())
                 .farmId(record.getFarmId())
+                .companyCode(record.getCompanyCode())
                 .build();
     }
 }

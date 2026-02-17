@@ -12,7 +12,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -36,7 +35,11 @@ public class AttendanceController {
         // Parse attendance type
         AttendanceRecord.AttendanceType type = AttendanceRecord.AttendanceType.valueOf(request.getType());
 
-        AttendanceRecord record = attendanceService.recordAttendance(user.getId(), type, request.getFarmId());
+        // Use company from user profile if available, otherwise from request
+        String companyCode = user.getCompany() != null ? user.getCompany().getCode() : request.getCompanyCode();
+
+        AttendanceRecord record = attendanceService.recordAttendance(user.getId(), type, request.getFarmId(),
+                companyCode);
 
         return ResponseEntity.ok(AttendanceResponse.from(record));
     }
@@ -45,9 +48,10 @@ public class AttendanceController {
     public ResponseEntity<List<AttendanceResponse>> getMyAttendance(
             @AuthenticationPrincipal UserDetails userDetails) {
 
-        Long userId = Long.parseLong(userDetails.getUsername().split("@")[0].replaceAll("[^0-9]", ""));
+        User user = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        List<AttendanceResponse> records = attendanceService.getUserAttendance(userId)
+        List<AttendanceResponse> records = attendanceService.getUserAttendance(user.getId())
                 .stream()
                 .map(AttendanceResponse::from)
                 .collect(Collectors.toList());
@@ -57,9 +61,9 @@ public class AttendanceController {
 
     @GetMapping("/farm/{farmId}")
     public ResponseEntity<List<AttendanceResponse>> getFarmAttendance(
-            @PathVariable Long farmId,
-            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime startDate,
-            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime endDate) {
+            @PathVariable("farmId") Long farmId,
+            @RequestParam(value = "startDate", required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime startDate,
+            @RequestParam(value = "endDate", required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime endDate) {
 
         List<AttendanceRecord> records;
 
@@ -67,6 +71,27 @@ public class AttendanceController {
             records = attendanceService.getFarmAttendanceInRange(farmId, startDate, endDate);
         } else {
             records = attendanceService.getFarmAttendance(farmId);
+        }
+
+        List<AttendanceResponse> responses = records.stream()
+                .map(AttendanceResponse::from)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(responses);
+    }
+
+    @GetMapping("/company/{companyCode}")
+    public ResponseEntity<List<AttendanceResponse>> getCompanyAttendance(
+            @PathVariable("companyCode") String companyCode,
+            @RequestParam(value = "startDate", required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime startDate,
+            @RequestParam(value = "endDate", required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime endDate) {
+
+        List<AttendanceRecord> records;
+
+        if (startDate != null && endDate != null) {
+            records = attendanceService.getCompanyAttendanceInRange(companyCode, startDate, endDate);
+        } else {
+            records = attendanceService.getCompanyAttendance(companyCode);
         }
 
         List<AttendanceResponse> responses = records.stream()

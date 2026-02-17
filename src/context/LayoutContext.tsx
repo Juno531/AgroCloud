@@ -4,12 +4,15 @@ interface LayoutContextType {
     isSidebarOpen: boolean;
     toggleSidebar: () => void;
     closeSidebar: () => void;
+    title: string;
+    setTitle: (title: string) => void;
 }
 
 const LayoutContext = createContext<LayoutContextType | undefined>(undefined);
 
 export const LayoutProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [title, setTitle] = useState('농장 ERP');
 
     const toggleSidebar = () => {
         setIsSidebarOpen(prev => !prev);
@@ -20,7 +23,7 @@ export const LayoutProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     };
 
     return (
-        <LayoutContext.Provider value={{ isSidebarOpen, toggleSidebar, closeSidebar }}>
+        <LayoutContext.Provider value={{ isSidebarOpen, toggleSidebar, closeSidebar, title, setTitle }}>
             {children}
         </LayoutContext.Provider>
     );

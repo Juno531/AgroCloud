@@ -457,8 +457,7 @@
 .app-content>* {
     max-width: 1400px;
     width: 100%;
-    margin-left: 0;
-    margin-right: auto;
+    margin: 0 auto;
 }
 
 /* Mobile Responsive Layout */

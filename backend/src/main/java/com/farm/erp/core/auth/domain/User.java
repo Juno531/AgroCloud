@@ -25,7 +25,7 @@ public class User {
     private String name;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "company_id")
+    @JoinColumn(name = "company_code", referencedColumnName = "code")
     private Company company;
 
     @Enumerated(EnumType.STRING)
@@ -41,8 +41,8 @@ public class User {
     }
 
     public enum Role {
-        USER,        // 일반 작업자
-        ADMIN,       // 농장 관리자
-        SUPER_ADMIN  // 시스템 전체 관리자
+        USER, // 일반 작업자
+        ADMIN, // 농장 관리자
+        SUPER_ADMIN // 시스템 전체 관리자
     }
 }

@@ -110,7 +110,7 @@ const AttendanceHistory = () => {
                     <div>
                         <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>
                             <Search size={16} style={{ display: 'inline', marginRight: '0.5rem' }} />
-                            작업자 선택
+                            직원 선택
                         </label>
                         <select
                             value={selectedUserId || ''}

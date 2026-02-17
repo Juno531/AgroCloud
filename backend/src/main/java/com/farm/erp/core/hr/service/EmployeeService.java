@@ -5,8 +5,10 @@ import com.farm.erp.api.v1.dto.EmployeeProfileResponse;
 import com.farm.erp.core.auth.domain.User;
 import com.farm.erp.core.auth.repository.UserRepository;
 import com.farm.erp.core.hr.domain.EmployeeProfile;
+import com.farm.erp.core.hr.dto.EmployeeRegistrationRequest;
 import com.farm.erp.core.hr.repository.EmployeeProfileRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +21,7 @@ public class EmployeeService {
 
     private final EmployeeProfileRepository employeeProfileRepository;
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional(readOnly = true)
     public List<EmployeeProfileResponse> getAllEmployees() {
@@ -30,6 +33,13 @@ public class EmployeeService {
     @Transactional(readOnly = true)
     public List<EmployeeProfileResponse> getEmployeesByFarm(Long farmId) {
         return employeeProfileRepository.findByFarmId(farmId).stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<EmployeeProfileResponse> getEmployeesByCompanyCode(String companyCode) {
+        return employeeProfileRepository.findByUserCompanyCode(companyCode).stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
@@ -49,26 +59,35 @@ public class EmployeeService {
     }
 
     @Transactional
-    public EmployeeProfileResponse createEmployee(EmployeeProfileRequest request) {
-        User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        if (employeeProfileRepository.existsByUserId(request.getUserId())) {
-            throw new RuntimeException("Employee profile already exists for this user");
+    public EmployeeProfileResponse registerEmployee(EmployeeRegistrationRequest request, User adminUser) {
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new IllegalArgumentException("Email already exists");
         }
 
+        User newUser = User.builder()
+                .name(request.getName())
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .role(User.Role.USER)
+                .company(adminUser.getCompany())
+                .build();
+
+        User savedUser = userRepository.save(newUser);
+
         EmployeeProfile profile = EmployeeProfile.builder()
-                .user(user)
-                .phone(request.getPhone())
+                .user(savedUser)
+                .phone(request.getPhoneNumber())
                 .hireDate(request.getHireDate())
                 .bankAccount(request.getBankAccount())
                 .accountHolder(request.getAccountHolder())
                 .paymentDate(request.getPaymentDate())
-                .hourlyWage(request.getHourlyWage())
+                .hourlyWage(java.math.BigDecimal.valueOf(request.getHourlyWage()))
+                // .employeeCode(request.getEmployeeCode()) // removed for simplicity or
+                // auto-gen if needed
                 .build();
 
-        EmployeeProfile saved = employeeProfileRepository.save(profile);
-        return toResponse(saved);
+        EmployeeProfile savedProfile = employeeProfileRepository.save(profile);
+        return toResponse(savedProfile);
     }
 
     @Transactional
@@ -90,10 +109,12 @@ public class EmployeeService {
 
     @Transactional
     public void deleteEmployee(Long id) {
-        if (!employeeProfileRepository.existsById(id)) {
-            throw new RuntimeException("Employee profile not found");
-        }
-        employeeProfileRepository.deleteById(id);
+        EmployeeProfile profile = employeeProfileRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Employee profile not found"));
+
+        User user = profile.getUser();
+        employeeProfileRepository.delete(profile);
+        userRepository.delete(user);
     }
 
     private EmployeeProfileResponse toResponse(EmployeeProfile profile) {
@@ -109,6 +130,7 @@ public class EmployeeService {
                 .paymentDate(profile.getPaymentDate())
                 .hourlyWage(profile.getHourlyWage())
                 .employeeCode(profile.getEmployeeCode())
+                .password(profile.getUser().getPassword())
                 .build();
     }
 }

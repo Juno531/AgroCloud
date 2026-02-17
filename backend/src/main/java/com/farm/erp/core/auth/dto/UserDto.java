@@ -10,12 +10,18 @@ public class UserDto {
     private String name;
     private String role;
     private Long farmId;
+    private Long companyId;
+    private String companyCode;
 
     public UserDto(User user) {
         this.id = user.getId();
         this.email = user.getEmail();
         this.name = user.getName();
         this.role = user.getRole().name();
+        if (user.getCompany() != null) {
+            this.companyId = user.getCompany().getId();
+            this.companyCode = user.getCompany().getCode();
+        }
     }
 
     public UserDto(User user, Long farmId) {

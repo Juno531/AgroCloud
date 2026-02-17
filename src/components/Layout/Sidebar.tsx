@@ -1,16 +1,54 @@
-import React from 'react';
+import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useLayout } from '../../context/LayoutContext';
+import { useAuth } from '../../context/AuthContext';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 
 const Sidebar = () => {
     const location = useLocation();
     const { isSidebarOpen, closeSidebar } = useLayout();
+    const { user } = useAuth();
+    const [expandedMenus, setExpandedMenus] = useState<string[]>(['/hr']);
+
+    const toggleMenu = (path: string) => {
+        setExpandedMenus(prev =>
+            prev.includes(path) ? prev.filter(p => p !== path) : [...prev, path]
+        );
+    };
 
     const isActive = (path: string) => {
-        return location.pathname === path ?
+        return location.pathname === path || (path !== '/' && location.pathname.startsWith(path)) ?
             'bg-primary/10 text-primary font-bold' :
             'text-slate-500 hover:bg-slate-50 dark:hover:bg-zinc-800 font-medium';
     };
+
+    const isSubActive = (path: string) => {
+        return location.pathname === path ?
+            'text-primary font-bold' :
+            'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 font-medium';
+    };
+
+
+    const navItems = user?.role === 'SUPER_ADMIN'
+        ? [
+            { to: '/super-admin/companies', label: '회사 관리', icon: 'business' },
+            { to: '/super-admin/users', label: '사용자 관리', icon: 'people' },
+            { to: '/super-admin/settings', label: '시스템 설정', icon: 'settings_suggest' },
+        ]
+        : [
+            { to: '/', label: '대시보드', icon: 'dashboard' },
+            {
+                to: '/hr',
+                label: '인사 관리',
+                icon: 'groups',
+                children: [
+                    { to: '/hr/employees', label: '직원 관리' },
+                    { to: '/hr/attendance-log', label: '출퇴근 기록' },
+                    { to: '/hr/qr', label: '출퇴근 QR' },
+                ]
+            }
+        ];
+
 
     return (
         <>
@@ -24,7 +62,7 @@ const Sidebar = () => {
 
             {/* Sidebar */}
             <aside className={`
-                fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-zinc-900 border-r border-primary/10 flex flex-col
+                fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-[var(--color-surface)] border-r border-primary/10 flex flex-col
                 transition-transform duration-300 ease-in-out md:static md:translate-x-0
                 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
             `}>
@@ -34,8 +72,10 @@ const Sidebar = () => {
                             <span className="material-icons-round">filter_drama</span>
                         </div>
                         <div>
-                            <h1 className="font-extrabold text-xl tracking-tight leading-none text-slate-800 dark:text-white">Agro<span className="text-primary">Cloud</span></h1>
-                            <p className="text-[10px] uppercase tracking-widest text-slate-400 font-semibold mt-1">농장 관리 시스템</p>
+                            <h1 className="font-extrabold text-xl tracking-tight leading-none text-slate-900 dark:text-white">Agro<span className="text-primary">Cloud</span></h1>
+                            <p className="text-[10px] uppercase tracking-[0.1em] text-slate-400 font-bold mt-1">
+                                {user?.role === 'SUPER_ADMIN' ? '슈퍼 어드민 패널' : '농장 관리 시스템'}
+                            </p>
                         </div>
                     </div>
                     <button onClick={closeSidebar} className="md:hidden text-slate-400 hover:text-slate-600 p-1">
@@ -44,35 +84,53 @@ const Sidebar = () => {
                 </div>
 
                 <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto custom-scrollbar">
-                    <Link to="/" onClick={closeSidebar} className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive('/')}`}>
-                        <span className="material-icons-round">dashboard</span>
-                        <span>대시보드</span>
-                    </Link>
-                    <Link to="/hr" onClick={closeSidebar} className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive('/hr')}`}>
-                        <span className="material-icons-round">groups</span>
-                        <span>인사 관리</span>
-                    </Link>
-                    <Link to="/admin" onClick={closeSidebar} className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive('/admin')}`}>
-                        <span className="material-icons-round">settings</span>
-                        <span>설정</span>
-                    </Link>
+                    {navItems.map((item) => {
+                        const hasChildren = item.children && item.children.length > 0;
+                        const isExpanded = expandedMenus.includes(item.to);
+
+                        return (
+                            <div key={item.to} className="space-y-1">
+                                {hasChildren ? (
+                                    <div
+                                        onClick={() => toggleMenu(item.to)}
+                                        className={`flex items-center justify-between gap-3 px-4 py-3 rounded-xl transition-all cursor-pointer ${isActive(item.to)}`}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <span className="material-icons-round">{item.icon}</span>
+                                            <span>{item.label}</span>
+                                        </div>
+                                        {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                                    </div>
+                                ) : (
+                                    <Link
+                                        to={item.to}
+                                        onClick={closeSidebar}
+                                        className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive(item.to)}`}
+                                    >
+                                        <span className="material-icons-round">{item.icon}</span>
+                                        <span>{item.label}</span>
+                                    </Link>
+                                )}
+
+                                {hasChildren && isExpanded && (
+                                    <div className="ml-9 space-y-1 py-1">
+                                        {item.children?.map((child) => (
+                                            <Link
+                                                key={child.to}
+                                                to={child.to}
+                                                onClick={closeSidebar}
+                                                className={`block py-2 text-sm transition-colors ${isSubActive(child.to)}`}
+                                            >
+                                                {child.label}
+                                            </Link>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
                 </nav>
 
-                <div className="p-4 border-t border-primary/10">
-                    <div className="flex items-center gap-3 cursor-pointer p-2 hover:bg-slate-50 dark:hover:bg-zinc-800 rounded-xl transition-colors">
-                        <div className="h-10 w-10 rounded-xl overflow-hidden bg-slate-100 border-2 border-primary/20 flex-shrink-0">
-                            <img
-                                alt="User"
-                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDzKn-oFNz5vHafhSVkzHtYeSeM1VTczbPdaEJaK0bk43he5zx32lxafy8vv9nrhQq7z6WIBPGm6nm5XVKmZ2_ZKLgCGEuTSghrGxfgeup29172jdK_SEl_FqLdXo2lN_dteU1-tuusmPyrO5TDGdNT4XqWw14YOhvHf3fY7T_6zdkoJ-xtRzQHstQtcP1i0uw0Ik4LmnSSIDlNpksMw4zJfw-G3uSplkySeAVC30ryt-Y4SjzZqmO_91VwhqsHqcHup6g0TUFaqK4"
-                                className="w-full h-full object-cover"
-                            />
-                        </div>
-                        <div className="min-w-0">
-                            <p className="text-sm font-bold text-slate-700 dark:text-slate-200 truncate">Johnathan Doe</p>
-                            <p className="text-[10px] text-slate-400 font-semibold uppercase truncate">농장 관리자</p>
-                        </div>
-                    </div>
-                </div>
             </aside>
         </>
     );

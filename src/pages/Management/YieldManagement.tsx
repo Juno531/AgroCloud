@@ -1,18 +1,25 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import YieldStats from '../components/Yield/YieldStats';
-import YieldTable from '../components/Yield/YieldTable';
-import YieldChart from '../components/Yield/YieldChart';
-import YieldHistory from '../components/Yield/YieldHistory';
-import Modal from '../components/UI/Modal';
-import YieldForm from '../components/Yield/YieldForm';
+import YieldStats from '../../components/Yield/YieldStats';
+import YieldTable from '../../components/Yield/YieldTable';
+import YieldChart from '../../components/Yield/YieldChart';
+import YieldHistory from '../../components/Yield/YieldHistory';
+import Modal from '../../components/UI/Modal';
+import YieldForm from '../../components/Yield/YieldForm';
 import * as XLSX from 'xlsx';
-import '../styles/yield.css';
+import '../../styles/yield.css';
 import { LayoutDashboard, History } from 'lucide-react';
-import { HarvestService, ProductionService } from '../services/api';
-import { useFarm } from '../context/FarmContext';
+import { HarvestService, ProductionService } from '../../services/api';
+import { useFarm } from '../../context/FarmContext';
+import { useLayout } from '../../context/LayoutContext';
+
 
 const YieldManagement = ({ activeFarm }: { activeFarm?: any }) => {
+    const { setTitle } = useLayout();
     const [activeTab, setActiveTab] = useState('dashboard');
+
+    useEffect(() => {
+        setTitle('수확 관리');
+    }, [setTitle]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingYield, setEditingYield] = useState(null);
     const [yields, setYields] = useState([]);

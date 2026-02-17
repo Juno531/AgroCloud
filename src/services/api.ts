@@ -20,7 +20,7 @@ const api: AxiosInstance = axios.create({
 // Add a request interceptor
 api.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
         if (token && config.headers) {
             config.headers['Authorization'] = `Bearer ${token}`;
         }
@@ -41,6 +41,8 @@ api.interceptors.response.use(
             if (!window.location.pathname.includes('/login')) {
                 localStorage.removeItem('token');
                 localStorage.removeItem('user');
+                sessionStorage.removeItem('token');
+                sessionStorage.removeItem('user');
                 window.location.href = '/login';
             }
         }
@@ -143,23 +145,20 @@ export const CultivationService = {
 export const EmployeeService = {
     getAllEmployees: () => api.get('/employees'),
     getEmployeesByFarm: (farmId: number) => api.get('/employees', { params: { farmId } }),
+    getEmployeesByCompany: (companyCode: string) => api.get('/employees', { params: { companyCode } }),
     getEmployee: (id: number) => api.get(`/employees/${id}`),
     getEmployeeByUserId: (userId: number) => api.get(`/employees/user/${userId}`),
-    createEmployee: (data: any) => api.post('/employees', data),
+    registerEmployee: (data: any) => api.post('/employees', data),
     updateEmployee: (id: number, data: any) => api.put(`/employees/${id}`, data),
     deleteEmployee: (id: number) => api.delete(`/employees/${id}`)
 };
 
 export const AttendanceService = {
-    recordAttendance: (data: any) => api.post('/attendance', data),
+    recordAttendance: (data: { type: 'CLOCK_IN' | 'CLOCK_OUT', farmId?: number, companyCode?: string }) => api.post('/attendance', data),
     getMyAttendance: () => api.get('/attendance/me'),
-    getFarmAttendance: (farmId: number, startDate?: string, endDate?: string) => {
-        const params: any = {};
-        if (startDate) params.startDate = startDate;
-        if (endDate) params.endDate = endDate;
-        return api.get(`/attendance/farm/${farmId}`, { params });
-    },
-    getUserStatus: () => api.get('/attendance/status')
+    getFarmAttendance: (farmId: number, start?: string, end?: string) => api.get(`/attendance/farm/${farmId}`, { params: { startDate: start, endDate: end } }),
+    getCompanyAttendance: (companyCode: string, start?: string, end?: string) => api.get(`/attendance/company/${companyCode}`, { params: { startDate: start, endDate: end } }),
+    getUserStatus: () => api.get('/attendance/status'),
 };
 
 // Super Admin Services

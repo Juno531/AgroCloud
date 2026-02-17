@@ -47,9 +47,12 @@
 /* ==================== DARK THEME ==================== */
 [data-theme="dark"] {
     /* Background Colors */
-    --color-background: #0f172a;
-    --color-surface: #1e293b;
-    --color-surface-hover: #334155;
+    --color-background: #09090b;
+    /* Zinc 950 */
+    --color-surface: #18181b;
+    /* Zinc 900 */
+    --color-surface-hover: #27272a;
+    /* Zinc 800 */
 
     /* Text Colors */
     --color-text: #f1f5f9;
@@ -134,14 +137,23 @@ html {
     transition: background-color var(--transition-base), color var(--transition-base);
 }
 
-body {
+[data-theme="light"] {
+    color-scheme: light;
+}
+
+[data-theme="dark"] {
+    color-scheme: dark;
+}
+
+body,
+#root {
     font-family: var(--font-sans);
     background-color: var(--color-background);
     color: var(--color-text);
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    transition: background-color var(--transition-base), color var(--transition-base);
+    transition: background-color var(--transition-base), color var(--transition-base), border-color var(--transition-base);
 }
 
 button {

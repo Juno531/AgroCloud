@@ -14,4 +14,6 @@ public interface EmployeeProfileRepository extends JpaRepository<EmployeeProfile
     boolean existsByUserId(Long userId);
 
     List<EmployeeProfile> findByFarmId(Long farmId);
+
+    List<EmployeeProfile> findByUserCompanyCode(String companyCode);
 }

@@ -24,7 +24,18 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
 
     useEffect(() => {
         // Apply theme to document root
-        document.documentElement.setAttribute('data-theme', theme);
+        const root = window.document.documentElement;
+
+        // Apply data-theme for CSS variables
+        root.setAttribute('data-theme', theme);
+
+        // Apply 'dark' class for Tailwind
+        if (theme === 'dark') {
+            root.classList.add('dark');
+        } else {
+            root.classList.remove('dark');
+        }
+
         localStorage.setItem('farm-erp-theme', theme);
     }, [theme]);
 

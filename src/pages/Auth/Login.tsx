@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import { User, Lock, ArrowRight } from 'lucide-react';
 
 const Login: React.FC = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [rememberMe, setRememberMe] = useState(false);
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const { login } = useAuth();
@@ -20,10 +21,10 @@ const Login: React.FC = () => {
         setIsLoading(true);
 
         try {
-            await login({ email, password });
+            await login({ email, password }, rememberMe);
 
-            // Get user role from localStorage to determine redirect path
-            const storedUser = localStorage.getItem('user');
+            // Get user role from storage to determine redirect path
+            const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
             if (storedUser) {
                 const userData = JSON.parse(storedUser);
                 if (userData.role === 'SUPER_ADMIN') {
@@ -85,20 +86,38 @@ const Login: React.FC = () => {
                 boxShadow: 'var(--shadow-lg)',
                 border: '1px solid var(--color-border)'
             }}>
-                <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+                <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
                     <div style={{
                         display: 'inline-flex',
-                        marginBottom: '1rem',
-                        padding: '4px',
-                        backgroundColor: '#ffffff',
-                        borderRadius: '50%',
-                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)'
+                        marginBottom: '1.25rem',
+                        width: '64px',
+                        height: '64px',
+                        backgroundColor: 'var(--color-primary)',
+                        borderRadius: '1.25rem',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'white',
+                        boxShadow: '0 10px 15px -3px rgba(16, 185, 129, 0.2)'
                     }}>
-                        <img src="/logo.png" alt="Farm ERP" style={{ width: '84px', height: '84px', objectFit: 'contain', borderRadius: '50%' }} />
+                        <span className="material-icons-round" style={{ fontSize: '32px' }}>filter_drama</span>
                     </div>
-                    <h1 style={{ fontSize: '1.75rem', fontWeight: 700, marginBottom: '0.5rem' }}>Farm ERP</h1>
-                    <p style={{ color: 'var(--color-text-secondary)' }}>
-                        로그인하여 농장을 관리하세요
+                    <h1 style={{
+                        fontSize: '2.25rem',
+                        fontWeight: 800,
+                        marginBottom: '0.25rem',
+                        letterSpacing: '-0.025em',
+                        color: 'var(--color-text)'
+                    }}>
+                        Agro<span style={{ color: 'var(--color-primary)' }}>Cloud</span>
+                    </h1>
+                    <p style={{
+                        color: 'var(--color-text-secondary)',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.1em',
+                        fontSize: '0.75rem',
+                        fontWeight: 600
+                    }}>
+                        농장 관리 시스템
                     </p>
                 </div>
 
@@ -132,7 +151,7 @@ const Login: React.FC = () => {
                         </div>
                     </div>
 
-                    <div style={{ marginBottom: '1.25rem' }}>
+                    <div style={{ marginBottom: '1.5rem' }}>
                         <label style={labelStyle}>비밀번호</label>
                         <div style={{ position: 'relative' }}>
                             <Lock size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-secondary)' }} />
@@ -145,6 +164,24 @@ const Login: React.FC = () => {
                                 required
                             />
                         </div>
+                    </div>
+
+                    <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
+                            <input
+                                type="checkbox"
+                                checked={rememberMe}
+                                onChange={(e) => setRememberMe(e.target.checked)}
+                                style={{
+                                    width: '1rem',
+                                    height: '1rem',
+                                    borderRadius: '4px',
+                                    accentColor: 'var(--color-primary)',
+                                    cursor: 'pointer'
+                                }}
+                            />
+                            로그인 상태 유지
+                        </label>
                     </div>
 
                     <button
@@ -167,21 +204,7 @@ const Login: React.FC = () => {
                     </button>
                 </form>
 
-                <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
-                    <button
-                        onClick={() => navigate('/register')}
-                        style={{
-                            background: 'none',
-                            border: 'none',
-                            color: 'var(--color-primary)',
-                            cursor: 'pointer',
-                            fontSize: '0.875rem',
-                            textDecoration: 'underline'
-                        }}
-                    >
-                        계정이 없으신가요? 회원가입
-                    </button>
-                </div>
+
             </div>
             <style>{`
                 @media (max-width: 767px) {

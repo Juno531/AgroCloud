@@ -1,13 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { ProductionService } from '../services/api';
-import { useFarm } from '../context/FarmContext';
+import { ProductionService } from '../../services/api';
+import { useFarm } from '../../context/FarmContext';
 import { Layers, Plus, Home, AlignJustify } from 'lucide-react';
-import Modal from '../components/UI/Modal';
-import BedLayoutEditor from '../components/BedLayout/BedLayoutEditor';
-import CropSelector from '../components/Cultivation/CropSelector';
+import Modal from '../../components/UI/Modal';
+import BedLayoutEditor from '../../components/BedLayout/BedLayoutEditor';
+import CropSelector from '../../components/Cultivation/CropSelector';
+import { useLayout } from '../../context/LayoutContext';
+
 
 const ProductionManagement = () => {
+    const { setTitle } = useLayout();
     const { fields } = useFarm();
+
+    useEffect(() => {
+        setTitle('생산 관리');
+    }, [setTitle]);
+
     const [selectedFarm, setSelectedFarm] = useState(null);
     const [selectedHouse, setSelectedHouse] = useState(null);
     const [selectedLine, setSelectedLine] = useState(null);

@@ -1,11 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { SalesService } from '../services/api';
-import { useFarm } from '../context/FarmContext';
+import { SalesService } from '../../services/api';
+import { useFarm } from '../../context/FarmContext';
 import { ShoppingCart, Users, Plus } from 'lucide-react';
-import Modal from '../components/UI/Modal';
+import Modal from '../../components/UI/Modal';
+import { useLayout } from '../../context/LayoutContext';
+
 
 const SalesManagement = () => {
+    const { setTitle } = useLayout();
     const [activeTab, setActiveTab] = useState('orders');
+
+    useEffect(() => {
+        setTitle('판매 관리');
+    }, [setTitle]);
     const { fields } = useFarm();
     const [selectedFarm, setSelectedFarm] = useState(null);
 

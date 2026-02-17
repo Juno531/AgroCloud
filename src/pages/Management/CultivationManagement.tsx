@@ -1,17 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { CultivationService, ProductionService } from '../services/api';
-import api from '../services/api';
-import { useFarm } from '../context/FarmContext';
+import { CultivationService, ProductionService } from '../../services/api';
+import api from '../../services/api';
+import { useFarm } from '../../context/FarmContext';
 import { Sprout, Bug, Hammer, TrendingUp, Plus, Layers, Flower, Trash2, Droplets, Check } from 'lucide-react';
-import Modal from '../components/UI/Modal';
-import BedLayoutEditor from '../components/BedLayout/BedLayoutEditor';
-import ConfirmDialog from '../components/UI/ConfirmDialog';
-import NutrientDataTable from '../components/Cultivation/NutrientDataTable';
-import NutrientChart from '../components/Cultivation/NutrientChart';
-import NutrientRecordModal from '../components/Cultivation/NutrientRecordModal';
+import Modal from '../../components/UI/Modal';
+import BedLayoutEditor from '../../components/BedLayout/BedLayoutEditor';
+import ConfirmDialog from '../../components/UI/ConfirmDialog';
+import NutrientDataTable from '../../components/Cultivation/NutrientDataTable';
+import NutrientChart from '../../components/Cultivation/NutrientChart';
+import NutrientRecordModal from '../../components/Cultivation/NutrientRecordModal';
+import { useLayout } from '../../context/LayoutContext';
+
 
 const CultivationManagement = () => {
+    const { setTitle } = useLayout();
     const [activeTab, setActiveTab] = useState('beds');
+
+    useEffect(() => {
+        setTitle('재배 관리');
+    }, [setTitle]);
+
     const { fields } = useFarm();
     const [selectedFarm, setSelectedFarm] = useState(null);
 
@@ -444,7 +452,6 @@ const CultivationManagement = () => {
     return (
         <div className="cultivation-page" style={{ padding: 'var(--spacing-lg)' }}>
             <div className="page-header" style={{ marginBottom: '1rem' }}>
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '1rem' }}>재배 관리</h2>
                 <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                     {tabButtons.map(tab => {
                         const Icon = tab.icon;

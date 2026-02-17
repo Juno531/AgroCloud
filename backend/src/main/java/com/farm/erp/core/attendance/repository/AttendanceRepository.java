@@ -10,13 +10,18 @@ import java.util.List;
 @Repository
 public interface AttendanceRepository extends JpaRepository<AttendanceRecord, Long> {
 
-    List<AttendanceRecord> findByUserIdOrderByTimestampDesc(Long userId);
+        List<AttendanceRecord> findByUserIdOrderByTimestampDesc(Long userId);
 
-    List<AttendanceRecord> findByFarmIdOrderByTimestampDesc(Long farmId);
+        List<AttendanceRecord> findByFarmIdOrderByTimestampDesc(Long farmId);
 
-    List<AttendanceRecord> findByUserIdAndTimestampBetweenOrderByTimestampDesc(
-            Long userId, LocalDateTime start, LocalDateTime end);
+        List<AttendanceRecord> findByUserIdAndTimestampBetweenOrderByTimestampDesc(
+                        Long userId, LocalDateTime start, LocalDateTime end);
 
-    List<AttendanceRecord> findByFarmIdAndTimestampBetweenOrderByTimestampDesc(
-            Long farmId, LocalDateTime start, LocalDateTime end);
+        List<AttendanceRecord> findByFarmIdAndTimestampBetweenOrderByTimestampDesc(
+                        Long farmId, LocalDateTime start, LocalDateTime end);
+
+        List<AttendanceRecord> findByCompanyCodeOrderByTimestampDesc(String companyCode);
+
+        List<AttendanceRecord> findByCompanyCodeAndTimestampBetweenOrderByTimestampDesc(
+                        String companyCode, LocalDateTime start, LocalDateTime end);
 }

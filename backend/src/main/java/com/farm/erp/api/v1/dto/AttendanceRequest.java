@@ -10,4 +10,5 @@ import lombok.Setter;
 public class AttendanceRequest {
     private String type; // "CLOCK_IN" or "CLOCK_OUT"
     private Long farmId;
+    private String companyCode;
 }

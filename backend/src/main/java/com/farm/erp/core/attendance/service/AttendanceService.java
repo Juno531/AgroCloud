@@ -20,7 +20,8 @@ public class AttendanceService {
     private final UserRepository userRepository;
 
     @Transactional
-    public AttendanceRecord recordAttendance(Long userId, AttendanceRecord.AttendanceType type, Long farmId) {
+    public AttendanceRecord recordAttendance(Long userId, AttendanceRecord.AttendanceType type, Long farmId,
+            String companyCode) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
@@ -48,6 +49,7 @@ public class AttendanceService {
                 .type(type)
                 .timestamp(LocalDateTime.now())
                 .farmId(farmId)
+                .companyCode(companyCode)
                 .build();
 
         return attendanceRepository.save(record);
@@ -63,6 +65,15 @@ public class AttendanceService {
 
     public List<AttendanceRecord> getFarmAttendanceInRange(Long farmId, LocalDateTime start, LocalDateTime end) {
         return attendanceRepository.findByFarmIdAndTimestampBetweenOrderByTimestampDesc(farmId, start, end);
+    }
+
+    public List<AttendanceRecord> getCompanyAttendance(String companyCode) {
+        return attendanceRepository.findByCompanyCodeOrderByTimestampDesc(companyCode);
+    }
+
+    public List<AttendanceRecord> getCompanyAttendanceInRange(String companyCode, LocalDateTime start,
+            LocalDateTime end) {
+        return attendanceRepository.findByCompanyCodeAndTimestampBetweenOrderByTimestampDesc(companyCode, start, end);
     }
 
     /**

@@ -1,21 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Edit, Trash2, User, Phone, Calendar, DollarSign, CreditCard } from 'lucide-react';
+import { Edit, Trash2, User, Phone, Calendar, DollarSign, CreditCard, Mail, Lock } from 'lucide-react';
 import { EmployeeService } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import EmployeeForm from './EmployeeForm';
 import ConfirmDialog from '../UI/ConfirmDialog';
 
-interface EmployeeProfile {
-    id: number;
-    userId: number;
-    name: string;
-    phone: string;
-    hireDate: string;
-    hourlyWage: number;
-    bankAccount: string;
-    accountHolder: string;
-    paymentDate: number;
-}
+import { EmployeeProfile } from '../../types';
+
+
 
 const EmployeeList = () => {
     const { user } = useAuth();
@@ -41,17 +33,22 @@ const EmployeeList = () => {
 
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
-    }, [user?.farmId]);
+    }, [user?.farmId, user?.companyId, user?.companyCode]);
 
     const fetchEmployees = async () => {
-        if (!user?.farmId) {
+        if (!user?.farmId && !user?.companyId && !user?.companyCode) {
             setLoading(false);
             return;
         }
 
         setLoading(true);
         try {
-            const response = await EmployeeService.getEmployeesByFarm(user.farmId);
+            let response;
+            if (user.companyCode) {
+                response = await EmployeeService.getEmployeesByCompany(user.companyCode);
+            } else {
+                response = await EmployeeService.getEmployeesByFarm(user.farmId);
+            }
             setEmployees(response.data);
         } catch (error) {
             console.error('Failed to fetch employees:', error);
@@ -68,8 +65,8 @@ const EmployeeList = () => {
     const handleDelete = (employee: EmployeeProfile) => {
         setConfirmDialog({
             isOpen: true,
-            title: '작업자 삭제',
-            message: `"${employee.name}" 작업자를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`,
+            title: '직원 삭제',
+            message: `"${employee.name}" 직원을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`,
             variant: 'danger',
             onConfirm: async () => {
                 try {
@@ -77,7 +74,7 @@ const EmployeeList = () => {
                     await fetchEmployees();
                 } catch (error) {
                     console.error('Failed to delete employee:', error);
-                    alert('작업자 삭제에 실패했습니다.');
+                    alert('직원 삭제에 실패했습니다.');
                 }
             }
         });
@@ -124,8 +121,25 @@ const EmployeeList = () => {
                 marginBottom: 'var(--spacing-lg)'
             }}>
                 <h3 style={{ fontSize: isMobile ? '1.125rem' : '1.25rem', fontWeight: 600, margin: 0 }}>
-                    작업자 목록 ({employees.length}명)
+                    직원 목록 ({employees.length}명)
                 </h3>
+                <button
+                    onClick={() => {
+                        setEditingEmployee(null);
+                        setIsFormOpen(true);
+                    }}
+                    className="btn btn-primary"
+                    style={{
+                        padding: '0.5rem 1rem',
+                        fontSize: '0.875rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem'
+                    }}
+                >
+                    <User size={16} />
+                    <span>직원 등록</span>
+                </button>
             </div>
 
             {/* Employee List */}
@@ -138,10 +152,7 @@ const EmployeeList = () => {
                     color: 'var(--color-text-secondary)'
                 }}>
                     <User size={isMobile ? 40 : 48} style={{ margin: '0 auto 1rem', opacity: 0.5 }} />
-                    <p>등록된 작업자가 없습니다</p>
-                    <p style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>
-                        작업자가 농장 코드로 회원가입하면 자동으로 등록됩니다
-                    </p>
+                    <p>등록된 직원이 없습니다</p>
                 </div>
             ) : isMobile ? (
                 // Mobile Card Layout
@@ -171,7 +182,7 @@ const EmployeeList = () => {
                                         width: '40px',
                                         height: '40px',
                                         borderRadius: '50%',
-                                        backgroundColor: 'var(--color-primary)',
+                                        backgroundColor: employee.role === 'ADMIN' ? 'var(--color-warning)' : 'var(--color-primary)',
                                         color: 'white',
                                         display: 'flex',
                                         alignItems: 'center',
@@ -181,7 +192,16 @@ const EmployeeList = () => {
                                     }}>
                                         {employee.name ? employee.name.charAt(0) : '?'}
                                     </div>
-                                    <strong style={{ fontSize: '1.125rem' }}>{employee.name || '미등록'}</strong>
+                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                        <strong style={{ fontSize: '1.125rem' }}>{employee.name || '미등록'}</strong>
+                                        <span style={{
+                                            fontSize: '0.75rem',
+                                            color: employee.role === 'ADMIN' ? 'var(--color-warning)' : 'var(--color-text-secondary)',
+                                            fontWeight: employee.role === 'ADMIN' ? 600 : 400
+                                        }}>
+                                            {employee.role === 'ADMIN' ? '관리자' : '직원'}
+                                        </span>
+                                    </div>
                                 </div>
                                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                                     <button
@@ -214,34 +234,51 @@ const EmployeeList = () => {
                                     <Phone size={16} style={{ color: 'var(--color-text-secondary)', flexShrink: 0 }} />
                                     <span style={{ fontSize: '0.9375rem' }}>{employee.phone || '미등록'}</span>
                                 </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                    <Calendar size={16} style={{ color: 'var(--color-text-secondary)', flexShrink: 0 }} />
-                                    <span style={{ fontSize: '0.9375rem' }}>입사일: {formatDate(employee.hireDate)}</span>
-                                </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                    <DollarSign size={16} style={{ color: 'var(--color-text-secondary)', flexShrink: 0 }} />
-                                    <strong style={{ color: 'var(--color-primary)', fontSize: '1rem' }}>
-                                        {formatCurrency(employee.hourlyWage)}
-                                    </strong>
-                                </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                    <CreditCard size={16} style={{ color: 'var(--color-text-secondary)', flexShrink: 0 }} />
-                                    <div style={{ fontSize: '0.875rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                                        <span>{employee.bankAccount || '미등록'}</span>
-                                        {employee.accountHolder && (
-                                            <span style={{ color: 'var(--color-text-secondary)' }}>
-                                                {employee.accountHolder}
+                                {employee.role === 'USER' && (
+                                    <>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                            <Mail size={16} style={{ color: 'var(--color-text-secondary)', flexShrink: 0 }} />
+                                            <span style={{ fontSize: '0.9375rem' }}>{employee.email || '미등록'}</span>
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                            <Lock size={16} style={{ color: 'var(--color-text-secondary)', flexShrink: 0 }} />
+                                            <span style={{ fontSize: '0.9375rem', color: 'var(--color-text-secondary)' }}>
+                                                {employee.password ? '숨김 (해시됨)' : '미등록'}
+                                                {employee.password && (
+                                                    <span title={employee.password} style={{ marginLeft: '0.5rem', cursor: 'help', textDecoration: 'underline dotted' }}>자세히</span>
+                                                )}
                                             </span>
-                                        )}
-                                    </div>
-                                </div>
-                                <div style={{
-                                    fontSize: '0.875rem',
-                                    color: 'var(--color-text-secondary)',
-                                    marginTop: '0.25rem'
-                                }}>
-                                    급여 지급일: 매월 {employee.paymentDate}일
-                                </div>
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                            <Calendar size={16} style={{ color: 'var(--color-text-secondary)', flexShrink: 0 }} />
+                                            <span style={{ fontSize: '0.9375rem' }}>입사일: {formatDate(employee.hireDate)}</span>
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                            <DollarSign size={16} style={{ color: 'var(--color-text-secondary)', flexShrink: 0 }} />
+                                            <strong style={{ color: 'var(--color-primary)', fontSize: '1rem' }}>
+                                                {formatCurrency(employee.hourlyWage)}
+                                            </strong>
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                            <CreditCard size={16} style={{ color: 'var(--color-text-secondary)', flexShrink: 0 }} />
+                                            <div style={{ fontSize: '0.875rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                                <span>{employee.bankAccount || '미등록'}</span>
+                                                {employee.accountHolder && (
+                                                    <span style={{ color: 'var(--color-text-secondary)' }}>
+                                                        {employee.accountHolder}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div style={{
+                                            fontSize: '0.875rem',
+                                            color: 'var(--color-text-secondary)',
+                                            marginTop: '0.25rem'
+                                        }}>
+                                            급여 지급일: 매월 {employee.paymentDate}일
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         </div>
                     ))}
@@ -258,7 +295,8 @@ const EmployeeList = () => {
                         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                             <thead>
                                 <tr style={{ backgroundColor: 'var(--color-background)', borderBottom: '2px solid var(--color-border)' }}>
-                                    <th style={{ padding: '1rem', textAlign: 'left', fontWeight: 600 }}>이름</th>
+                                    <th style={{ padding: '1rem', textAlign: 'left', fontWeight: 600 }}>이름/권한</th>
+                                    <th style={{ padding: '1rem', textAlign: 'left', fontWeight: 600 }}>계정 정보</th>
                                     <th style={{ padding: '1rem', textAlign: 'left', fontWeight: 600 }}>연락처</th>
                                     <th style={{ padding: '1rem', textAlign: 'left', fontWeight: 600 }}>입사일</th>
                                     <th style={{ padding: '1rem', textAlign: 'left', fontWeight: 600 }}>시급</th>
@@ -285,7 +323,7 @@ const EmployeeList = () => {
                                                     width: '32px',
                                                     height: '32px',
                                                     borderRadius: '50%',
-                                                    backgroundColor: 'var(--color-primary)',
+                                                    backgroundColor: employee.role === 'ADMIN' ? 'var(--color-warning)' : 'var(--color-primary)',
                                                     color: 'white',
                                                     display: 'flex',
                                                     alignItems: 'center',
@@ -294,7 +332,33 @@ const EmployeeList = () => {
                                                 }}>
                                                     {(employee.name || '?').charAt(0)}
                                                 </div>
-                                                <strong>{employee.name || '미등록'}</strong>
+                                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                    <strong>{employee.name || '미등록'}</strong>
+                                                    <span style={{
+                                                        fontSize: '0.75rem',
+                                                        color: employee.role === 'ADMIN' ? 'var(--color-warning)' : 'var(--color-text-secondary)',
+                                                        fontWeight: employee.role === 'ADMIN' ? 600 : 400
+                                                    }}>
+                                                        {employee.role === 'ADMIN' ? '관리자' : '직원'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td style={{ padding: '1rem' }}>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.125rem' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                                    <Mail size={14} style={{ color: 'var(--color-text-secondary)' }} />
+                                                    <span style={{ fontSize: '0.875rem' }}>{employee.email}</span>
+                                                </div>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                                    <Lock size={14} style={{ color: 'var(--color-text-secondary)' }} />
+                                                    <span
+                                                        style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', cursor: 'help' }}
+                                                        title={employee.password}
+                                                    >
+                                                        {employee.password ? '숨김 (해시됨)' : '-'}
+                                                    </span>
+                                                </div>
                                             </div>
                                         </td>
                                         <td style={{ padding: '1rem' }}>
@@ -306,25 +370,27 @@ const EmployeeList = () => {
                                         <td style={{ padding: '1rem' }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                                 <Calendar size={16} style={{ color: 'var(--color-text-secondary)' }} />
-                                                {formatDate(employee.hireDate)}
+                                                {employee.role === 'USER' ? formatDate(employee.hireDate) : '-'}
                                             </div>
                                         </td>
                                         <td style={{ padding: '1rem' }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                                 <DollarSign size={16} style={{ color: 'var(--color-text-secondary)' }} />
-                                                <strong style={{ color: 'var(--color-primary)' }}>
-                                                    {formatCurrency(employee.hourlyWage)}
-                                                </strong>
+                                                {employee.role === 'USER' ? (
+                                                    <strong style={{ color: 'var(--color-primary)' }}>
+                                                        {formatCurrency(employee.hourlyWage)}
+                                                    </strong>
+                                                ) : '-'}
                                             </div>
                                         </td>
                                         <td style={{ padding: '1rem' }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                                 <CreditCard size={16} style={{ color: 'var(--color-text-secondary)' }} />
-                                                {employee.bankAccount}
+                                                {employee.role === 'USER' ? employee.bankAccount : '-'}
                                             </div>
                                         </td>
-                                        <td style={{ padding: '1rem' }}>{employee.accountHolder}</td>
-                                        <td style={{ padding: '1rem' }}>매월 {employee.paymentDate}일</td>
+                                        <td style={{ padding: '1rem' }}>{employee.role === 'USER' ? employee.accountHolder : '-'}</td>
+                                        <td style={{ padding: '1rem' }}>{employee.role === 'USER' ? `매월 ${employee.paymentDate}일` : '-'}</td>
                                         <td style={{ padding: '1rem' }}>
                                             <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
                                                 <button

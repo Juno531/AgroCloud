@@ -17,7 +17,7 @@ public class AttendanceRecord {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
@@ -31,6 +31,9 @@ public class AttendanceRecord {
     @Column(nullable = false)
     private Long farmId;
 
+    @Column
+    private String companyCode;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -40,11 +43,12 @@ public class AttendanceRecord {
     }
 
     @Builder
-    public AttendanceRecord(User user, AttendanceType type, LocalDateTime timestamp, Long farmId) {
+    public AttendanceRecord(User user, AttendanceType type, LocalDateTime timestamp, Long farmId, String companyCode) {
         this.user = user;
         this.type = type;
         this.timestamp = timestamp;
         this.farmId = farmId;
+        this.companyCode = companyCode;
     }
 
     public enum AttendanceType {

@@ -20,4 +20,5 @@ public class EmployeeProfileResponse {
     private Integer paymentDate;
     private BigDecimal hourlyWage;
     private String employeeCode;
+    private String password;
 }

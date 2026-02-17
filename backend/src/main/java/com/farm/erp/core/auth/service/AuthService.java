@@ -43,12 +43,14 @@ public class AuthService {
         public AuthResponse login(LoginRequest request) {
                 // Check if account is locked due to too many attempts
                 if (loginAttemptService.isBlocked(request.getEmail())) {
-                        throw new RuntimeException("Account temporarily locked due to too many failed login attempts. Please try again later.");
+                        throw new RuntimeException(
+                                        "Account temporarily locked due to too many failed login attempts. Please try again later.");
                 }
 
                 try {
                         Authentication authentication = authenticationManager.authenticate(
-                                        new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
+                                        new UsernamePasswordAuthenticationToken(request.getEmail(),
+                                                        request.getPassword()));
 
                         SecurityContextHolder.getContext().setAuthentication(authentication);
                         String jwt = jwtService.createToken(authentication);
@@ -73,53 +75,52 @@ public class AuthService {
         }
 
         @Transactional
-    public AuthResponse register(RegisterRequest request) {
-        // 1. 이메일 중복 체크
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already in use");
+        public AuthResponse register(RegisterRequest request) {
+                // 1. 이메일 중복 체크
+                if (userRepository.existsByEmail(request.getEmail())) {
+                        throw new RuntimeException("Email already in use");
+                }
+
+                // 2. 가입 코드 검증
+                var registrationCode = registrationCodeService.validateCode(request.getRegistrationCode());
+                Company company = registrationCode.getCompany();
+
+                // 3. 역할 결정
+                Role role = registrationCode
+                                .getType() == com.farm.erp.core.company.domain.RegistrationCode.CodeType.ADMIN
+                                                ? Role.ADMIN
+                                                : Role.USER;
+
+                // 4. 사용자 생성
+                User user = User.builder()
+                                .email(request.getEmail())
+                                .password(passwordEncoder.encode(request.getPassword()))
+                                .name(request.getName())
+                                .role(role)
+                                .company(company)
+                                .build();
+
+                userRepository.save(user);
+
+                // 5. 코드 사용 처리 (옵션)
+                // registrationCodeService.markCodeAsUsed(request.getRegistrationCode());
+
+                // 6. 인증 토큰 생성
+                org.springframework.security.core.userdetails.UserDetails userDetails = new org.springframework.security.core.userdetails.User(
+                                user.getEmail(),
+                                user.getPassword(),
+                                java.util.Collections.singletonList(
+                                                new org.springframework.security.core.authority.SimpleGrantedAuthority(
+                                                                "ROLE_" + user.getRole().name())));
+
+                Authentication authentication = new UsernamePasswordAuthenticationToken(
+                                userDetails, null, userDetails.getAuthorities());
+
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+                String jwt = jwtService.createToken(authentication);
+
+                return new AuthResponse(jwt, new UserDto(user, null));
         }
-
-        // 2. 가입 코드 검증
-        var registrationCode = registrationCodeService.validateCode(request.getRegistrationCode());
-        Company company = registrationCode.getCompany();
-
-        // 3. 역할 결정
-        Role role = registrationCode.getType() == com.farm.erp.core.company.domain.RegistrationCode.CodeType.ADMIN
-                ? Role.ADMIN
-                : Role.USER;
-
-        // 4. 사용자 생성
-        User user = User.builder()
-                .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .name(request.getName())
-                .role(role)
-                .company(company)
-                .build();
-
-        userRepository.save(user);
-
-        // 5. 코드 사용 처리 (옵션)
-        // registrationCodeService.markCodeAsUsed(request.getRegistrationCode());
-
-        // 6. 인증 토큰 생성
-        org.springframework.security.core.userdetails.UserDetails userDetails = new org.springframework.security.core.userdetails.User(
-                user.getEmail(),
-                user.getPassword(),
-                java.util.Collections.singletonList(
-                        new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_" + user.getRole().name())
-                )
-        );
-
-        Authentication authentication = new UsernamePasswordAuthenticationToken(
-                userDetails, null, userDetails.getAuthorities()
-        );
-
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        String jwt = jwtService.createToken(authentication);
-
-        return new AuthResponse(jwt, new UserDto(user, company.getId()));
-    }
 
         @Transactional(readOnly = true)
         public UserDto me(String email) {

@@ -20,7 +20,8 @@ public class CompanyController {
     private final CompanyService companyService;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<CompanyDto.Response>> createCompany(@RequestBody CompanyDto.Request request) {
+    public ResponseEntity<ApiResponse<CompanyDto.Response>> createCompany(
+            @RequestBody com.farm.erp.core.company.dto.CompanyCreationRequest request) {
         return ResponseEntity.ok(ApiResponse.success(companyService.createCompany(request)));
     }
 
@@ -32,7 +33,8 @@ public class CompanyController {
         } catch (Exception e) {
             log.error("Error fetching companies: ", e);
             // 에러 메시지를 프론트엔드에 노출하여 원인 파악 (디버깅용)
-            return ResponseEntity.status(500).body(ApiResponse.error("500", e.getMessage() != null ? e.getMessage() : e.toString()));
+            return ResponseEntity.status(500)
+                    .body(ApiResponse.error("500", e.getMessage() != null ? e.getMessage() : e.toString()));
         }
     }
 
@@ -42,7 +44,8 @@ public class CompanyController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<CompanyDto.Response>> updateCompany(@PathVariable Long id, @RequestBody CompanyDto.UpdateRequest request) {
+    public ResponseEntity<ApiResponse<CompanyDto.Response>> updateCompany(@PathVariable Long id,
+            @RequestBody CompanyDto.UpdateRequest request) {
         return ResponseEntity.ok(ApiResponse.success(companyService.updateCompany(id, request)));
     }
 

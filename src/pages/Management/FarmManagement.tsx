@@ -1,10 +1,18 @@
 import React, { useState } from 'react';
 import { Plus, Trash2, MapPin } from 'lucide-react';
-import ConfirmDialog from '../components/UI/ConfirmDialog';
-import { useFarm } from '../context/FarmContext';
+import ConfirmDialog from '../../components/UI/ConfirmDialog';
+import { useFarm } from '../../context/FarmContext';
+import { useLayout } from '../../context/LayoutContext';
+import { useEffect } from 'react';
+
 
 const FarmManagement: React.FC = () => {
     const { fields, addField, removeField } = useFarm();
+    const { setTitle } = useLayout();
+
+    useEffect(() => {
+        setTitle('농장 관리');
+    }, [setTitle]);
     const [newFarm, setNewFarm] = useState({ name: '', location: '', area: '' });
     const [isAdding, setIsAdding] = useState(false);
 
@@ -64,14 +72,7 @@ const FarmManagement: React.FC = () => {
     };
 
     return (
-        <div className="farm-management-page responsive-padding" style={{ maxWidth: '1200px', margin: '0 auto' }}>
-            <div className="page-header" style={{ marginBottom: 'var(--spacing-xl)' }}>
-                <h2 style={{ fontSize: '1.75rem', fontWeight: 700, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <MapPin size={28} />
-                    농장 관리
-                </h2>
-                <p style={{ color: 'var(--color-text-secondary)', fontSize: '1rem' }}>농장을 추가, 수정, 삭제할 수 있습니다</p>
-            </div>
+        <div className="farm-management-page responsive-padding" style={{ paddingTop: 'var(--spacing-lg)' }}>
 
             <div style={sectionStyle}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-lg)' }}>

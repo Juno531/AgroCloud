@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Scanner } from '@yudiel/react-qr-scanner';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import { Clock, CheckCircle, XCircle, Camera } from 'lucide-react';
-import { AttendanceService } from '../services/api';
-import '../styles/Attendance.css';
+import { AttendanceService } from '../../services/api';
+import { useLayout } from '../../context/LayoutContext';
+import '../../styles/Attendance.css';
+
 
 interface ScanResult {
     type: 'CLOCK_IN' | 'CLOCK_OUT';
@@ -13,7 +15,12 @@ interface ScanResult {
 
 const Attendance = () => {
     const { user } = useAuth();
+    const { setTitle } = useLayout();
     const [currentTime, setCurrentTime] = useState(new Date());
+
+    useEffect(() => {
+        setTitle('출퇴근 기록');
+    }, [setTitle]);
     const [isScanning, setIsScanning] = useState(false);
     const [isRequestingPermission, setIsRequestingPermission] = useState(false);
     const [scanResult, setScanResult] = useState<{ status: 'success' | 'error'; message: string } | null>(null);
@@ -209,14 +216,7 @@ const Attendance = () => {
     };
 
     return (
-        <div className="attendance-container">
-            <header className="attendance-header">
-                <h2>{user?.name || '작업자'}님, 환영합니다</h2>
-                <div className="current-time">
-                    <Clock size={20} />
-                    <span>{currentTime.toLocaleDateString()} {currentTime.toLocaleTimeString()}</span>
-                </div>
-            </header>
+        <div className="attendance-container" style={{ paddingTop: 'var(--spacing-lg)' }}>
 
             <div className="attendance-content">
                 {scanResult && (

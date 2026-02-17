@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
+import { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import api, { AuthService } from '../services/api';
 import type { User, AuthContextType, LoginRequest, RegisterRequest } from '../types';
 
@@ -10,16 +10,17 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
-    const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
+    const [token, setToken] = useState<string | null>(
+        localStorage.getItem('token') || sessionStorage.getItem('token')
+    );
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const initAuth = async () => {
             if (token) {
                 try {
-                    // Verify token and get user info if endpoint exists
-                    // For now, we'll check if there's a stored user
-                    const storedUser = localStorage.getItem('user');
+                    // Check localStorage first, then sessionStorage
+                    const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
                     if (storedUser) {
                         setUser(JSON.parse(storedUser));
                     }
@@ -35,7 +36,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         initAuth();
     }, [token]);
 
-    const login = async (data: LoginRequest): Promise<void> => {
+    const login = async (data: LoginRequest, rememberMe: boolean = false): Promise<void> => {
         try {
             const response = await AuthService.login(data);
             const { token: newToken, user: userData } = response.data;
@@ -72,6 +73,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUser(null);
         localStorage.removeItem('token');
         localStorage.removeItem('user');
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('user');
         delete api.defaults.headers.common['Authorization'];
     };
 

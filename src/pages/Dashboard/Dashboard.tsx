@@ -1,52 +1,22 @@
 import React from 'react';
-import { useLayout } from '../context/LayoutContext';
+import { useLayout } from '../../context/LayoutContext';
 
 const Dashboard = () => {
-    const { toggleSidebar } = useLayout();
+    const { toggleSidebar, setTitle } = useLayout();
+
+    React.useEffect(() => {
+        setTitle('대시보드');
+    }, [setTitle]);
 
     return (
         <div className="flex-1 flex flex-col min-w-0">
-            <header className="h-20 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border-b border-primary/10 flex items-center justify-between px-4 sm:px-8 z-10 sticky top-0 w-full">
-                <div className="flex items-center gap-4 flex-1">
-                    <button
-                        onClick={toggleSidebar}
-                        className="p-2 -ml-2 rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-zinc-800 md:hidden"
-                    >
-                        <span className="material-icons-round">menu</span>
-                    </button>
-                    <div className="relative w-full max-w-sm hidden sm:block">
-                        <span className="material-icons-round absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">search</span>
-                        <input className="w-full bg-slate-100 dark:bg-zinc-800 border-none rounded-full py-2.5 pl-11 pr-4 focus:ring-2 focus:ring-primary/40 text-sm outline-none transition-all" placeholder="농작물, 구역, 작업 검색..." type="text" />
-                    </div>
-                </div>
-                <div className="flex items-center gap-4 sm:gap-6">
-                    <button className="relative text-slate-400 hover:text-primary transition-colors p-1">
-                        <span className="material-icons-round text-2xl">notifications</span>
-                        <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full border-2 border-white dark:border-zinc-900"></span>
-                    </button>
-                    <div className="h-8 w-[1px] bg-slate-200 dark:bg-zinc-800 hidden sm:block"></div>
-                    <div className="flex items-center gap-3 cursor-pointer group">
-                        <div className="text-right hidden md:block">
-                            <p className="text-sm font-bold leading-none text-slate-800 dark:text-white group-hover:text-primary transition-colors">Johnathan Doe</p>
-                            <p className="text-[10px] text-slate-400 font-semibold uppercase mt-1">농장 관리자</p>
-                        </div>
-                        <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl overflow-hidden bg-slate-100 border-2 border-primary/20 group-hover:border-primary transition-all">
-                            <img alt="User" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDzKn-oFNz5vHafhSVkzHtYeSeM1VTczbPdaEJaK0bk43he5zx32lxafy8vv9nrhQq7z6WIBPGm6nm5XVKmZ2_ZKLgCGEuTSghrGxfgeup29172jdK_SEl_FqLdXo2lN_dteU1-tuusmPyrO5TDGdNT4XqWw14YOhvHf3fY7T_6zdkoJ-xtRzQHstQtcP1i0uw0Ik4LmnSSIDlNpksMw4zJfw-G3uSplkySeAVC30ryt-Y4SjzZqmO_91VwhqsHqcHup6g0TUFaqK4" />
-                        </div>
-                    </div>
-                </div>
-            </header>
+
 
             <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 custom-scrollbar">
                 <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4 w-full">
                     <div className="flex-1">
-                        <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-800 dark:text-white">농장 현황</h2>
-                        <p className="text-slate-500 font-medium text-sm sm:text-base mt-1">그린 밸리 제4구역 모니터링 • <span className="text-primary font-bold">2023년 10월 24일</span></p>
+                        <p className="text-slate-500 font-medium text-sm sm:text-base mt-1">SP Agri 모니터링 • <span className="text-primary font-bold">2023년 10월 24일</span></p>
                     </div>
-                    <button className="bg-primary text-white font-bold px-5 py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all whitespace-nowrap">
-                        <span className="material-icons-round">add</span>
-                        새 필드 스캔
-                    </button>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6 w-full">
@@ -56,7 +26,7 @@ const Dashboard = () => {
                                 <div>
                                     <div className="flex items-center gap-2 mb-1">
                                         <span className="material-icons-round text-sm">location_on</span>
-                                        <span className="text-xs font-bold uppercase tracking-wider opacity-80">소노마 밸리, CA</span>
+                                        <span className="text-xs font-bold uppercase tracking-wider opacity-80">서산시 음암면</span>
                                     </div>
                                     <h3 className="text-lg sm:text-xl font-bold">현재 날씨</h3>
                                 </div>

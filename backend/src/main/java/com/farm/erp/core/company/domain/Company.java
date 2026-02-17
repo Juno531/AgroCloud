@@ -29,7 +29,7 @@ public class Company {
     private String businessNumber;
 
     private String address;
-    
+
     @Column(name = "phone_number")
     private String phoneNumber;
 
@@ -42,7 +42,8 @@ public class Company {
     private LocalDateTime createdAt;
 
     @Builder
-    public Company(String name, String code, String businessNumber, String address, String phoneNumber, CompanyStatus status) {
+    public Company(String name, String code, String businessNumber, String address, String phoneNumber,
+            CompanyStatus status) {
         this.name = name;
         this.code = code;
         this.businessNumber = businessNumber;
@@ -51,10 +52,11 @@ public class Company {
         this.status = status != null ? status : CompanyStatus.ACTIVE;
     }
 
-    public void update(String name, String address, String phoneNumber, CompanyStatus status) {
+    public void update(String name, String address, String phoneNumber, String businessNumber, CompanyStatus status) {
         this.name = name;
         this.address = address;
         this.phoneNumber = phoneNumber;
+        this.businessNumber = businessNumber;
         if (status != null) {
             this.status = status;
         }

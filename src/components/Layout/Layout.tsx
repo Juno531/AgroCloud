@@ -1,5 +1,6 @@
-import React from 'react';
 import Sidebar from './Sidebar';
+import Header from './Header';
+import BottomNav from './BottomNav';
 import { LayoutProvider } from '../../context/LayoutContext';
 
 interface LayoutProps {
@@ -11,7 +12,11 @@ const LayoutContent: React.FC<LayoutProps> = ({ children }) => {
         <div className="flex h-screen overflow-hidden bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-100 font-display">
             <Sidebar />
             <main className="flex-1 flex flex-col overflow-hidden w-full relative">
-                {children}
+                <Header />
+                <div className="flex-1 overflow-auto pb-20 md:pb-0">
+                    {children}
+                </div>
+                <BottomNav />
             </main>
         </div>
     );

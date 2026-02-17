@@ -1,11 +1,11 @@
-// Domain Types
 export interface User {
     id: number;
     email: string;
     name: string;
     role: 'USER' | 'ADMIN' | 'SUPER_ADMIN';
     farmId: number;
-    companyId?: number;
+    companyId?: number; // Added companyId
+    companyCode?: string; // Added companyCode
 }
 
 export interface Company {
@@ -42,6 +42,23 @@ export interface Crop {
     name: string;
     variety?: string;
     plantingDate?: string;
+}
+
+export interface EmployeeProfile {
+    id: number;
+    userId: number;
+    companyId?: number; // Added companyId
+    companyCode?: string; // Added companyCode
+    name: string;
+    phone: string;
+    email: string;
+    password?: string;
+    hireDate: string;
+    hourlyWage: number;
+    bankAccount: string;
+    accountHolder: string;
+    paymentDate: number;
+    role: 'USER' | 'ADMIN';
 }
 
 export interface YieldData {
@@ -90,17 +107,25 @@ export interface RegisterRequest {
 
 // Company API Requests
 export interface CompanyCreateRequest {
-    name: string;
-    code: string;
+    // Company Details
+    companyName: string;
+    companyCode: string;
     businessNumber?: string;
     address?: string;
     phoneNumber?: string;
+
+    // Admin User Details
+    adminName: string;
+    adminEmail: string;
+    adminPassword: string;
+    adminPhone?: string;
 }
 
 export interface CompanyUpdateRequest {
     name: string;
     address?: string;
     phoneNumber?: string;
+    businessNumber?: string;
     status: 'ACTIVE' | 'INACTIVE';
 }
 
@@ -120,7 +145,7 @@ export interface ApiResponse<T> {
 export interface AuthContextType {
     user: User | null;
     token: string | null;
-    login: (data: LoginRequest) => Promise<void>;
+    login: (data: LoginRequest, rememberMe?: boolean) => Promise<void>;
     register: (data: RegisterRequest) => Promise<void>;
     logout: () => void;
     isAuthenticated: boolean;

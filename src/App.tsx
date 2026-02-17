@@ -1,21 +1,20 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Layout from './components/Layout/Layout'
-import Login from './pages/Login'
-import Register from './pages/Register'
 import PrivateRoute from './components/Auth/PrivateRoute'
-import Dashboard from './pages/Dashboard'
-import YieldManagement from './pages/YieldManagement'
-import SalesManagement from './pages/SalesManagement'
-import CultivationManagement from './pages/CultivationManagement'
-import FarmManagement from './pages/FarmManagement'
-import AdminSettings from './pages/AdminSettings'
-import HRManagement from './pages/HRManagement'
 import { FarmProvider } from './context/FarmContext'
 import { ThemeProvider } from './context/ThemeContext'
 import { AuthProvider } from './context/AuthContext'
+import Dashboard from './pages/Dashboard/Dashboard'
+import YieldManagement from './pages/Management/YieldManagement'
+import SalesManagement from './pages/Management/SalesManagement'
+import CultivationManagement from './pages/Management/CultivationManagement'
+import FarmManagement from './pages/Management/FarmManagement'
+import AdminSettings from './pages/Admin/AdminSettings'
+import HRManagement from './pages/HR/HRManagement'
+import Attendance from './pages/HR/Attendance'
+import SuperAdmin from './pages/SuperAdmin/SuperAdmin'
+import Login from './pages/Auth/Login'
 
-import Attendance from './pages/Attendance'
-import SuperAdmin from './pages/SuperAdmin'
 
 function App() {
   return (
@@ -25,7 +24,7 @@ function App() {
           <BrowserRouter>
             <Routes>
               <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
+
               <Route path="/super-admin/*" element={
                 <PrivateRoute allowedRoles={['SUPER_ADMIN']}>
                   <Layout>
@@ -68,7 +67,7 @@ function App() {
                   </Layout>
                 </PrivateRoute>
               } />
-              <Route path="/hr" element={
+              <Route path="/hr/*" element={
                 <PrivateRoute allowedRoles={['ADMIN']}>
                   <Layout>
                     <HRManagement />
