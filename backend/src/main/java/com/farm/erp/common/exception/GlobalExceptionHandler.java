@@ -8,8 +8,10 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -135,17 +137,43 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handle Method Not Allowed (405) exceptions
+     */
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMethodNotAllowed(
+            HttpRequestMethodNotSupportedException ex, HttpServletRequest request) {
+        log.error("Method not allowed: method={}, uri={}, supported_methods={}",
+                request.getMethod(), request.getRequestURI(), ex.getSupportedHttpMethods());
+
+        // System.err for forced visibility in logs
+        System.err.println(">>> 405 METHOD NOT ALLOWED DETECTED <<<");
+        System.err.println("Request URI: " + request.getRequestURI());
+        System.err.println("Attempted Method: " + request.getMethod());
+        System.err.println("Supported Methods: " + ex.getSupportedHttpMethods());
+
+        ApiResponse<Void> response = ApiResponse.error(
+                "405",
+                "Method '" + request.getMethod() + "' not supported for this endpoint.");
+
+        return ResponseEntity
+                .status(HttpStatus.METHOD_NOT_ALLOWED)
+                .body(response);
+    }
+
+    /**
      * Handle all other exceptions
      */
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<Void>> handleException(Exception ex) {
+    public ResponseEntity<ApiResponse<Void>> handleException(Exception ex, HttpServletRequest request) {
         // SYSTEM.ERR LOGGING (FORCED)
         System.err.println(">>> CRITICAL EXCEPTION CAUGHT IN GLOBAL HANDLER <<<");
+        System.err.println("Request URI: " + request.getRequestURI());
+        System.err.println("Method: " + request.getMethod());
         System.err.println("Exception Type: " + ex.getClass().getName());
         System.err.println("Message: " + ex.getMessage());
         ex.printStackTrace(); // Print full stack trace to console
 
-        log.error("Unexpected exception", ex);
+        log.error("Unexpected exception at {}: ", request.getRequestURI(), ex);
 
         ApiResponse<Void> response = ApiResponse.error(
                 ErrorCode.INTERNAL_SERVER_ERROR.getCode(),

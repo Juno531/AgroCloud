@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
+@Slf4j
 public class AuthController {
 
     private final AuthService authService;
@@ -18,6 +19,17 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
+    }
+
+    /**
+     * Diagnostic endpoint to detect if POST is redirected to GET (causing 405)
+     */
+    @GetMapping("/login")
+    public ResponseEntity<String> loginGetDiagnostic() {
+        log.warn(
+                "GET request received for /login - This usually indicates an infrastructure redirect (HTTP->HTTPS) converted POST to GET");
+        return ResponseEntity.status(405)
+                .body("405 Method Not Allowed: You sent a GET request to /login. If you intended a POST, your request might have been redirected by HTTPS enforcement.");
     }
 
     @PostMapping("/register")
