@@ -66,6 +66,9 @@ public class AuthController {
         }
         System.out.println("DEBUG: password provided = " + (request.getPassword() != null ? "***" : "NULL"));
 
+        if (userDetails == null) {
+            throw new RuntimeException("인증 정보가 없습니다.");
+        }
         authService.verifyPassword(userDetails.getUsername(), request.getPassword());
         return ResponseEntity.ok(com.farm.erp.common.dto.ApiResponse.success("비밀번호가 확인되었습니다.", null));
     }
