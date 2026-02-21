@@ -5,6 +5,7 @@ import com.farm.erp.core.auth.dto.LoginRequest;
 import com.farm.erp.core.auth.dto.RegisterRequest;
 import com.farm.erp.core.auth.service.AuthService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
