@@ -5,9 +5,9 @@ spring:
     name: farm-erp-backend
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/farm_erp
-    username: postgres
-    password: postgres
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/farm_erp}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10
@@ -33,8 +33,8 @@ spring:
 
   data:
     redis:
-      host: localhost
-      port: 6379
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
       timeout: 2000ms
       lettuce:
         pool:
@@ -105,7 +105,7 @@ app:
     password: ${SUPER_ADMIN_PASSWORD:1234}
     name: ${SUPER_ADMIN_NAME:Super Administrator}
   cors:
-    allowed-origins: "http://localhost:*,http://127.0.0.1:*,http://192.168.*.*:*,http://10.*.*.*:*,http://172.*.*.*:*,https://localhost:*,https://127.0.0.1:*,https://192.168.*.*:*,https://10.*.*.*:*,https://172.*.*.*:*,https://192.168.45.117:5173"
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:*,http://127.0.0.1:*,http://192.168.*.*:*,http://10.*.*.*:*,http://172.*.*.*:*,https://localhost:*,https://127.0.0.1:*,https://192.168.*.*:*,https://10.*.*.*:*,https://172.*.*.*:*,https://192.168.45.117:5173}
 
 # Logging Configuration
 logging:
