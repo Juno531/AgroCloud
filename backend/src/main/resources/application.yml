@@ -101,7 +101,7 @@ app:
     admin: ${ADMIN_INVITE_CODE:ADMIN123}
     farm: ${FARM_INVITE_CODE:FARM123}
   super-admin:
-    email: ${SUPER_ADMIN_EMAIL:super@agrocloud.com}
+    email: ${SUPER_ADMIN_EMAIL:}
     password: ${SUPER_ADMIN_PASSWORD:}
     name: ${SUPER_ADMIN_NAME:Super Administrator}
   cors:

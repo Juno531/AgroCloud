@@ -28,6 +28,11 @@ public class SuperAdminInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
+        if (superAdminEmail == null || superAdminEmail.trim().isEmpty()) {
+            log.warn("⚠️ Super admin email is not configured. Skipping initialization.");
+            return;
+        }
+
         final String actualPassword;
         final boolean isRandomPassword;
 
