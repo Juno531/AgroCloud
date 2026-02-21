@@ -8,6 +8,7 @@ services:
       POSTGRES_DB: farm_erp
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+      TZ: Asia/Seoul
     ports:
       - "5432:5432"
     volumes:
@@ -62,6 +63,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: postgres
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
+      TZ: Asia/Seoul
     depends_on:
       postgres:
         condition: service_healthy

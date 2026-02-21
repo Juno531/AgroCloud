@@ -6,6 +6,11 @@ export interface User {
     farmId: number;
     companyId?: number; // Added companyId
     companyCode?: string; // Added companyCode
+    latitude?: number;
+    longitude?: number;
+    attendanceRadius?: number;
+    lastPasswordChangedAt?: string;
+    employmentType?: 'FULL_TIME' | 'PART_TIME';
 }
 
 export interface Company {
@@ -35,6 +40,7 @@ export interface Farm {
     address?: string;
     size?: number;
     userId: number;
+    attendanceIpAddress?: string;
 }
 
 export interface Crop {
@@ -47,8 +53,8 @@ export interface Crop {
 export interface EmployeeProfile {
     id: number;
     userId: number;
-    companyId?: number; // Added companyId
-    companyCode?: string; // Added companyCode
+    companyId?: number;
+    companyCode?: string;
     name: string;
     phone: string;
     email: string;
@@ -59,6 +65,7 @@ export interface EmployeeProfile {
     accountHolder: string;
     paymentDate: number;
     role: 'USER' | 'ADMIN';
+    employmentType?: 'FULL_TIME' | 'PART_TIME'; // 정규직/비정규직(알바)
 }
 
 export interface YieldData {
@@ -103,6 +110,7 @@ export interface RegisterRequest {
     password: string;
     name: string;
     registrationCode: string;
+    employmentType?: 'FULL_TIME' | 'PART_TIME';
 }
 
 // Company API Requests

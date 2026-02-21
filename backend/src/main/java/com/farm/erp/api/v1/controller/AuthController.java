@@ -26,7 +26,49 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<com.farm.erp.core.auth.dto.UserDto> getMe(@org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails) {
+    public ResponseEntity<com.farm.erp.core.auth.dto.UserDto> getMe(
+            @org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails) {
         return ResponseEntity.ok(authService.me(userDetails.getUsername()));
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<com.farm.erp.common.dto.ApiResponse<Void>> changePassword(
+            @org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails,
+            @jakarta.validation.Valid @RequestBody com.farm.erp.core.auth.dto.ChangePasswordRequest request) {
+        authService.changePassword(userDetails.getUsername(), request);
+        return ResponseEntity.ok(com.farm.erp.common.dto.ApiResponse.success("비밀번호가 성공적으로 변경되었습니다.", null));
+    }
+
+    @PostMapping("/verify-password")
+    public ResponseEntity<com.farm.erp.common.dto.ApiResponse<Void>> verifyPassword(
+            @org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails,
+            @jakarta.validation.Valid @RequestBody com.farm.erp.core.auth.dto.PasswordVerifyRequest request) {
+
+        // DEBUG LOG
+        System.out.println("DEBUG: verifyPassword called");
+        if (userDetails != null) {
+            System.out.println("DEBUG: userDetails username = " + userDetails.getUsername());
+        } else {
+            System.out.println("DEBUG: userDetails is NULL");
+        }
+        System.out.println("DEBUG: password provided = " + (request.getPassword() != null ? "***" : "NULL"));
+
+        authService.verifyPassword(userDetails.getUsername(), request.getPassword());
+        return ResponseEntity.ok(com.farm.erp.common.dto.ApiResponse.success("비밀번호가 확인되었습니다.", null));
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<AuthResponse> refreshToken(
+            @RequestBody com.farm.erp.core.auth.dto.RefreshTokenRequest request) {
+        return ResponseEntity.ok(authService.refreshToken(request.getRefreshToken()));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<com.farm.erp.common.dto.ApiResponse<Void>> logout(
+            @org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails) {
+        if (userDetails != null) {
+            authService.logout(userDetails.getUsername());
+        }
+        return ResponseEntity.ok(com.farm.erp.common.dto.ApiResponse.success("로그아웃 되었습니다.", null));
     }
 }

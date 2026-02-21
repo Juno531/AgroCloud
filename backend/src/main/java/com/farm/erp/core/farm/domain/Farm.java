@@ -36,6 +36,24 @@ public class Farm {
     @Column(precision = 10, scale = 2)
     private BigDecimal area; // in hectares
 
+    @Column(precision = 18, scale = 15)
+    private BigDecimal latitude;
+
+    @Column(precision = 18, scale = 15)
+    private BigDecimal longitude;
+
+    @Column(name = "attendance_radius")
+    private Integer attendanceRadius; // in meters (radius for geo-fencing)
+
+    @Column(name = "attendance_wifi_ssid", length = 100)
+    private String attendanceWifiSsid;
+
+    @Column(name = "attendance_wifi_bssid", length = 50)
+    private String attendanceWifiBssid;
+
+    @Column(name = "attendance_ip_address", length = 50)
+    private String attendanceIpAddress;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     @Builder.Default
@@ -70,7 +88,9 @@ public class Farm {
      * Business logic: Update farm information
      */
     public void update(String name, String location, BigDecimal area, String description,
-            String ownerName, String contactNumber) {
+            String ownerName, String contactNumber, BigDecimal latitude, BigDecimal longitude,
+            Integer attendanceRadius, String attendanceWifiSsid, String attendanceWifiBssid,
+            String attendanceIpAddress) {
         if (name != null)
             this.name = name;
         if (location != null)
@@ -83,6 +103,16 @@ public class Farm {
             this.ownerName = ownerName;
         if (contactNumber != null)
             this.contactNumber = contactNumber;
+        if (latitude != null)
+            this.latitude = latitude;
+        if (longitude != null)
+            this.longitude = longitude;
+
+        // Settings that can be cleared (nullable)
+        this.attendanceRadius = attendanceRadius;
+        this.attendanceWifiSsid = attendanceWifiSsid;
+        this.attendanceWifiBssid = attendanceWifiBssid;
+        this.attendanceIpAddress = attendanceIpAddress;
     }
 
     /**

@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@lombok.extern.slf4j.Slf4j
 public class AuthService {
 
         @Value("${app.invite-codes.admin}")
@@ -38,12 +39,14 @@ public class AuthService {
         private final LoginAttemptService loginAttemptService;
         private final com.farm.erp.core.audit.service.AuditLogService auditLogService;
         private final com.farm.erp.core.company.service.RegistrationCodeService registrationCodeService;
+        private final com.farm.erp.core.auth.repository.RefreshTokenRepository refreshTokenRepository;
 
         @Transactional
         public AuthResponse login(LoginRequest request) {
                 // Check if account is locked due to too many attempts
                 if (loginAttemptService.isBlocked(request.getEmail())) {
-                        throw new RuntimeException(
+                        log.warn("Login blocked due to too many failed attempts: {}", request.getEmail());
+                        throw new org.springframework.security.authentication.LockedException(
                                         "Account temporarily locked due to too many failed login attempts. Please try again later.");
                 }
 
@@ -54,22 +57,30 @@ public class AuthService {
 
                         SecurityContextHolder.getContext().setAuthentication(authentication);
                         String jwt = jwtService.createToken(authentication);
+                        String refreshToken = jwtService.createRefreshToken(authentication);
 
                         User user = userRepository.findByEmail(request.getEmail())
-                                        .orElseThrow(() -> new RuntimeException("User not found"));
+                                        .orElseThrow(() -> new org.springframework.security.core.userdetails.UsernameNotFoundException(
+                                                        "User not found"));
+
+                        // Save Refresh Token
+                        saveRefreshToken(user, refreshToken);
 
                         // Login succeeded - clear attempt counter
                         loginAttemptService.loginSucceeded(request.getEmail());
 
                         // Log successful login
                         auditLogService.logLogin(user, "N/A", "N/A");
+                        log.info("User logged in successfully: {}", request.getEmail());
 
                         Long farmId = getFarmIdForUser(user);
+                        String employmentType = getEmploymentTypeForUser(user);
 
-                        return new AuthResponse(jwt, new UserDto(user, farmId));
+                        return new AuthResponse(jwt, refreshToken, new UserDto(user, farmId, employmentType));
                 } catch (Exception e) {
                         // Login failed - increment attempt counter
                         loginAttemptService.loginFailed(request.getEmail());
+                        log.warn("Login failed for user: {}", request.getEmail());
                         throw e;
                 }
         }
@@ -101,6 +112,7 @@ public class AuthService {
                                 .build();
 
                 userRepository.save(user);
+                log.info("User registered successfully: {}, Role: {}", request.getEmail(), role);
 
                 // 5. 코드 사용 처리 (옵션)
                 // registrationCodeService.markCodeAsUsed(request.getRegistrationCode());
@@ -118,16 +130,122 @@ public class AuthService {
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
                 String jwt = jwtService.createToken(authentication);
+                String refreshToken = jwtService.createRefreshToken(authentication);
 
-                return new AuthResponse(jwt, new UserDto(user, null));
+                // Save Refresh Token
+                saveRefreshToken(user, refreshToken);
+
+                String employmentType = getEmploymentTypeForUser(user);
+                return new AuthResponse(jwt, refreshToken, new UserDto(user, null, employmentType));
+        }
+
+        @Transactional
+        public AuthResponse refreshToken(String refreshToken) {
+                if (!jwtService.validateRefreshToken(refreshToken)) {
+                        throw new IllegalArgumentException("Invalid refresh token");
+                }
+
+                com.farm.erp.core.auth.domain.RefreshToken token = refreshTokenRepository.findByToken(refreshToken)
+                                .orElseThrow(() -> new IllegalArgumentException("Refresh token not found"));
+
+                // Verify expiration (Assuming JwtTokenProvider validation covers date, but
+                // double check with entity if needed)
+                // if (token.getExpiryDate().isBefore(java.time.Instant.now())) { ... }
+
+                User user = token.getUser();
+
+                // Create new auth object
+                org.springframework.security.core.userdetails.UserDetails userDetails = new org.springframework.security.core.userdetails.User(
+                                user.getEmail(),
+                                user.getPassword(),
+                                java.util.Collections.singletonList(
+                                                new org.springframework.security.core.authority.SimpleGrantedAuthority(
+                                                                "ROLE_" + user.getRole().name())));
+
+                Authentication authentication = new UsernamePasswordAuthenticationToken(
+                                userDetails, null, userDetails.getAuthorities());
+
+                String newJwt = jwtService.createToken(authentication);
+                // Optionally rotate refresh token here
+
+                Long farmId = getFarmIdForUser(user);
+                String employmentType = getEmploymentTypeForUser(user);
+                return new AuthResponse(newJwt, refreshToken, new UserDto(user, farmId, employmentType));
+        }
+
+        @Transactional
+        public void logout(String email) {
+                User user = userRepository.findByEmail(email)
+                                .orElseThrow(() -> new org.springframework.security.core.userdetails.UsernameNotFoundException(
+                                                "User not found"));
+                refreshTokenRepository.deleteByUser(user);
+        }
+
+        @Transactional
+        public void logout(User user) {
+                refreshTokenRepository.deleteByUser(user);
+        }
+
+        private void saveRefreshToken(User user, String token) {
+                java.time.Instant expiry = java.time.Instant.now().plusMillis(2592000000L); // 30 days
+
+                refreshTokenRepository.findByUserId(user.getId()).ifPresentOrElse(
+                                existingToken -> {
+                                        log.info("Updating existing refresh token for user ID: {}", user.getId());
+                                        existingToken.updateToken(token, expiry);
+                                        refreshTokenRepository.save(existingToken);
+                                },
+                                () -> {
+                                        log.info("Creating new refresh token for user ID: {}", user.getId());
+                                        com.farm.erp.core.auth.domain.RefreshToken newRefreshToken = com.farm.erp.core.auth.domain.RefreshToken
+                                                        .builder()
+                                                        .user(user)
+                                                        .token(token)
+                                                        .expiryDate(expiry)
+                                                        .build();
+                                        refreshTokenRepository.save(newRefreshToken);
+                                });
         }
 
         @Transactional(readOnly = true)
         public UserDto me(String email) {
                 User user = userRepository.findByEmail(email)
-                                .orElseThrow(() -> new RuntimeException("User not found"));
+                                .orElseThrow(() -> new org.springframework.security.core.userdetails.UsernameNotFoundException(
+                                                "User not found"));
                 Long farmId = getFarmIdForUser(user);
-                return new UserDto(user, farmId);
+                String employmentType = getEmploymentTypeForUser(user);
+                return new UserDto(user, farmId, employmentType);
+        }
+
+        @Transactional
+        public void changePassword(String email, ChangePasswordRequest request) {
+                User user = userRepository.findByEmail(email)
+                                .orElseThrow(() -> new org.springframework.security.core.userdetails.UsernameNotFoundException(
+                                                "User not found"));
+
+                if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+                        log.warn("Password change failed: Incorrect current password for user {}", email);
+                        throw new org.springframework.security.authentication.BadCredentialsException(
+                                        "현재 비밀번호가 일치하지 않습니다.");
+                }
+
+                user.updatePassword(passwordEncoder.encode(request.getNewPassword()));
+                userRepository.save(user);
+                log.info("Password changed successfully for user: {}", email);
+        }
+
+        @Transactional(readOnly = true)
+        public void verifyPassword(String email, String password) {
+                User user = userRepository.findByEmail(email)
+                                .orElseThrow(() -> new org.springframework.security.core.userdetails.UsernameNotFoundException(
+                                                "User not found"));
+
+                if (!passwordEncoder.matches(password, user.getPassword())) {
+                        log.warn("Password verification failed for user {}", email);
+                        throw new org.springframework.security.authentication.BadCredentialsException(
+                                        "비밀번호가 일치하지 않습니다.");
+                }
+                log.info("Password verified successfully for user: {}", email);
         }
 
         private Long getFarmIdForUser(User user) {
@@ -142,5 +260,17 @@ public class AuthService {
                                         .map(profile -> profile.getFarm() != null ? profile.getFarm().getId() : null)
                                         .orElse(null);
                 }
+        }
+
+        private String getEmploymentTypeForUser(User user) {
+                if (user.getRole() == Role.USER) {
+                        return employeeAutoCreationService.getEmployeeProfileRepository()
+                                        .findByUserId(user.getId())
+                                        .map(profile -> profile.getEmploymentType() != null
+                                                        ? profile.getEmploymentType().name()
+                                                        : null)
+                                        .orElse(null);
+                }
+                return null;
         }
 }

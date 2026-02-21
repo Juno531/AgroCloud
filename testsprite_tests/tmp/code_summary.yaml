@@ -1,0 +1,47 @@
+version: "2"
+type: frontend
+tech_stack:
+  - react
+  - typescript
+  - vite
+  - tailwindcss
+  - react-router-dom
+  - zustand
+  - framer-motion
+  - lucide-react
+features:
+  - name: User Authentication
+    description: Handle login, logout, and token management
+    files:
+      - src/pages/Login.tsx
+      - src/store/authStore.ts
+      - src/services/api.ts
+    depends_on: []
+  - name: Dashboard
+    description: Main landing page with overview data
+    files:
+      - src/pages/Dashboard.tsx
+      - src/components/Dashboard/StatCard.tsx
+    depends_on:
+      - User Authentication
+  - name: Employee Management
+    description: CRUD operations for farm employees
+    files:
+      - src/pages/EmployeeManagement.tsx
+      - src/components/Employee/EmployeeList.tsx
+      - src/components/Employee/EmployeeForm.tsx
+    depends_on:
+      - User Authentication
+  - name: Settings
+    description: Update user profile and application settings
+    files:
+      - src/pages/Settings.tsx
+    depends_on:
+      - User Authentication
+  - name: Error Handling
+    description: Global error boundary and API error interceptors
+    files:
+      - src/components/ErrorBoundary.tsx
+      - src/services/api.ts
+    depends_on: []
+known_limitations: []

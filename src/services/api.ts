@@ -53,11 +53,17 @@ api.interceptors.response.use(
 export const AuthService = {
     login: (credentials: LoginRequest) => api.post<AuthResponse>('/auth/login', credentials),
     register: (data: RegisterRequest) => api.post<AuthResponse>('/auth/register', data),
-    me: () => api.get('/auth/me')
+    me: () => api.get('/auth/me'),
+    changePassword: async (data: any) => {
+        return api.post('/auth/change-password', data);
+    },
+    verifyPassword: async (password: string) => {
+        return api.post('/auth/verify-password', { password });
+    },
 };
 
 export const FarmService = {
-    getAllFarms: () => api.get('/farms'),
+    getAllFarms: (params?: any) => api.get('/farms', { params }),
     getFarm: (id: number) => api.get(`/farms/${id}`),
     createFarm: (data: any) => api.post('/farms', data),
     updateFarm: (id: number, data: any) => api.put(`/farms/${id}`, data),
@@ -154,7 +160,8 @@ export const EmployeeService = {
 };
 
 export const AttendanceService = {
-    recordAttendance: (data: { type: 'CLOCK_IN' | 'CLOCK_OUT', farmId?: number, companyCode?: string }) => api.post('/attendance', data),
+    recordAttendance: (data: { type: 'CLOCK_IN' | 'CLOCK_OUT'; farmId?: number; companyCode?: string; latitude?: number; longitude?: number }) =>
+        api.post('/attendance', data),
     getMyAttendance: () => api.get('/attendance/me'),
     getFarmAttendance: (farmId: number, start?: string, end?: string) => api.get(`/attendance/farm/${farmId}`, { params: { startDate: start, endDate: end } }),
     getCompanyAttendance: (companyCode: string, start?: string, end?: string) => api.get(`/attendance/company/${companyCode}`, { params: { startDate: start, endDate: end } }),

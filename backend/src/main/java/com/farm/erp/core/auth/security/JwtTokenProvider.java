@@ -20,6 +20,9 @@ public class JwtTokenProvider {
     @Value("${jwt.expiration:86400000}") // 24 hours
     private long validityInMilliseconds;
 
+    @Value("${jwt.refresh-expiration:604800000}") // 7 days
+    private long refreshValidityInMilliseconds;
+
     private SecretKey getSigningKey() {
         // Check if the secret key is already Base64 encoded
         // If not, use it as a direct UTF-8 byte array
@@ -37,6 +40,19 @@ public class JwtTokenProvider {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         Date now = new Date();
         Date validity = new Date(now.getTime() + validityInMilliseconds);
+
+        return Jwts.builder()
+                .subject(userDetails.getUsername())
+                .issuedAt(now)
+                .expiration(validity)
+                .signWith(getSigningKey())
+                .compact();
+    }
+
+    public String createRefreshToken(Authentication authentication) {
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        Date now = new Date();
+        Date validity = new Date(now.getTime() + refreshValidityInMilliseconds);
 
         return Jwts.builder()
                 .subject(userDetails.getUsername())
@@ -65,5 +81,9 @@ public class JwtTokenProvider {
         } catch (JwtException | IllegalArgumentException e) {
             return false;
         }
+    }
+
+    public boolean validateRefreshToken(String token) {
+        return validateToken(token);
     }
 }

@@ -12,6 +12,7 @@ public class UserDto {
     private Long farmId;
     private Long companyId;
     private String companyCode;
+    private String employmentType;
 
     public UserDto(User user) {
         this.id = user.getId();
@@ -27,5 +28,10 @@ public class UserDto {
     public UserDto(User user, Long farmId) {
         this(user);
         this.farmId = farmId;
+    }
+
+    public UserDto(User user, Long farmId, String employmentType) {
+        this(user, farmId);
+        this.employmentType = employmentType;
     }
 }

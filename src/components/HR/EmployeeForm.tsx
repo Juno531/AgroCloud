@@ -11,10 +11,11 @@ interface EmployeeFormProps {
 
 interface FormData {
     // Shared fields
-    userId?: number; // Only for legacy/view? Actually we don't need userId input for new registration
+    userId?: number;
     name: string;
-    phone: string; // Changed from phoneNumber to match API? No, checks below.
+    phone: string;
     role: 'USER' | 'ADMIN';
+    employmentType: 'FULL_TIME' | 'PART_TIME'; // 정규직/비정규직
     // Registration fields
     email?: string;
     password?: string;
@@ -35,6 +36,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onClose, onSucces
         name: employee?.name || '',
         phone: employee?.phone || '',
         role: employee?.role === 'ADMIN' ? 'ADMIN' : 'USER',
+        employmentType: employee?.employmentType || 'FULL_TIME',
         email: '',
         password: '',
         confirmPassword: '',
@@ -68,9 +70,8 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onClose, onSucces
                 // Update existing
                 await EmployeeService.updateEmployee(employee.id, {
                     ...formData,
-                    // Ensure we send correct field names for update if needed
-                    // API expects EmployeeProfileRequest which has phone, hireDate, etc.
-                    phone: formData.phone
+                    phone: formData.phone,
+                    employmentType: formData.employmentType
                 });
             } else {
                 // Register new
@@ -83,17 +84,16 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onClose, onSucces
                     name: formData.name,
                     email: formData.email,
                     password: formData.password,
-                    phoneNumber: formData.phone, // API expects phoneNumber
+                    phoneNumber: formData.phone,
                     role: formData.role,
-                    // Send these only if USER, or send generic defaults if backend requires them. 
-                    // Assuming backend allows nulls or we send safe defaults for Admin.
+                    employmentType: formData.employmentType,
                     hireDate: formData.role === 'USER' ? formData.hireDate : null,
-                    hourlyWage: formData.role === 'USER' ? formData.hourlyWage : 0,
-                    bankAccount: formData.role === 'USER' ? formData.bankAccount : '',
-                    accountHolder: formData.role === 'USER' ? formData.accountHolder : '',
-                    paymentDate: formData.role === 'USER' ? formData.paymentDate : 0,
-                    companyId: user?.companyId, // Add companyId from current user context
-                    companyCode: user?.companyCode // Add companyCode from current user context
+                    hourlyWage: formData.role === 'USER' ? formData.hourlyWage : null,
+                    bankAccount: formData.role === 'USER' ? formData.bankAccount : null,
+                    accountHolder: formData.role === 'USER' ? formData.accountHolder : null,
+                    paymentDate: formData.role === 'USER' ? formData.paymentDate : null,
+                    companyId: user?.companyId,
+                    companyCode: user?.companyCode
                 };
 
                 await EmployeeService.registerEmployee(registrationData);
@@ -196,17 +196,17 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onClose, onSucces
                         <div style={{ display: 'grid', gap: isMobile ? '1rem' : '1rem' }}>
 
                             {/* Account Info Section */}
-                            {!employee && (
-                                <div style={{
-                                    padding: '1rem',
-                                    backgroundColor: 'var(--color-background)',
-                                    borderRadius: 'var(--radius-md)',
-                                    marginBottom: '0.5rem'
-                                }}>
-                                    <h4 style={{ margin: '0 0 1rem 0', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                        <User size={16} /> 계정 정보
-                                    </h4>
+                            <div style={{
+                                padding: '1rem',
+                                backgroundColor: 'var(--color-background)',
+                                borderRadius: 'var(--radius-md)',
+                                marginBottom: '0.5rem'
+                            }}>
+                                <h4 style={{ margin: '0 0 1rem 0', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <User size={16} /> 계정 정보
+                                </h4>
 
+                                {!employee && (
                                     <div style={{ marginBottom: '1rem' }}>
                                         <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>권한 설정 *</label>
                                         <div style={{ display: 'flex', gap: '1rem' }}>
@@ -237,7 +237,56 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onClose, onSucces
                                             * 관리자는 시스템 설정 및 모든 메뉴에 접근할 수 있습니다.
                                         </p>
                                     </div>
+                                )}
 
+                                {/* 고용 형태 - 등록시에만 선택 가능, 수정시에는 텍스트로 표시 */}
+                                {!employee ? (
+                                    <div style={{ marginBottom: '1rem' }}>
+                                        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>고용 형태 *</label>
+                                        <div style={{ display: 'flex', gap: '0.75rem' }}>
+                                            <label style={{
+                                                display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer',
+                                                padding: '0.6rem 1rem',
+                                                borderRadius: 'var(--radius-md)',
+                                                border: `2px solid ${formData.employmentType === 'FULL_TIME' ? 'var(--color-primary)' : 'var(--color-border)'}`,
+                                                backgroundColor: formData.employmentType === 'FULL_TIME' ? '#e8f4ff' : 'transparent',
+                                                flex: 1
+                                            }}>
+                                                <input type="radio" name="employmentType" value="FULL_TIME"
+                                                    checked={formData.employmentType === 'FULL_TIME'}
+                                                    onChange={handleChange}
+                                                    style={{ width: '1.1rem', height: '1.1rem' }} />
+                                                <span style={{ fontWeight: formData.employmentType === 'FULL_TIME' ? 600 : 400 }}>🏢 정규직</span>
+                                            </label>
+                                            <label style={{
+                                                display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer',
+                                                padding: '0.6rem 1rem',
+                                                borderRadius: 'var(--radius-md)',
+                                                border: `2px solid ${formData.employmentType === 'PART_TIME' ? '#f59e0b' : 'var(--color-border)'}`,
+                                                backgroundColor: formData.employmentType === 'PART_TIME' ? '#fffbeb' : 'transparent',
+                                                flex: 1
+                                            }}>
+                                                <input type="radio" name="employmentType" value="PART_TIME"
+                                                    checked={formData.employmentType === 'PART_TIME'}
+                                                    onChange={handleChange}
+                                                    style={{ width: '1.1rem', height: '1.1rem' }} />
+                                                <span style={{ fontWeight: formData.employmentType === 'PART_TIME' ? 600 : 400 }}>⏰ 비정규직 (알바)</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div style={{ display: 'flex', marginBottom: '1rem', padding: '0.75rem', backgroundColor: 'var(--color-surface)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
+                                        <span style={{ display: 'inline-block', fontWeight: 500, marginRight: '1rem', color: 'var(--color-text-secondary)' }}>고용 형태:</span>
+                                        <span style={{
+                                            fontWeight: 600,
+                                            color: formData.employmentType === 'PART_TIME' ? '#d97706' : 'var(--color-primary)'
+                                        }}>
+                                            {formData.employmentType === 'PART_TIME' ? '⏰ 비정규직 (알바)' : '🏢 정규직'}
+                                        </span>
+                                    </div>
+                                )}
+
+                                {!employee && (
                                     <div style={{ display: 'grid', gap: '1rem' }}>
                                         <div>
                                             <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>이메일 (ID) *</label>
@@ -287,8 +336,8 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onClose, onSucces
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            )}
+                                )}
+                            </div>
 
                             {/* Personal Info */}
                             <div>
@@ -299,7 +348,6 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onClose, onSucces
                                     value={formData.name}
                                     onChange={handleChange}
                                     required
-                                    readOnly={!!employee}
                                     placeholder="홍길동"
                                     style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}
                                 />
@@ -338,7 +386,9 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onClose, onSucces
                                             </div>
                                         </div>
                                         <div>
-                                            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>시급 (원) *</label>
+                                            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>
+                                                {formData.employmentType === 'PART_TIME' ? '시급 (원) *' : '기본급/월급 (원) *'}
+                                            </label>
                                             <div style={{ position: 'relative' }}>
                                                 <DollarSign size={16} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-secondary)' }} />
                                                 <input
@@ -398,7 +448,6 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onClose, onSucces
                                     </div>
                                 </>
                             )}
-
                         </div>
                     </div>
 

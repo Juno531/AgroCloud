@@ -6,6 +6,8 @@ import com.farm.erp.core.attendance.domain.AttendanceRecord;
 import com.farm.erp.core.attendance.service.AttendanceService;
 import com.farm.erp.core.auth.domain.User;
 import com.farm.erp.core.auth.repository.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -26,11 +28,18 @@ public class AttendanceController {
     @PostMapping
     public ResponseEntity<AttendanceResponse> recordAttendance(
             @AuthenticationPrincipal UserDetails userDetails,
-            @RequestBody AttendanceRequest request) {
+            @Valid @RequestBody AttendanceRequest request,
+            HttpServletRequest httpServletRequest) {
 
         // Get user by email (username in Spring Security)
         User user = userRepository.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        // Extract client IP
+        String clientIp = httpServletRequest.getHeader("X-Forwarded-For");
+        if (clientIp == null || clientIp.isEmpty() || "unknown".equalsIgnoreCase(clientIp)) {
+            clientIp = httpServletRequest.getRemoteAddr();
+        }
 
         // Parse attendance type
         AttendanceRecord.AttendanceType type = AttendanceRecord.AttendanceType.valueOf(request.getType());
@@ -39,7 +48,7 @@ public class AttendanceController {
         String companyCode = user.getCompany() != null ? user.getCompany().getCode() : request.getCompanyCode();
 
         AttendanceRecord record = attendanceService.recordAttendance(user.getId(), type, request.getFarmId(),
-                companyCode);
+                companyCode, request.getLatitude(), request.getLongitude(), clientIp);
 
         return ResponseEntity.ok(AttendanceResponse.from(record));
     }

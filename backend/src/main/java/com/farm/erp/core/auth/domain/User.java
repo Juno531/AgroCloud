@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Builder;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "users")
@@ -24,7 +25,7 @@ public class User {
     @Column(nullable = false)
     private String name;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY) // Changed from EAGER to LAZY
     @JoinColumn(name = "company_code", referencedColumnName = "code")
     private Company company;
 
@@ -38,6 +39,14 @@ public class User {
         this.name = name;
         this.role = role;
         this.company = company;
+    }
+
+    public void updatePassword(String encodedPassword) {
+        this.password = encodedPassword;
+    }
+
+    public void updateName(String name) {
+        this.name = name;
     }
 
     public enum Role {

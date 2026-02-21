@@ -1,5 +1,7 @@
 package com.farm.erp;
 
+import java.util.TimeZone;
+import jakarta.annotation.PostConstruct;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cache.annotation.EnableCaching;
@@ -22,6 +24,12 @@ public class FarmErpApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(FarmErpApplication.class, args);
+    }
+
+    @PostConstruct
+    public void init() {
+        // 시스템 전체 타임존을 한국 시간으로 설정
+        TimeZone.setDefault(TimeZone.getTimeZone("Asia/Seoul"));
     }
 
 }

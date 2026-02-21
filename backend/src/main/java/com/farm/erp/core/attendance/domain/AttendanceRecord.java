@@ -51,6 +51,10 @@ public class AttendanceRecord {
         this.companyCode = companyCode;
     }
 
+    public void updateTimestamp(LocalDateTime timestamp) {
+        this.timestamp = timestamp;
+    }
+
     public enum AttendanceType {
         CLOCK_IN, CLOCK_OUT
     }

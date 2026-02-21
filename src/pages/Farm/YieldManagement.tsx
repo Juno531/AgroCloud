@@ -13,7 +13,7 @@ import { useFarm } from '../../context/FarmContext';
 import { useLayout } from '../../context/LayoutContext';
 
 
-const YieldManagement = ({ activeFarm }: { activeFarm?: any }) => {
+const YieldManagement = ({ activeFarm = 'All' }: { activeFarm?: any }) => {
     const { setTitle } = useLayout();
     const [activeTab, setActiveTab] = useState('dashboard');
 

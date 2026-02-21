@@ -1,11 +1,13 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, QrCode, Clock, Settings, Menu } from 'lucide-react';
+import { LayoutDashboard, Clock, Settings, Menu } from 'lucide-react';
 import { useLayout } from '../../context/LayoutContext';
+import { useAuth } from '../../context/AuthContext';
 
 const BottomNav = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { toggleSidebar } = useLayout();
+    const { user } = useAuth();
 
     const navItems = [
         {
@@ -20,13 +22,7 @@ const BottomNav = () => {
             icon: LayoutDashboard,
             path: '/'
         },
-        {
-            id: 'qr',
-            label: 'QR 스캔',
-            icon: QrCode,
-            path: '/hr/scan',
-            isSpecial: true
-        },
+
         {
             id: 'attendance',
             label: '출퇴근',
@@ -37,9 +33,14 @@ const BottomNav = () => {
             id: 'settings',
             label: '설정',
             icon: Settings,
-            path: '/admin'
+            path: '/mypage/mysecurity'
         },
-    ];
+    ].filter(item => {
+        if (user?.role === 'USER') {
+            return item.id !== 'dashboard';
+        }
+        return true;
+    });
 
     return (
         <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-zinc-900 border-t border-slate-200 dark:border-zinc-800 pb-safe z-50">
@@ -50,27 +51,7 @@ const BottomNav = () => {
                         (item.path !== '/' && location.pathname.startsWith(item.path) && item.id !== 'qr')
                     ) : false;
 
-                    if (item.isSpecial) {
-                        return (
-                            <button
-                                key={item.id}
-                                onClick={() => item.path && navigate(item.path)}
-                                className="relative -top-5 flex flex-col items-center justify-center p-2"
-                            >
-                                <div className={`
-                                    w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-transform active:scale-95
-                                    ${isActive
-                                        ? 'bg-primary text-white ring-4 ring-white dark:ring-zinc-900'
-                                        : 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 ring-4 ring-white dark:ring-zinc-900'}
-                                `}>
-                                    <item.icon size={24} />
-                                </div>
-                                <span className="text-[10px] font-medium mt-1 text-slate-600 dark:text-slate-400">
-                                    {item.label}
-                                </span>
-                            </button>
-                        );
-                    }
+
 
                     return (
                         <button

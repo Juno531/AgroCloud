@@ -1,0 +1,27 @@
+[
+  {
+    "id": "TC001",
+    "title": "user authentication login and token management",
+    "description": "Test the POST /api/auth/login endpoint with valid and invalid credentials to verify successful login returns access and refresh tokens, and invalid credentials return 401 Unauthorized. Also test token refresh and logout flows to ensure proper token lifecycle management."
+  },
+  {
+    "id": "TC002",
+    "title": "dashboard overview metrics access with token handling",
+    "description": "Test the GET /api/dashboard endpoint to verify it returns farm overview metrics with a valid access token, handles expired tokens by refreshing them, and properly surfaces server errors with 500 status and error details."
+  },
+  {
+    "id": "TC003",
+    "title": "employee management crud operations with validation",
+    "description": "Test the POST /api/employees endpoint for creating employees with valid data, missing required fields, and duplicate unique fields to verify validation and constraint handling. Test GET, PUT, and DELETE /api/employees/:id endpoints to verify retrieval, update, and deletion of employee records with proper authorization."
+  },
+  {
+    "id": "TC004",
+    "title": "user profile update and validation",
+    "description": "Test the PUT /api/profile endpoint to update user profile and settings with valid data and invalid email format to verify successful updates and proper validation error responses."
+  },
+  {
+    "id": "TC005",
+    "title": "global error handling and token refresh interceptor",
+    "description": "Test API requests with expired access tokens to verify automatic token refresh and retry of original requests. Test handling of server errors (500) and network failures to ensure errors are logged via /api/logs and user-friendly fallback UI is rendered."
+  }
+]

@@ -158,18 +158,36 @@ const AttendanceLog = () => {
                 });
 
                 if (userDayRecords.length > 0) {
-                    // 출근(CLOCK_IN)과 퇴근(CLOCK_OUT) 기록 분리 및 정렬
-                    const clockIn = userDayRecords.find(r => r.type === 'CLOCK_IN');
-                    const clockOut = [...userDayRecords].reverse().find(r => r.type === 'CLOCK_OUT');
+                    // 시간 역순 정렬 (최신순)
+                    const sortedRecords = [...userDayRecords].sort(
+                        (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+                    );
+
+                    const latestRecord = sortedRecords[0];
+                    let clockIn = null;
+                    let clockOut = null;
+                    let status: 'PRESENT' | 'LATE' | 'ABSENT' | 'LEAVE' | 'CLOCK_OUT' = 'ABSENT';
+
+                    if (latestRecord.type === 'CLOCK_IN') {
+                        // 최신 기록이 출근이면: 퇴근은 아직 안 함 (표시 초기화)
+                        clockIn = latestRecord;
+                        clockOut = null;
+                        status = 'PRESENT';
+                    } else {
+                        // 최신 기록이 퇴근이면: 해당 퇴근과 매칭되는 가장 최근 출근 찾기
+                        clockOut = latestRecord;
+                        clockIn = sortedRecords.find(r => r.type === 'CLOCK_IN');
+                        status = 'CLOCK_OUT';
+                    }
 
                     return {
-                        id: userDayRecords[0].id,
+                        id: latestRecord?.id || 0,
                         userId: emp.userId,
                         userName: emp.name,
                         date: dateStr,
                         checkInTime: clockIn ? format(new Date(clockIn.timestamp), 'HH:mm:ss') : null,
                         checkOutTime: clockOut ? format(new Date(clockOut.timestamp), 'HH:mm:ss') : null,
-                        status: (clockIn ? 'PRESENT' : 'ABSENT') as 'PRESENT' | 'LATE' | 'ABSENT' | 'LEAVE',
+                        status: status,
                         workDuration: (clockIn && clockOut)
                             ? Math.floor((new Date(clockOut.timestamp).getTime() - new Date(clockIn.timestamp).getTime()) / 60000)
                             : null
@@ -234,6 +252,7 @@ const AttendanceLog = () => {
             case 'LATE': return 'bg-yellow-100 text-yellow-700';
             case 'ABSENT': return 'bg-red-100 text-red-700';
             case 'LEAVE': return 'bg-blue-100 text-blue-700';
+            case 'CLOCK_OUT': return 'bg-indigo-100 text-indigo-700';
             default: return 'bg-gray-100 text-gray-700';
         }
     };
@@ -244,6 +263,7 @@ const AttendanceLog = () => {
             case 'LATE': return '지각';
             case 'ABSENT': return '결근';
             case 'LEAVE': return '휴가';
+            case 'CLOCK_OUT': return '퇴근 완료';
             default: return '미확인';
         }
     };

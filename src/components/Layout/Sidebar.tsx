@@ -8,7 +8,7 @@ const Sidebar = () => {
     const location = useLocation();
     const { isSidebarOpen, closeSidebar } = useLayout();
     const { user } = useAuth();
-    const [expandedMenus, setExpandedMenus] = useState<string[]>(['/hr']);
+    const [expandedMenus, setExpandedMenus] = useState<string[]>(['/hr/employees']);
 
     const toggleMenu = (path: string) => {
         setExpandedMenus(prev =>
@@ -16,8 +16,12 @@ const Sidebar = () => {
         );
     };
 
-    const isActive = (path: string) => {
-        return location.pathname === path || (path !== '/' && location.pathname.startsWith(path)) ?
+    const isItemActive = (item: any) => {
+        const path = item.to;
+        const isCurrentPath = location.pathname === path || (path !== '/' && location.pathname.startsWith(path));
+        const isChildActive = item.children?.some((child: any) => location.pathname === child.to || location.pathname.startsWith(child.to));
+
+        return isCurrentPath || isChildActive ?
             'bg-primary/10 text-primary font-bold' :
             'text-slate-500 hover:bg-slate-50 dark:hover:bg-zinc-800 font-medium';
     };
@@ -35,19 +39,51 @@ const Sidebar = () => {
             { to: '/super-admin/users', label: '사용자 관리', icon: 'people' },
             { to: '/super-admin/settings', label: '시스템 설정', icon: 'settings_suggest' },
         ]
-        : [
-            { to: '/', label: '대시보드', icon: 'dashboard' },
-            {
-                to: '/hr',
-                label: '인사 관리',
-                icon: 'groups',
-                children: [
-                    { to: '/hr/employees', label: '직원 관리' },
-                    { to: '/hr/attendance-log', label: '출퇴근 기록' },
-                    { to: '/hr/qr', label: '출퇴근 QR' },
-                ]
-            }
-        ];
+        : user?.role === 'USER'
+            ? [
+                { to: '/attendance', label: '출퇴근', icon: 'schedule' },
+                {
+                    to: '/mypage/mysecurity',
+                    label: '설정',
+                    icon: 'settings',
+                    children: [
+                        { to: '/mypage/mysecurity', label: '내 정보 관리' }
+                    ]
+                },
+            ]
+            : [
+                { to: '/', label: '대시보드', icon: 'dashboard' },
+                {
+                    to: '/farm/setting',
+                    label: '농장 관리',
+                    icon: 'yard',
+                    children: [
+                        { to: '/farm/setting', label: '농장 설정' },
+                        { to: '/farm/production', label: '생산 관리' },
+                        { to: '/farm/cultivation', label: '재배 관리' },
+                        { to: '/farm/yield', label: '수확 관리' },
+                        { to: '/farm/sales', label: '판매 관리' },
+                    ]
+                },
+                {
+                    to: '/hr/employees',
+                    label: '인사 관리',
+                    icon: 'groups',
+                    children: [
+                        { to: '/hr/employees', label: '직원 관리' },
+                        { to: '/hr/attendance-log', label: '출퇴근 기록' },
+                        { to: '/hr/attendance-settings', label: '출퇴근 설정' },
+                    ]
+                },
+                {
+                    to: '/mypage/mysecurity',
+                    label: '설정',
+                    icon: 'settings',
+                    children: [
+                        { to: '/mypage/mysecurity', label: '내 정보 관리' },
+                    ]
+                },
+            ];
 
 
     return (
@@ -92,20 +128,32 @@ const Sidebar = () => {
                             <div key={item.to} className="space-y-1">
                                 {hasChildren ? (
                                     <div
-                                        onClick={() => toggleMenu(item.to)}
-                                        className={`flex items-center justify-between gap-3 px-4 py-3 rounded-xl transition-all cursor-pointer ${isActive(item.to)}`}
+                                        className={`flex items-center justify-between gap-3 px-4 py-3 rounded-xl transition-all ${isItemActive(item)}`}
                                     >
-                                        <div className="flex items-center gap-3">
+                                        <Link
+                                            to={item.to}
+                                            onClick={closeSidebar}
+                                            className="flex items-center gap-3 flex-1"
+                                        >
                                             <span className="material-icons-round">{item.icon}</span>
                                             <span>{item.label}</span>
-                                        </div>
-                                        {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                                        </Link>
+                                        <button
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                toggleMenu(item.to);
+                                            }}
+                                            className="p-1 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors"
+                                        >
+                                            {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                                        </button>
                                     </div>
                                 ) : (
                                     <Link
                                         to={item.to}
                                         onClick={closeSidebar}
-                                        className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive(item.to)}`}
+                                        className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isItemActive(item)}`}
                                     >
                                         <span className="material-icons-round">{item.icon}</span>
                                         <span>{item.label}</span>

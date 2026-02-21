@@ -1,5 +1,6 @@
 package com.farm.erp.core.hr.dto;
 
+import com.farm.erp.core.hr.domain.EmploymentType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -15,9 +16,16 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class EmployeeRegistrationRequest {
     // User info
+    @jakarta.validation.constraints.NotBlank(message = "Name is required")
     private String name;
+
+    @jakarta.validation.constraints.NotBlank(message = "Email is required")
+    @jakarta.validation.constraints.Email(message = "Invalid email format")
     private String email;
+
+    @jakarta.validation.constraints.NotBlank(message = "Password is required")
     private String password;
+
     private String phoneNumber;
 
     // Profile info
@@ -26,4 +34,9 @@ public class EmployeeRegistrationRequest {
     private String bankAccount;
     private String accountHolder;
     private Integer paymentDate;
+
+    @jakarta.validation.constraints.NotNull(message = "Employment type is required")
+    private EmploymentType employmentType; // 정규직/비정규직(알바)
+
+    private com.farm.erp.core.auth.domain.User.Role role;
 }

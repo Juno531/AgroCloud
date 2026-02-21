@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Edit, Trash2, User, Phone, Calendar, DollarSign, CreditCard, Mail, Lock } from 'lucide-react';
+import { Edit, Trash2, User, Phone, Calendar, DollarSign, CreditCard, Mail, Lock, Search } from 'lucide-react';
 import { EmployeeService } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import EmployeeForm from './EmployeeForm';
@@ -23,6 +23,9 @@ const EmployeeList = () => {
         onConfirm: () => { },
         variant: 'danger' as 'danger' | 'info' | 'warning'
     });
+    const [fetchError, setFetchError] = useState<string | null>(null);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filterType, setFilterType] = useState<'ALL' | 'FULL_TIME' | 'PART_TIME'>('ALL');
 
     useEffect(() => {
         fetchEmployees();
@@ -36,22 +39,28 @@ const EmployeeList = () => {
     }, [user?.farmId, user?.companyId, user?.companyCode]);
 
     const fetchEmployees = async () => {
-        if (!user?.farmId && !user?.companyId && !user?.companyCode) {
+        // Only guard if absolutely no identifying info is available for fetching
+        if (user?.role !== 'ADMIN' && !user?.farmId && !user?.companyId && !user?.companyCode) {
             setLoading(false);
             return;
         }
 
         setLoading(true);
+        setFetchError(null);
         try {
             let response;
-            if (user.companyCode) {
+            if (user?.companyCode) {
                 response = await EmployeeService.getEmployeesByCompany(user.companyCode);
-            } else {
+            } else if (user?.farmId) {
                 response = await EmployeeService.getEmployeesByFarm(user.farmId);
+            } else {
+                // If admin but no farm/company code yet assigned in context/session
+                response = await EmployeeService.getAllEmployees();
             }
             setEmployees(response.data);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to fetch employees:', error);
+            setFetchError(error.message || '직원 목록을 불러오는 중 오류가 발생했습니다.');
         } finally {
             setLoading(false);
         }
@@ -103,10 +112,44 @@ const EmployeeList = () => {
         return new Date(dateString).toLocaleDateString('ko-KR');
     };
 
+    const filteredEmployees = employees.filter((emp: EmployeeProfile) => {
+        const matchesSearch = (emp.name?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (emp.email?.toLowerCase().includes(searchTerm.toLowerCase()));
+
+        const empType = emp.employmentType || 'FULL_TIME';
+        const matchesFilter = filterType === 'ALL' || empType === filterType;
+
+        return matchesSearch && matchesFilter;
+    });
+
     if (loading) {
         return (
             <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--color-text-secondary)' }}>
-                로딩 중...
+                <div className="animate-spin inline-block w-8 h-8 border-4 border-current border-t-transparent text-primary rounded-full mb-4" role="status">
+                    <span className="sr-only">Loading...</span>
+                </div>
+                <div>데이터를 불러오는 중...</div>
+            </div>
+        );
+    }
+
+    if (fetchError) {
+        return (
+            <div style={{
+                backgroundColor: 'var(--color-surface)',
+                padding: '3rem',
+                borderRadius: 'var(--radius-lg)',
+                textAlign: 'center',
+                border: '1px solid var(--color-danger)',
+                color: 'var(--color-danger)'
+            }}>
+                <p style={{ marginBottom: '1rem' }}>{fetchError}</p>
+                <button
+                    onClick={fetchEmployees}
+                    className="btn btn-primary"
+                >
+                    다시 시도
+                </button>
             </div>
         );
     }
@@ -142,22 +185,109 @@ const EmployeeList = () => {
                 </button>
             </div>
 
+            {/* Search and Filter Bar */}
+            <div style={{
+                display: 'flex',
+                flexDirection: isMobile ? 'column' : 'row',
+                gap: '1rem',
+                marginBottom: 'var(--spacing-lg)',
+                backgroundColor: 'var(--color-surface)',
+                padding: '1rem',
+                borderRadius: 'var(--radius-lg)',
+                border: '1px solid var(--color-border)',
+                boxShadow: 'var(--shadow-sm)'
+            }}>
+                {/* Search Input */}
+                <div style={{ position: 'relative', flex: 1 }}>
+                    <Search size={18} style={{
+                        position: 'absolute',
+                        left: '0.75rem',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        color: 'var(--color-text-secondary)'
+                    }} />
+                    <input
+                        type="text"
+                        placeholder="이름 또는 이메일로 검색..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        style={{
+                            width: '100%',
+                            padding: '0.625rem 0.75rem 0.625rem 2.5rem',
+                            borderRadius: 'var(--radius-md)',
+                            border: '1px solid var(--color-border)',
+                            backgroundColor: 'var(--color-background)',
+                            fontSize: '0.875rem'
+                        }}
+                    />
+                </div>
+
+                {/* Filter Tabs */}
+                <div style={{
+                    display: 'flex',
+                    backgroundColor: 'var(--color-background)',
+                    padding: '0.25rem',
+                    borderRadius: 'var(--radius-md)',
+                    border: '1px solid var(--color-border)',
+                    gap: '0.25rem'
+                }}>
+                    {(['ALL', 'FULL_TIME', 'PART_TIME'] as const).map((type) => (
+                        <button
+                            key={type}
+                            onClick={() => setFilterType(type)}
+                            style={{
+                                padding: '0.4rem 1rem',
+                                borderRadius: 'var(--radius-sm)',
+                                border: 'none',
+                                cursor: 'pointer',
+                                fontSize: '0.875rem',
+                                fontWeight: filterType === type ? 600 : 400,
+                                backgroundColor: filterType === type ? 'var(--color-surface)' : 'transparent',
+                                color: filterType === type ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+                                boxShadow: filterType === type ? 'var(--shadow-sm)' : 'none',
+                                transition: 'all 0.2s ease',
+                                whiteSpace: 'nowrap'
+                            }}
+                        >
+                            {type === 'ALL' ? '전체' : type === 'FULL_TIME' ? '정규직' : '비정규직(알바)'}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
             {/* Employee List */}
-            {employees.length === 0 ? (
+            {filteredEmployees.length === 0 ? (
                 <div style={{
                     backgroundColor: 'var(--color-surface)',
                     padding: isMobile ? '2rem 1rem' : '3rem',
                     borderRadius: 'var(--radius-lg)',
                     textAlign: 'center',
-                    color: 'var(--color-text-secondary)'
+                    color: 'var(--color-text-secondary)',
+                    border: '1px solid var(--color-border)'
                 }}>
-                    <User size={isMobile ? 40 : 48} style={{ margin: '0 auto 1rem', opacity: 0.5 }} />
-                    <p>등록된 직원이 없습니다</p>
+                    <Search size={isMobile ? 40 : 48} style={{ margin: '0 auto 1rem', opacity: 0.3 }} />
+                    <p>{searchTerm || filterType !== 'ALL' ? '검색 결과가 없습니다' : '등록된 직원이 없습니다'}</p>
+                    {(searchTerm || filterType !== 'ALL') && (
+                        <button
+                            onClick={() => { setSearchTerm(''); setFilterType('ALL'); }}
+                            style={{
+                                marginTop: '1rem',
+                                color: 'var(--color-primary)',
+                                background: 'none',
+                                border: 'none',
+                                cursor: 'pointer',
+                                fontWeight: 500,
+                                textDecoration: 'underline'
+                            }}
+                        >
+                            필터 초기화
+                        </button>
+                    )}
                 </div>
             ) : isMobile ? (
                 // Mobile Card Layout
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    {employees.map((employee) => (
+                    {filteredEmployees.map((employee: EmployeeProfile) => (
                         <div
                             key={employee.id}
                             style={{
@@ -194,13 +324,28 @@ const EmployeeList = () => {
                                     </div>
                                     <div style={{ display: 'flex', flexDirection: 'column' }}>
                                         <strong style={{ fontSize: '1.125rem' }}>{employee.name || '미등록'}</strong>
-                                        <span style={{
-                                            fontSize: '0.75rem',
-                                            color: employee.role === 'ADMIN' ? 'var(--color-warning)' : 'var(--color-text-secondary)',
-                                            fontWeight: employee.role === 'ADMIN' ? 600 : 400
-                                        }}>
-                                            {employee.role === 'ADMIN' ? '관리자' : '직원'}
-                                        </span>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.25rem', flexWrap: 'wrap' }}>
+                                            <span style={{
+                                                fontSize: '0.75rem',
+                                                color: employee.role === 'ADMIN' ? 'var(--color-warning)' : 'var(--color-text-secondary)',
+                                                fontWeight: employee.role === 'ADMIN' ? 600 : 400
+                                            }}>
+                                                {employee.role === 'ADMIN' ? '관리자' : '직원'}
+                                            </span>
+                                            {employee.role !== 'ADMIN' && (
+                                                <span style={{
+                                                    fontSize: '0.7rem',
+                                                    fontWeight: 600,
+                                                    padding: '0.1rem 0.5rem',
+                                                    borderRadius: '999px',
+                                                    backgroundColor: employee.employmentType === 'PART_TIME' ? '#fef3c7' : '#dbeafe',
+                                                    color: employee.employmentType === 'PART_TIME' ? '#92400e' : '#1e40af',
+                                                    border: `1px solid ${employee.employmentType === 'PART_TIME' ? '#fcd34d' : '#93c5fd'}`
+                                                }}>
+                                                    {employee.employmentType === 'PART_TIME' ? '⏰ 비정규직(알바)' : '🏢 정규직'}
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                                 <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -299,7 +444,7 @@ const EmployeeList = () => {
                                     <th style={{ padding: '1rem', textAlign: 'left', fontWeight: 600 }}>계정 정보</th>
                                     <th style={{ padding: '1rem', textAlign: 'left', fontWeight: 600 }}>연락처</th>
                                     <th style={{ padding: '1rem', textAlign: 'left', fontWeight: 600 }}>입사일</th>
-                                    <th style={{ padding: '1rem', textAlign: 'left', fontWeight: 600 }}>시급</th>
+                                    <th style={{ padding: '1rem', textAlign: 'left', fontWeight: 600 }}>급여(기본급/시급)</th>
                                     <th style={{ padding: '1rem', textAlign: 'left', fontWeight: 600 }}>계좌번호</th>
                                     <th style={{ padding: '1rem', textAlign: 'left', fontWeight: 600 }}>예금주</th>
                                     <th style={{ padding: '1rem', textAlign: 'left', fontWeight: 600 }}>급여지급일</th>
@@ -307,7 +452,7 @@ const EmployeeList = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {employees.map((employee) => (
+                                {filteredEmployees.map((employee: EmployeeProfile) => (
                                     <tr
                                         key={employee.id}
                                         style={{
@@ -332,15 +477,36 @@ const EmployeeList = () => {
                                                 }}>
                                                     {(employee.name || '?').charAt(0)}
                                                 </div>
-                                                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                    <strong>{employee.name || '미등록'}</strong>
-                                                    <span style={{
-                                                        fontSize: '0.75rem',
-                                                        color: employee.role === 'ADMIN' ? 'var(--color-warning)' : 'var(--color-text-secondary)',
-                                                        fontWeight: employee.role === 'ADMIN' ? 600 : 400
-                                                    }}>
-                                                        {employee.role === 'ADMIN' ? '관리자' : '직원'}
-                                                    </span>
+                                                <div style={{ display: 'flex', flexDirection: 'column', minWidth: '0' }}>
+                                                    <strong style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                        {employee.name || '미등록'}
+                                                    </strong>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.2rem', }}>
+                                                        <span style={{
+                                                            fontSize: '0.75rem',
+                                                            color: employee.role === 'ADMIN' ? 'var(--color-warning)' : 'var(--color-text-secondary)',
+                                                            fontWeight: employee.role === 'ADMIN' ? 600 : 400,
+                                                            whiteSpace: 'nowrap',
+                                                            flexShrink: 0
+                                                        }}>
+                                                            {employee.role === 'ADMIN' ? '관리자' : '직원'}
+                                                        </span>
+                                                        {employee.role !== 'ADMIN' && (
+                                                            <span style={{
+                                                                fontSize: '0.7rem',
+                                                                fontWeight: 600,
+                                                                padding: '0.1rem 0.45rem',
+                                                                borderRadius: '999px',
+                                                                backgroundColor: employee.employmentType === 'PART_TIME' ? '#fef3c7' : '#dbeafe',
+                                                                color: employee.employmentType === 'PART_TIME' ? '#92400e' : '#1e40af',
+                                                                border: `1px solid ${employee.employmentType === 'PART_TIME' ? '#fcd34d' : '#93c5fd'}`,
+                                                                whiteSpace: 'nowrap',
+                                                                flexShrink: 0
+                                                            }}>
+                                                                {employee.employmentType === 'PART_TIME' ? '비정규직(알바)' : '정규직'}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </td>
@@ -386,11 +552,24 @@ const EmployeeList = () => {
                                         <td style={{ padding: '1rem' }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                                 <CreditCard size={16} style={{ color: 'var(--color-text-secondary)' }} />
-                                                {employee.role === 'USER' ? employee.bankAccount : '-'}
+                                                {employee.role === 'USER' ? (
+                                                    <>
+                                                        {employee.bankAccount}
+                                                        {employee.accountHolder && (
+                                                            <span style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>
+                                                                ({employee.accountHolder})
+                                                            </span>
+                                                        )}
+                                                    </>
+                                                ) : '-'}
                                             </div>
                                         </td>
-                                        <td style={{ padding: '1rem' }}>{employee.role === 'USER' ? employee.accountHolder : '-'}</td>
-                                        <td style={{ padding: '1rem' }}>{employee.role === 'USER' ? `매월 ${employee.paymentDate}일` : '-'}</td>
+                                        <td style={{ padding: '1rem' }}>
+                                            {employee.role === 'USER' ? employee.accountHolder : '-'}
+                                        </td>
+                                        <td style={{ padding: '1rem' }}>
+                                            {employee.role === 'USER' && employee.paymentDate ? `매월 ${employee.paymentDate}일` : '-'}
+                                        </td>
                                         <td style={{ padding: '1rem' }}>
                                             <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
                                                 <button

@@ -7,6 +7,12 @@ interface Field {
     name: string;
     area: number;
     location?: string;
+    latitude?: number;
+    longitude?: number;
+    attendanceRadius?: number;
+    attendanceWifiSsid?: string | null;
+    attendanceWifiBssid?: string | null;
+    attendanceIpAddress?: string | null;
 }
 
 interface Crop {
@@ -18,7 +24,7 @@ interface Crop {
 interface FarmContextType {
     fields: Field[];
     crops: Crop[];
-    addField: (field: { name: string; size: string; location?: string }) => Promise<void>;
+    addField: (field: { name: string; size: string; location?: string; latitude?: string; longitude?: string; attendanceRadius?: string; attendanceWifiSsid?: string; attendanceWifiBssid?: string; attendanceIpAddress?: string }) => Promise<void>;
     removeField: (id: number) => Promise<void>;
     addCrop: (crop: { name: string; type?: string }) => Promise<void>;
     removeCrop: (id: number) => Promise<void>;
@@ -71,7 +77,13 @@ export const FarmProvider: React.FC<FarmProviderProps> = ({ children }) => {
                 id: f.id,
                 name: f.name,
                 area: f.area,
-                location: f.location
+                location: f.location,
+                latitude: f.latitude,
+                longitude: f.longitude,
+                attendanceRadius: f.attendanceRadius,
+                attendanceWifiSsid: f.attendanceWifiSsid,
+                attendanceWifiBssid: f.attendanceWifiBssid,
+                attendanceIpAddress: f.attendanceIpAddress
             })));
 
             setCrops(cropsData.map((c: any) => ({
@@ -91,15 +103,24 @@ export const FarmProvider: React.FC<FarmProviderProps> = ({ children }) => {
         fetchData();
     }, [user]);
 
-    const addField = async (field: { name: string; size: string; location?: string }) => {
+    const addField = async (field: { name: string; size: string; location?: string; latitude?: string; longitude?: string; attendanceRadius?: string; attendanceWifiSsid?: string; attendanceWifiBssid?: string; attendanceIpAddress?: string }) => {
         try {
             const sizeNum = parseFloat(field.size) || 0;
+            const latNum = field.latitude ? parseFloat(field.latitude) : undefined;
+            const lonNum = field.longitude ? parseFloat(field.longitude) : undefined;
+            const radiusNum = field.attendanceRadius ? parseInt(field.attendanceRadius) : undefined;
 
             // Save to backend first and get the real ID
             const response = await FarmService.createFarm({
                 name: field.name,
                 area: sizeNum,
-                location: field.location || "Unknown"
+                location: field.location || "Unknown",
+                latitude: latNum,
+                longitude: lonNum,
+                attendanceRadius: radiusNum,
+                attendanceWifiSsid: field.attendanceWifiSsid,
+                attendanceWifiBssid: field.attendanceWifiBssid,
+                attendanceIpAddress: field.attendanceIpAddress
             });
 
             // Use the real ID from backend response
@@ -108,7 +129,13 @@ export const FarmProvider: React.FC<FarmProviderProps> = ({ children }) => {
                 id: createdFarm.id,  // Use real ID from backend
                 name: createdFarm.name,
                 area: createdFarm.area,
-                location: createdFarm.location
+                location: createdFarm.location,
+                latitude: createdFarm.latitude,
+                longitude: createdFarm.longitude,
+                attendanceRadius: createdFarm.attendanceRadius,
+                attendanceWifiSsid: createdFarm.attendanceWifiSsid,
+                attendanceWifiBssid: createdFarm.attendanceWifiBssid,
+                attendanceIpAddress: createdFarm.attendanceIpAddress
             };
 
             // Update UI with real data

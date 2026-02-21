@@ -60,10 +60,23 @@ public interface FarmRepository extends JpaRepository<Farm, Long> {
     /**
      * Find farms by user ID
      */
+    /**
+     * Find farms by user ID
+     */
     List<Farm> findByUserId(Long userId);
 
     /**
+     * Find farms by user ID and status
+     */
+    List<Farm> findByUserIdAndStatus(Long userId, FarmStatus status);
+
+    /**
      * Find farm by ID and user ID (권한 체크용)
+     */
+    Optional<Farm> findByIdAndUserIdAndStatus(Long id, Long userId, FarmStatus status);
+
+    /**
+     * Find farm by ID and user ID (ignoring status)
      */
     Optional<Farm> findByIdAndUserId(Long id, Long userId);
 
@@ -71,4 +84,10 @@ public interface FarmRepository extends JpaRepository<Farm, Long> {
      * Check if farm exists by name and user ID
      */
     boolean existsByNameAndUserId(String name, Long userId);
+
+    /**
+     * Find farms by company code
+     */
+    @Query("SELECT f FROM Farm f WHERE f.user.company.code = :companyCode AND f.status = :status")
+    List<Farm> findByCompanyCodeAndStatus(@Param("companyCode") String companyCode, @Param("status") FarmStatus status);
 }

@@ -1,10 +1,11 @@
+import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import BottomNav from './BottomNav';
 import { LayoutProvider } from '../../context/LayoutContext';
 
 interface LayoutProps {
-    children: React.ReactNode;
+    children?: React.ReactNode;
 }
 
 const LayoutContent: React.FC<LayoutProps> = ({ children }) => {
@@ -14,7 +15,7 @@ const LayoutContent: React.FC<LayoutProps> = ({ children }) => {
             <main className="flex-1 flex flex-col overflow-hidden w-full relative">
                 <Header />
                 <div className="flex-1 overflow-auto pb-20 md:pb-0">
-                    {children}
+                    {children ? children : <Outlet />}
                 </div>
                 <BottomNav />
             </main>

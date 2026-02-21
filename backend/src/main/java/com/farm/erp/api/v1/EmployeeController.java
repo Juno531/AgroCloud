@@ -45,7 +45,7 @@ public class EmployeeController {
     @PostMapping
     public ResponseEntity<EmployeeProfileResponse> registerEmployee(
             @org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails,
-            @RequestBody com.farm.erp.core.hr.dto.EmployeeRegistrationRequest request) {
+            @jakarta.validation.Valid @RequestBody com.farm.erp.core.hr.dto.EmployeeRegistrationRequest request) {
 
         com.farm.erp.core.auth.domain.User adminUser = userRepository.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new RuntimeException("Admin user not found"));
@@ -57,7 +57,7 @@ public class EmployeeController {
     @PutMapping("/{id}")
     public ResponseEntity<EmployeeProfileResponse> updateEmployee(
             @PathVariable Long id,
-            @RequestBody EmployeeProfileRequest request) {
+            @jakarta.validation.Valid @RequestBody EmployeeProfileRequest request) {
         return ResponseEntity.ok(employeeService.updateEmployee(id, request));
     }
 

@@ -1,5 +1,6 @@
 package com.farm.erp.api.v1.dto;
 
+import com.farm.erp.core.hr.domain.EmploymentType;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -21,4 +22,6 @@ public class EmployeeProfileResponse {
     private BigDecimal hourlyWage;
     private String employeeCode;
     private String password;
+    private String role; // Add role field to send to frontend
+    private EmploymentType employmentType; // 정규직/비정규직(알바)
 }

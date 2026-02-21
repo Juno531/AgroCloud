@@ -1,8 +1,11 @@
 import React from 'react';
 import { useLayout } from '../../context/LayoutContext';
+import { useAuth } from '../../context/AuthContext';
 
 const Dashboard = () => {
-    const { toggleSidebar, setTitle } = useLayout();
+    const { setTitle } = useLayout();
+    const { user } = useAuth();
+    const isPartTime = user?.employmentType === 'PART_TIME';
 
     React.useEffect(() => {
         setTitle('대시보드');
@@ -19,8 +22,8 @@ const Dashboard = () => {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6 w-full">
-                    <div className="col-span-1 md:col-span-2 bg-gradient-to-br from-blue-500 to-blue-700 dark:from-zinc-800 dark:to-zinc-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl shadow-blue-500/10 relative overflow-hidden group">
+                <div className={`grid grid-cols-1 md:grid-cols-2 ${isPartTime ? 'lg:grid-cols-1' : 'lg:grid-cols-3'} gap-6 mb-6 w-full`}>
+                    <div className={`col-span-1 md:col-span-2 ${isPartTime ? 'lg:col-span-1' : ''} bg-gradient-to-br from-blue-500 to-blue-700 dark:from-zinc-800 dark:to-zinc-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl shadow-blue-500/10 relative overflow-hidden group`}>
                         <div className="relative z-10 flex flex-col h-full justify-between">
                             <div className="flex justify-between items-start">
                                 <div>
@@ -76,81 +79,85 @@ const Dashboard = () => {
                         <div className="absolute left-1/2 -bottom-24 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl pointer-events-none"></div>
                     </div>
 
-                    <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 sm:p-8 shadow-xl shadow-slate-200/50 dark:shadow-none border border-primary/10 flex flex-col justify-between">
-                        <div className="flex justify-between items-center mb-8">
-                            <h3 className="font-bold text-xl text-slate-800 dark:text-white">자원 현황</h3>
-                            <button className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors">
-                                <span className="material-icons-round">more_horiz</span>
+                    {!isPartTime && (
+                        <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 sm:p-8 shadow-xl shadow-slate-200/50 dark:shadow-none border border-primary/10 flex flex-col justify-between">
+                            <div className="flex justify-between items-center mb-8">
+                                <h3 className="font-bold text-xl text-slate-800 dark:text-white">자원 현황</h3>
+                                <button className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors">
+                                    <span className="material-icons-round">more_horiz</span>
+                                </button>
+                            </div>
+                            <div className="space-y-8 flex-1">
+                                <div>
+                                    <div className="flex justify-between items-end mb-3">
+                                        <div>
+                                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">NPK 비료</p>
+                                            <p className="text-2xl font-bold text-slate-800 dark:text-white mt-1">420 kg</p>
+                                        </div>
+                                        <span className="text-amber-500 font-extrabold text-sm">22%</span>
+                                    </div>
+                                    <div className="w-full h-4 bg-slate-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                                        <div className="h-full bg-gradient-to-r from-amber-400 to-amber-600 rounded-full transition-all duration-1000 ease-out shadow-sm" style={{ width: '22%' }}></div>
+                                    </div>
+                                    <p className="text-[11px] text-amber-500 font-bold mt-3 flex items-center gap-2 bg-amber-50 dark:bg-amber-900/10 w-fit px-3 py-1 rounded-full">
+                                        <span className="material-icons-round text-sm">warning</span> 보충 필요함
+                                    </p>
+                                </div>
+                                <div>
+                                    <div className="flex justify-between items-end mb-3">
+                                        <div>
+                                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">농업용수</p>
+                                            <p className="text-2xl font-bold text-slate-800 dark:text-white mt-1">12,500 L</p>
+                                        </div>
+                                        <span className="text-primary font-extrabold text-sm">78%</span>
+                                    </div>
+                                    <div className="w-full h-4 bg-slate-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                                        <div className="h-full bg-gradient-to-r from-primary to-green-600 rounded-full transition-all duration-1000 ease-out shadow-sm" style={{ width: '78%' }}></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button className="w-full mt-10 py-4 bg-slate-50 dark:bg-zinc-800/50 text-slate-600 dark:text-slate-300 font-bold rounded-2xl hover:bg-primary/10 hover:text-primary border-2 border-transparent hover:border-primary/20 transition-all text-sm group">
+                                재고 관리 시스템 <span className="material-icons-round text-xs ml-1 align-middle group-hover:translate-x-1 transition-transform">arrow_forward</span>
                             </button>
                         </div>
-                        <div className="space-y-8 flex-1">
-                            <div>
-                                <div className="flex justify-between items-end mb-3">
-                                    <div>
-                                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">NPK 비료</p>
-                                        <p className="text-2xl font-bold text-slate-800 dark:text-white mt-1">420 kg</p>
-                                    </div>
-                                    <span className="text-amber-500 font-extrabold text-sm">22%</span>
-                                </div>
-                                <div className="w-full h-4 bg-slate-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-                                    <div className="h-full bg-gradient-to-r from-amber-400 to-amber-600 rounded-full transition-all duration-1000 ease-out shadow-sm" style={{ width: '22%' }}></div>
-                                </div>
-                                <p className="text-[11px] text-amber-500 font-bold mt-3 flex items-center gap-2 bg-amber-50 dark:bg-amber-900/10 w-fit px-3 py-1 rounded-full">
-                                    <span className="material-icons-round text-sm">warning</span> 보충 필요함
-                                </p>
-                            </div>
-                            <div>
-                                <div className="flex justify-between items-end mb-3">
-                                    <div>
-                                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">농업용수</p>
-                                        <p className="text-2xl font-bold text-slate-800 dark:text-white mt-1">12,500 L</p>
-                                    </div>
-                                    <span className="text-primary font-extrabold text-sm">78%</span>
-                                </div>
-                                <div className="w-full h-4 bg-slate-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-                                    <div className="h-full bg-gradient-to-r from-primary to-green-600 rounded-full transition-all duration-1000 ease-out shadow-sm" style={{ width: '78%' }}></div>
-                                </div>
-                            </div>
-                        </div>
-                        <button className="w-full mt-10 py-4 bg-slate-50 dark:bg-zinc-800/50 text-slate-600 dark:text-slate-300 font-bold rounded-2xl hover:bg-primary/10 hover:text-primary border-2 border-transparent hover:border-primary/20 transition-all text-sm group">
-                            재고 관리 시스템 <span className="material-icons-round text-xs ml-1 align-middle group-hover:translate-x-1 transition-transform">arrow_forward</span>
-                        </button>
-                    </div>
+                    )}
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full items-start">
-                    <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 sm:p-8 shadow-xl shadow-slate-200/50 dark:shadow-none border border-primary/10">
-                        <div className="flex justify-between items-center mb-8">
-                            <h3 className="font-bold text-xl text-slate-800 dark:text-white">일일 생산량</h3>
-                            <div className="flex gap-2">
-                                <span className="bg-primary/10 text-primary text-[10px] font-extrabold px-3 py-1.5 rounded-full tracking-wider uppercase">정상</span>
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4 sm:gap-6">
-                            {[
-                                { label: '수확 목표', value: '94%', offset: '12.8' },
-                                { label: '품질 등급', value: '81%', offset: '40.5' },
-                                { label: '자원 효율', value: '88%', offset: '25.6' }
-                            ].map((item, idx) => (
-                                <div key={idx} className="flex flex-col items-center p-6 bg-slate-50 dark:bg-zinc-800/40 rounded-3xl hover:bg-primary/5 transition-all group border border-transparent hover:border-primary/10">
-                                    <div className="relative flex items-center justify-center mb-4 scale-110 sm:scale-125">
-                                        <svg className="w-16 h-16 -rotate-90">
-                                            <circle className="text-slate-200 dark:text-zinc-700" cx="32" cy="32" fill="transparent" r="28" stroke="currentColor" strokeWidth="6"></circle>
-                                            <circle className="text-primary transition-all duration-1000 ease-out" cx="32" cy="32" fill="transparent" r="28" stroke="currentColor" strokeDasharray="175.9" strokeDashoffset={item.offset} strokeWidth="6" strokeLinecap="round"></circle>
-                                        </svg>
-                                        <span className="absolute text-[13px] font-black text-slate-800 dark:text-white">{item.value}</span>
-                                    </div>
-                                    <span className="text-[10px] font-black text-slate-400 uppercase text-center mt-2 group-hover:text-primary transition-colors">{item.label}</span>
+                <div className={`grid grid-cols-1 ${isPartTime ? 'lg:grid-cols-1' : 'lg:grid-cols-3'} gap-6 w-full items-start`}>
+                    {!isPartTime && (
+                        <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 sm:p-8 shadow-xl shadow-slate-200/50 dark:shadow-none border border-primary/10">
+                            <div className="flex justify-between items-center mb-8">
+                                <h3 className="font-bold text-xl text-slate-800 dark:text-white">일일 생산량</h3>
+                                <div className="flex gap-2">
+                                    <span className="bg-primary/10 text-primary text-[10px] font-extrabold px-3 py-1.5 rounded-full tracking-wider uppercase">정상</span>
                                 </div>
-                            ))}
-                            <div className="flex flex-col items-center justify-center p-6 bg-gradient-to-br from-primary to-green-600 text-white rounded-3xl cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-primary/30 group">
-                                <span className="material-icons-round text-4xl mb-2 group-hover:rotate-12 transition-transform">insights</span>
-                                <span className="text-[10px] font-black uppercase text-center leading-tight">상세<br />통계 리포트</span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4 sm:gap-6">
+                                {[
+                                    { label: '수확 목표', value: '94%', offset: '12.8' },
+                                    { label: '품질 등급', value: '81%', offset: '40.5' },
+                                    { label: '자원 효율', value: '88%', offset: '25.6' }
+                                ].map((item, idx) => (
+                                    <div key={idx} className="flex flex-col items-center p-6 bg-slate-50 dark:bg-zinc-800/40 rounded-3xl hover:bg-primary/5 transition-all group border border-transparent hover:border-primary/10">
+                                        <div className="relative flex items-center justify-center mb-4 scale-110 sm:scale-125">
+                                            <svg className="w-16 h-16 -rotate-90">
+                                                <circle className="text-slate-200 dark:text-zinc-700" cx="32" cy="32" fill="transparent" r="28" stroke="currentColor" strokeWidth="6"></circle>
+                                                <circle className="text-primary transition-all duration-1000 ease-out" cx="32" cy="32" fill="transparent" r="28" stroke="currentColor" strokeDasharray="175.9" strokeDashoffset={item.offset} strokeWidth="6" strokeLinecap="round"></circle>
+                                            </svg>
+                                            <span className="absolute text-[13px] font-black text-slate-800 dark:text-white">{item.value}</span>
+                                        </div>
+                                        <span className="text-[10px] font-black text-slate-400 uppercase text-center mt-2 group-hover:text-primary transition-colors">{item.label}</span>
+                                    </div>
+                                ))}
+                                <div className="flex flex-col items-center justify-center p-6 bg-gradient-to-br from-primary to-green-600 text-white rounded-3xl cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-primary/30 group">
+                                    <span className="material-icons-round text-4xl mb-2 group-hover:rotate-12 transition-transform">insights</span>
+                                    <span className="text-[10px] font-black uppercase text-center leading-tight">상세<br />통계 리포트</span>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    )}
 
-                    <div className="lg:col-span-2 bg-white dark:bg-zinc-900 rounded-3xl p-6 sm:p-8 shadow-xl shadow-slate-200/50 dark:shadow-none border border-primary/10 w-full overflow-hidden">
+                    <div className={`${isPartTime ? 'lg:col-span-1' : 'lg:col-span-2'} bg-white dark:bg-zinc-900 rounded-3xl p-6 sm:p-8 shadow-xl shadow-slate-200/50 dark:shadow-none border border-primary/10 w-full overflow-hidden`}>
                         <div className="flex justify-between items-center mb-8">
                             <h3 className="font-bold text-xl text-slate-800 dark:text-white">오늘의 농작업</h3>
                             <button className="bg-primary/10 text-primary font-bold text-xs px-4 py-2 rounded-full hover:bg-primary hover:text-white transition-all">전체 일정</button>

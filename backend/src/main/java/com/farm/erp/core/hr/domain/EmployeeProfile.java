@@ -49,6 +49,10 @@ public class EmployeeProfile {
     @Column(name = "hourly_wage", precision = 10, scale = 2)
     private BigDecimal hourlyWage; // 시급
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "employment_type")
+    private EmploymentType employmentType;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -69,7 +73,7 @@ public class EmployeeProfile {
     @Builder
     public EmployeeProfile(User user, Farm farm, String phone, LocalDate hireDate,
             String bankAccount, String accountHolder,
-            Integer paymentDate, BigDecimal hourlyWage, String employeeCode) {
+            Integer paymentDate, BigDecimal hourlyWage, String employeeCode, EmploymentType employmentType) {
         this.user = user;
         this.farm = farm;
         this.phone = phone;
@@ -79,15 +83,21 @@ public class EmployeeProfile {
         this.paymentDate = paymentDate;
         this.hourlyWage = hourlyWage;
         this.employeeCode = employeeCode;
+        this.employmentType = employmentType;
     }
 
     public void updateProfile(String phone, LocalDate hireDate, String bankAccount,
-            String accountHolder, Integer paymentDate, BigDecimal hourlyWage) {
+            String accountHolder, Integer paymentDate, BigDecimal hourlyWage, EmploymentType employmentType) {
         this.phone = phone;
         this.hireDate = hireDate;
         this.bankAccount = bankAccount;
         this.accountHolder = accountHolder;
         this.paymentDate = paymentDate;
         this.hourlyWage = hourlyWage;
+        this.employmentType = employmentType;
+    }
+
+    public void unassignFarm() {
+        this.farm = null;
     }
 }

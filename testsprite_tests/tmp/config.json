@@ -1,0 +1,20 @@
+{
+  "status": "commited",
+  "type": "backend",
+  "scope": "codebase",
+  "localEndpoint": "http://localhost:5173",
+  "backendAuthType": "basic token",
+  "backendUsername": "sp@sp.sp",
+  "backendPassword": "1234",
+  "executionArgs": {
+    "projectName": "FarmErp",
+    "projectPath": "c:\\AntiProject\\FarmErp",
+    "testIds": [],
+    "additionalInstruction": "",
+    "envs": {
+      "API_KEY": "sk-user-H-rTr75t7lc2N4ddBRJvxxFS9ydbK4sQQsoJ8IENOUsXG6aUsEX2KIxnMwreiUbj44UAewVw0fetb4algCOF0cC76yeRmKEEJfK6LOSMLFFl3YtK8LV9ONKoqgOfKW-tiUI"
+    }
+  },
+  "serverPort": 58595,
+  "proxy": "http://c7276368-712b-4b7c-8d7d-8663e37d9d8a:eFCVlgRP3pTofxdzcsU0TSbgobnB593a@tun.testsprite.com:8080"
+}

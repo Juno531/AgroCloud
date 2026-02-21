@@ -31,4 +31,16 @@ public class FarmRequest {
     private String ownerName;
 
     private String contactNumber;
+
+    private BigDecimal latitude;
+
+    private BigDecimal longitude;
+
+    private Integer attendanceRadius;
+
+    private String attendanceWifiSsid;
+
+    private String attendanceWifiBssid;
+
+    private String attendanceIpAddress;
 }

@@ -1,0 +1,57 @@
+### 1. 전역 예외 처리기 (Global Exception Handler)
+
+가장 먼저 발생한 에러의 정확한 원인(Stack Trace)을 파악해야 합니다.
+
+- **`@RestControllerAdvice` 또는 `@ExceptionHandler` 클래스 확인:** 클라이언트에게 400, 500 에러 포맷이 어떻게 변환되어 나가는지 디버깅합니다.
+- 에러 발생 시 서버 콘솔이나 로그 파일(
+    
+    ![](vscode-file://vscode-app/c:/Antigravity/resources/app/extensions/theme-symbols/src/icons/files/document.svg)
+    
+    run.log 또는 
+    
+    ![](vscode-file://vscode-app/c:/Antigravity/resources/app/extensions/theme-symbols/src/icons/files/document.svg)
+    
+    backend_logs.txt)에 에러의 근본 원인(Root Cause)이 남도록 로깅(e.g., `log.error()`)이 명확하게 되어 있는지 체크합니다.
+
+### 2. 컨트롤러 (Controller)와 DTO 객체 검증
+
+API 진입점부터 데이터가 올바르게 들어오는지 확인합니다.
+
+- **Request Payload / DTO 유효성 검사:** `@Valid`, `@NotBlank`, `@NotNull` 등의 어노테이션이 제대로 동작하는지, 검증 실패 시 어떤 메시지를 반환하는지 체크합니다.
+- **파라미터 바인딩:** 프론트엔드에서 보낸 JSON 데이터 명칭과 백엔드 DTO의 필드명이 정확히 일치하는지(ex. `companyCode`, `employeeType`) 확인합니다.
+
+### 3. 비즈니스 로직 (Service Layer)
+
+데이터 처리의 핵심 부분으로 논리적 결함이나 예외 발생 처리를 확인합니다.
+
+- **비즈니스 검증 단계:** 출퇴근 시 DB 위치와 현재 좌표 간의 거리 계산 공식이나 조건문(`if`)이 의도한 대로 동작하는지 디버그 모드(Break point)로 추적합니다.
+- **트랜잭션(`@Transactional`):** 중간에 에러가 났을 때 데이터가 정상적으로 롤백(Rollback)되는지 파악합니다. 특히 농장 삭제(하드 딜리트) 시나리오처럼 여러 엔티티를 수정 및 삭제할 때 중요합니다.
+
+### 4. 데이터베이스 및 영속성 (Repository / Entity Layer)
+
+JPA 혹은 DB 제약 조건으로 인해 에러가 나는 영역입니다.
+
+- **고유 제약 조건 (Unique Constraints):** 로그인 시 Refresh Token 중복 저장 시도 등으로 인해 DB 레벨에서 오류가 나지 않는지 확인합니다 (예: UPSERT나 변경 감지 활용 확인).
+- **엔티티 연관관계:** JPA 연관 데이터(e.g., Farm 삭제 시 관련된 EmployeeProfile 업데이트나 Attendance 기록 삭제)가 정상적으로 처리되는지 확인하고 영속성 전이(Cascade) 설정을 점검합니다.
+- **실제 실행되는 SQL 쿼리 로그 활성화:** `application.yml`에서 `show-sql: true`를 켜서 쿼리가 예상대로 나가는지 모니터링합니다.
+
+### 5. 인증, 인가 및 보안 (Security & JWT Filters)
+
+로그인 및 권한과 관련된 부분을 확인합니다.
+
+- **JWT 필터 (JwtAuthenticationFilter 등):** 토큰을 헤더에서 정상적으로 추출하는지, 서명 검증은 통과하는지 확인합니다.
+- **Redis 연동:** Refresh token이나 임시 데이터 저장 시 Redis 서버와의 통신 지연이나 저장 값 불일치 문제가 없는지 확인합니다.
+- **Security Config:** 보호되어야 할 엔드포인트와 퍼블릭 엔드포인트(
+    
+    ![](vscode-file://vscode-app/c:/Antigravity/resources/app/extensions/theme-symbols/src/icons/files/java.svg)
+    
+    SecurityConfig.java)의 설정(CORS 포함)이 올바른지 점검합니다.
+
+### 6. 인프라 및 컨테이너 (Docker / 환경 변수)
+
+- **환경 변수 주입:** Docker 연동 시 DB URL이나 토큰 시크릿 키, 포트 번호가 `.env` 파일과 
+    
+    ![](vscode-file://vscode-app/c:/Antigravity/resources/app/extensions/theme-symbols/src/icons/files/docker.svg)
+    
+    docker-compose.yml을 통해 잘 주입되었는지 확인합니다.
+- **도커 로그 확인:** `docker logs [backend_container_name]`을 통해 어플리케이션 초기 구동 시 실패하는 부분이 없는지 살핍니다.

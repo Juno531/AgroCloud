@@ -37,6 +37,8 @@ public class FarmService {
 
     private final FarmRepository farmRepository;
     private final UserRepository userRepository;
+    private final com.farm.erp.core.hr.repository.EmployeeProfileRepository employeeProfileRepository;
+    private final com.farm.erp.core.attendance.repository.AttendanceRepository attendanceRepository;
 
     /**
      * 현재 로그인한 사용자의 email 가져오기
@@ -53,10 +55,16 @@ public class FarmService {
      * 현재 로그인한 사용자의 ID 가져오기
      */
     private Long getCurrentUserId() {
+        return getCurrentUser().getId();
+    }
+
+    /**
+     * 현재 로그인한 사용자 정보 가져오기
+     */
+    private User getCurrentUser() {
         String email = getCurrentUserEmail();
-        User user = userRepository.findByEmail(email)
+        return userRepository.findByEmail(email)
                 .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));
-        return user.getId();
     }
 
     /**
@@ -79,6 +87,13 @@ public class FarmService {
                 .description(request.getDescription())
                 .ownerName(request.getOwnerName())
                 .contactNumber(request.getContactNumber())
+                .latitude(request.getLatitude())
+                .longitude(request.getLongitude())
+                .attendanceRadius(request.getAttendanceRadius() != null ? request.getAttendanceRadius() : 300) // Default
+                                                                                                               // 300m
+                .attendanceWifiSsid(request.getAttendanceWifiSsid())
+                .attendanceWifiBssid(request.getAttendanceWifiBssid())
+                .attendanceIpAddress(request.getAttendanceIpAddress())
                 .status(FarmStatus.ACTIVE)
                 .userId(userId) // 현재 사용자 ID 설정
                 .build();
@@ -96,31 +111,50 @@ public class FarmService {
     public FarmResponse getFarm(Long id) {
         Long userId = getCurrentUserId();
 
-        Farm farm = farmRepository.findByIdAndUserId(id, userId)
+        Farm farm = farmRepository.findByIdAndUserIdAndStatus(id, userId, FarmStatus.ACTIVE)
                 .orElseThrow(() -> new BusinessException(ErrorCode.FARM_NOT_FOUND));
 
         return FarmResponse.from(farm);
     }
 
     /**
-     * Get all farms (현재 사용자의 농장만 반환)
+     * Get all farms
+     * - ADMIN: 본인의 농장만 반환
+     * - USER (Employee): 소속 회사의 모든 농장 반환
      */
     public PageResponse<FarmResponse> getAllFarms(Pageable pageable) {
-        Long userId = getCurrentUserId();
+        User currentUser = getCurrentUser();
+        List<Farm> farms;
 
-        // 사용자별 농장 조회
-        List<Farm> userFarms = farmRepository.findByUserId(userId);
+        if (currentUser.getRole() == User.Role.USER) {
+            // 직원의 경우 소속 회사의 모든 농장 조회
+            if (currentUser.getCompany() == null) {
+                log.warn("User {} (USER role) has no assigned company code", currentUser.getEmail());
+                farms = List.of();
+            } else {
+                String companyCode = currentUser.getCompany().getCode();
+                log.info("Fetching farms for company: {} for user: {}", companyCode, currentUser.getEmail());
+                farms = farmRepository.findByCompanyCodeAndStatus(companyCode, FarmStatus.ACTIVE);
+                log.info("Found {} farms for company code: {}", farms.size(), companyCode);
+            }
+        } else {
+            // 어드민의 경우 본인의 농장만 조회
+            log.info("Fetching farms for admin: {}", currentUser.getEmail());
+            farms = farmRepository.findByUserIdAndStatus(currentUser.getId(), FarmStatus.ACTIVE);
+            log.info("Found {} farms for admin user ID: {}", farms.size(), currentUser.getId());
+        }
 
         // 페이지네이션 적용
         int start = (int) pageable.getOffset();
-        int end = Math.min((start + pageable.getPageSize()), userFarms.size());
+        int end = Math.min((start + pageable.getPageSize()), farms.size());
 
-        List<FarmResponse> content = userFarms.subList(start, end)
-                .stream()
-                .map(FarmResponse::from)
-                .collect(Collectors.toList());
+        List<FarmResponse> content = (start < farms.size())
+                ? farms.subList(start, end).stream()
+                        .map(FarmResponse::from)
+                        .collect(Collectors.toList())
+                : List.of();
 
-        Page<FarmResponse> page = new PageImpl<>(content, pageable, userFarms.size());
+        Page<FarmResponse> page = new PageImpl<>(content, pageable, farms.size());
 
         return PageResponse.from(page);
     }
@@ -133,7 +167,7 @@ public class FarmService {
     public FarmResponse updateFarm(Long id, FarmRequest request) {
         Long userId = getCurrentUserId();
 
-        Farm farm = farmRepository.findByIdAndUserId(id, userId)
+        Farm farm = farmRepository.findByIdAndUserIdAndStatus(id, userId, FarmStatus.ACTIVE)
                 .orElseThrow(() -> new BusinessException(ErrorCode.FARM_NOT_FOUND));
 
         // Check name uniqueness if name is changed (같은 사용자 내에서)
@@ -148,7 +182,13 @@ public class FarmService {
                 request.getArea(),
                 request.getDescription(),
                 request.getOwnerName(),
-                request.getContactNumber());
+                request.getContactNumber(),
+                request.getLatitude(),
+                request.getLongitude(),
+                request.getAttendanceRadius(),
+                request.getAttendanceWifiSsid(),
+                request.getAttendanceWifiBssid(),
+                request.getAttendanceIpAddress());
 
         log.info("Updated farm: {} for user: {}", id, userId);
 
@@ -156,17 +196,32 @@ public class FarmService {
     }
 
     /**
-     * Delete farm (본인 농장만 삭제 가능 - Soft delete by changing status)
+     * Delete farm (Hard Delete)
+     * - Unlink employees
+     * - Delete attendance records
+     * - Delete farm entity
      */
     @Transactional
     @CacheEvict(value = "farms", key = "#id")
     public void deleteFarm(Long id) {
         Long userId = getCurrentUserId();
 
-        Farm farm = farmRepository.findByIdAndUserId(id, userId)
+        Farm farm = farmRepository.findByIdAndUserIdAndStatus(id, userId, FarmStatus.ACTIVE)
                 .orElseThrow(() -> new BusinessException(ErrorCode.FARM_NOT_FOUND));
 
-        farm.deactivate();
-        log.info("Deactivated farm: {} for user: {}", id, userId);
+        // 1. Unlink employees
+        List<com.farm.erp.core.hr.domain.EmployeeProfile> employees = employeeProfileRepository.findByFarmId(id);
+        for (com.farm.erp.core.hr.domain.EmployeeProfile employee : employees) {
+            employee.unassignFarm();
+            // Transactional context will automatically flush changes (Dirty Checking)
+        }
+
+        // 2. Delete attendance records
+        attendanceRepository.deleteByFarmId(id);
+
+        // 3. Delete farm entity (Hard Delete)
+        farmRepository.delete(farm);
+
+        log.info("Deleted farm (Hard Delete): {} for user: {}", id, userId);
     }
 }

@@ -24,4 +24,6 @@ public interface AttendanceRepository extends JpaRepository<AttendanceRecord, Lo
 
         List<AttendanceRecord> findByCompanyCodeAndTimestampBetweenOrderByTimestampDesc(
                         String companyCode, LocalDateTime start, LocalDateTime end);
+
+        void deleteByFarmId(Long farmId);
 }

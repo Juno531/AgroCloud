@@ -139,11 +139,17 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleException(Exception ex) {
+        // SYSTEM.ERR LOGGING (FORCED)
+        System.err.println(">>> CRITICAL EXCEPTION CAUGHT IN GLOBAL HANDLER <<<");
+        System.err.println("Exception Type: " + ex.getClass().getName());
+        System.err.println("Message: " + ex.getMessage());
+        ex.printStackTrace(); // Print full stack trace to console
+
         log.error("Unexpected exception", ex);
 
         ApiResponse<Void> response = ApiResponse.error(
                 ErrorCode.INTERNAL_SERVER_ERROR.getCode(),
-                "An unexpected error occurred");
+                "Internal Error: " + ex.getClass().getName() + " - " + ex.getMessage());
 
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
