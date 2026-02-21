@@ -9,6 +9,16 @@ RUN npm run build
 # Production stage
 FROM nginx:stable-alpine as production-stage
 COPY --from=build-stage /app/dist /usr/share/nginx/html
+
+# Nginx 1.19+ automatically runs envsubst on files in /etc/nginx/templates/*.template
+# and outputs them to /etc/nginx/conf.d/*.conf before starting.
 COPY docker/frontend/nginx.conf /etc/nginx/templates/default.conf.template
-EXPOSE 80
-CMD ["/bin/sh", "-c", "export BACKEND_URL=${BACKEND_URL:-http://backend:8080} && envsubst '${PORT} ${BACKEND_URL}' < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf && exec nginx -g 'daemon off;'"]
+
+# Ensure necessary environment variables are defined or have defaults,
+# so envsubst doesn't fail if they are missing in local dev.
+ENV PORT=80
+ENV BACKEND_URL=http://backend:8080
+
+EXPOSE ${PORT}
+# Let the precise built-in Nginx entrypoint handle the template processing
+# and start the daemon. Do not override CMD.
