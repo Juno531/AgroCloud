@@ -55,6 +55,7 @@ export interface EmployeeProfile {
     userId: number;
     companyId?: number;
     companyCode?: string;
+    farmId: number;
     name: string;
     phone: string;
     email: string;

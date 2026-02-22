@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Search, Clock, LogIn, LogOut } from 'lucide-react';
+import { Calendar, Search, Clock, LogIn, LogOut, MapPin } from 'lucide-react';
 import { EmployeeService, AttendanceService } from '../../services/api';
-import { useAuth } from '../../context/AuthContext';
+import { useFarm } from '../../context/FarmContext';
 
 interface AttendanceRecord {
     id: number;
@@ -13,9 +13,10 @@ interface AttendanceRecord {
 }
 
 const AttendanceHistory = () => {
-    const { user } = useAuth();
+    const { fields: farms } = useFarm();
     const [employees, setEmployees] = useState<any[]>([]);
     const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+    const [selectedFarmId, setSelectedFarmId] = useState<number | ''>('');
     const [records, setRecords] = useState<AttendanceRecord[]>([]);
     const [startDate, setStartDate] = useState(() => {
         const date = new Date();
@@ -29,11 +30,18 @@ const AttendanceHistory = () => {
         fetchEmployees();
     }, []);
 
+    // Set initial farm
     useEffect(() => {
-        if (selectedUserId) {
+        if (farms && farms.length > 0 && selectedFarmId === '') {
+            setSelectedFarmId(farms[0]?.id || '');
+        }
+    }, [farms, selectedFarmId]);
+
+    useEffect(() => {
+        if (selectedUserId && selectedFarmId) {
             fetchAttendanceRecords();
         }
-    }, [selectedUserId, startDate, endDate]);
+    }, [selectedUserId, selectedFarmId, startDate, endDate]);
 
     const fetchEmployees = async () => {
         try {
@@ -48,7 +56,7 @@ const AttendanceHistory = () => {
     };
 
     const fetchAttendanceRecords = async () => {
-        if (!selectedUserId || !user?.farmId) return;
+        if (!selectedUserId || !selectedFarmId) return;
 
         setLoading(true);
         try {
@@ -57,7 +65,7 @@ const AttendanceHistory = () => {
             const endDateTime = `${endDate}T23:59:59`;
 
             // Fetch all farm attendance and filter by user
-            const response = await AttendanceService.getFarmAttendance(user.farmId, startDateTime, endDateTime);
+            const response = await AttendanceService.getFarmAttendance(Number(selectedFarmId), startDateTime, endDateTime);
             const filteredRecords = response.data.filter(
                 (record: AttendanceRecord) => record.userId === selectedUserId
             );
@@ -105,7 +113,34 @@ const AttendanceHistory = () => {
                 marginBottom: 'var(--spacing-lg)',
                 boxShadow: 'var(--shadow-sm)'
             }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+
+                    {/* Farm Select */}
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>
+                            <MapPin size={16} style={{ display: 'inline', marginRight: '0.5rem' }} />
+                            농장 선택
+                        </label>
+                        <select
+                            value={selectedFarmId}
+                            onChange={(e) => setSelectedFarmId(Number(e.target.value))}
+                            style={{
+                                width: '100%',
+                                padding: '0.75rem',
+                                borderRadius: 'var(--radius-md)',
+                                border: '1px solid var(--color-border)',
+                                fontSize: '1rem',
+                                backgroundColor: 'white'
+                            }}
+                        >
+                            {farms && farms.map(farm => (
+                                <option key={farm.id} value={farm.id}>
+                                    {farm.name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
                     {/* Employee Select */}
                     <div>
                         <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>
@@ -315,8 +350,22 @@ const AttendanceHistory = () => {
                                                     {isClockIn ? <LogIn size={20} /> : <LogOut size={20} />}
                                                 </div>
                                                 <div style={{ flex: 1 }}>
-                                                    <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
-                                                        {isClockIn ? '출근' : '퇴근'}
+                                                    <div style={{ fontWeight: 600, marginBottom: '0.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                                        <span>{isClockIn ? '출근' : '퇴근'}</span>
+                                                        <span style={{
+                                                            fontSize: '0.75rem',
+                                                            fontWeight: 500,
+                                                            color: 'var(--color-text-secondary)',
+                                                            backgroundColor: 'rgba(0,0,0,0.05)',
+                                                            padding: '0.125rem 0.375rem',
+                                                            borderRadius: '1rem',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '0.25rem'
+                                                        }}>
+                                                            <MapPin size={10} />
+                                                            {farms?.find(f => f.id === record.farmId)?.name || '근무지 미상'}
+                                                        </span>
                                                     </div>
                                                     <div style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem' }}>
                                                         {time.toLocaleTimeString('ko-KR')}

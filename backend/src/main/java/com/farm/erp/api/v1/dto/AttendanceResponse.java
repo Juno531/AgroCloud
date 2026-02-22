@@ -16,6 +16,8 @@ public class AttendanceResponse {
     private LocalDateTime timestamp;
     private Long farmId;
     private String companyCode;
+    private Integer weekNumber;
+    private Integer workingDayIndex;
 
     public static AttendanceResponse from(AttendanceRecord record) {
         return AttendanceResponse.builder()
@@ -26,6 +28,8 @@ public class AttendanceResponse {
                 .timestamp(record.getTimestamp())
                 .farmId(record.getFarmId())
                 .companyCode(record.getCompanyCode())
+                .weekNumber(record.getWeekNumber())
+                .workingDayIndex(record.getWorkingDayIndex())
                 .build();
     }
 }

@@ -34,6 +34,12 @@ public class AttendanceRecord {
     @Column
     private String companyCode;
 
+    @Column
+    private Integer weekNumber;
+
+    @Column
+    private Integer workingDayIndex;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -43,12 +49,15 @@ public class AttendanceRecord {
     }
 
     @Builder
-    public AttendanceRecord(User user, AttendanceType type, LocalDateTime timestamp, Long farmId, String companyCode) {
+    public AttendanceRecord(User user, AttendanceType type, LocalDateTime timestamp, Long farmId, String companyCode,
+            Integer weekNumber, Integer workingDayIndex) {
         this.user = user;
         this.type = type;
         this.timestamp = timestamp;
         this.farmId = farmId;
         this.companyCode = companyCode;
+        this.weekNumber = weekNumber;
+        this.workingDayIndex = workingDayIndex;
     }
 
     public void updateTimestamp(LocalDateTime timestamp) {

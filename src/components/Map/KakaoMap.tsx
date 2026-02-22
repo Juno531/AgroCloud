@@ -196,6 +196,7 @@ const KakaoMapBase: React.FC<KakaoMapProps> = ({
                 }
             } else {
                 // Update existing marker
+                markerRef.current.setMap(map);
                 markerRef.current.setPosition(mPos);
                 markerRef.current.setDraggable(draggableMarker);
             }
@@ -241,6 +242,7 @@ const KakaoMapBase: React.FC<KakaoMapProps> = ({
                 });
             } else {
                 // Update existing circle
+                circleRef.current.setMap(map);
                 circleRef.current.setPosition(currentCenter);
                 circleRef.current.setRadius(circleRadius);
             }
@@ -254,9 +256,18 @@ const KakaoMapBase: React.FC<KakaoMapProps> = ({
     // Cleanup on unmount
     useEffect(() => {
         return () => {
-            if (markerRef.current) markerRef.current.setMap(null);
-            if (circleRef.current) circleRef.current.setMap(null);
-            if (infowindowRef.current) infowindowRef.current.close();
+            if (markerRef.current) {
+                markerRef.current.setMap(null);
+                markerRef.current = null;
+            }
+            if (circleRef.current) {
+                circleRef.current.setMap(null);
+                circleRef.current = null;
+            }
+            if (infowindowRef.current) {
+                infowindowRef.current.close();
+                infowindowRef.current = null;
+            }
             mapRef.current = null;
         };
     }, []);

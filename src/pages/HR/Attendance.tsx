@@ -144,6 +144,10 @@ const Attendance = () => {
         // Prevent spam clicking
         if (isLocating) return;
 
+        if (locationName === '위치 정보 권한이 거부되었습니다.') {
+            alert('위치 정보 권한이 거부된 상태입니다.\n브라우저 주소창 왼쪽의 자물쇠(또는 설정) 아이콘을 눌러 위치 권한을 허용으로 변경한 뒤 다시 시도해주세요.');
+        }
+
         setIsLocating(true);
         setLocationName('위치 정보 재탐색 중...');
 

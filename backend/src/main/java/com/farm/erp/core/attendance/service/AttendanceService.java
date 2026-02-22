@@ -10,6 +10,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.temporal.IsoFields;
+import java.time.DayOfWeek;
+import java.time.temporal.TemporalAdjusters;
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -98,12 +102,52 @@ public class AttendanceService {
             }
         }
 
+        // 1. 달력 기준 이번 주 시작일(월)과 종료일(일) 구하기
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime startOfWeek = now.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).withHour(0)
+                .withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime endOfWeek = now.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY)).withHour(23).withMinute(59)
+                .withSecond(59).withNano(999999999);
+
+        // 2. 이번 주 전체 기록 가져오기
+        List<AttendanceRecord> weekRecords = attendanceRepository
+                .findByUserIdAndTimestampBetweenOrderByTimestampDesc(userId, startOfWeek, endOfWeek);
+
+        // 3. weekNumber (ISO 기준의 연간 주차)
+        int weekNumber = now.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR);
+
+        // 4. workingDayIndex 계산
+        LocalDate today = now.toLocalDate();
+        int workingDayIndex = 1;
+
+        // 오늘 이미 등록된 기록이 있는지 찾기
+        boolean hasRecordToday = false;
+        long uniqueDaysThisWeek = weekRecords.stream()
+                .map(r -> r.getTimestamp().toLocalDate())
+                .distinct()
+                .count();
+
+        for (AttendanceRecord r : weekRecords) {
+            if (r.getTimestamp().toLocalDate().equals(today)) {
+                hasRecordToday = true;
+                workingDayIndex = r.getWorkingDayIndex() != null ? r.getWorkingDayIndex() : 1;
+                break;
+            }
+        }
+
+        if (!hasRecordToday) {
+            // 오늘 등록된 기록이 없다면, 이전 출근 일수 + 1
+            workingDayIndex = (int) uniqueDaysThisWeek + 1;
+        }
+
         AttendanceRecord record = AttendanceRecord.builder()
                 .user(user)
                 .type(type)
-                .timestamp(LocalDateTime.now())
+                .timestamp(now)
                 .farmId(farmId)
                 .companyCode(companyCode)
+                .weekNumber(weekNumber)
+                .workingDayIndex(workingDayIndex)
                 .build();
 
         return attendanceRepository.save(record);
