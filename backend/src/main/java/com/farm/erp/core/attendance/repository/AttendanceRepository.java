@@ -10,18 +10,24 @@ import java.util.List;
 @Repository
 public interface AttendanceRepository extends JpaRepository<AttendanceRecord, Long> {
 
+        @EntityGraph(attributePaths = { "user" })
         List<AttendanceRecord> findByUserIdOrderByTimestampDesc(Long userId);
 
+        @EntityGraph(attributePaths = { "user" })
         List<AttendanceRecord> findByFarmIdOrderByTimestampDesc(Long farmId);
 
+        @EntityGraph(attributePaths = { "user" })
         List<AttendanceRecord> findByUserIdAndTimestampBetweenOrderByTimestampDesc(
                         Long userId, LocalDateTime start, LocalDateTime end);
 
+        @EntityGraph(attributePaths = { "user" })
         List<AttendanceRecord> findByFarmIdAndTimestampBetweenOrderByTimestampDesc(
                         Long farmId, LocalDateTime start, LocalDateTime end);
 
+        @EntityGraph(attributePaths = { "user" })
         List<AttendanceRecord> findByCompanyCodeOrderByTimestampDesc(String companyCode);
 
+        @EntityGraph(attributePaths = { "user" })
         List<AttendanceRecord> findByCompanyCodeAndTimestampBetweenOrderByTimestampDesc(
                         String companyCode, LocalDateTime start, LocalDateTime end);
 
