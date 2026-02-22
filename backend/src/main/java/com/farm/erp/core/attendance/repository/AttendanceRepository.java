@@ -1,6 +1,7 @@
 package com.farm.erp.core.attendance.repository;
 
 import com.farm.erp.core.attendance.domain.AttendanceRecord;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
