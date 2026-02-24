@@ -69,6 +69,18 @@ spring:
     baseline-on-migrate: true
     locations: classpath:db/migration
 
+  mail:
+    host: ${SPRING_MAIL_HOST:localhost}
+    port: ${SPRING_MAIL_PORT:25}
+    username: ${SPRING_MAIL_USERNAME:}
+    password: ${SPRING_MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+
 server:
   port: ${PORT:8080}
   address: 0.0.0.0  # Bind to all network interfaces (allows mobile access)
@@ -92,7 +104,6 @@ springdoc:
   default-consumes-media-type: application/json
   default-produces-media-type: application/json
 
-# JWT Configuration
 jwt:
   secret: ${JWT_SECRET:farm-erp-secret-key-change-this-in-production-must-be-at-least-256-bits-long}
   expiration: 86400000  # 24 hours in milliseconds

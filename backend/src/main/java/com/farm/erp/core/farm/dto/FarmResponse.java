@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 /**
  * Response DTO for farm data
@@ -33,6 +34,8 @@ public class FarmResponse {
     private String attendanceWifiSsid;
     private String attendanceWifiBssid;
     private String attendanceIpAddress;
+    private String workStartTime;
+    private String workEndTime;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -55,6 +58,12 @@ public class FarmResponse {
                 .attendanceWifiSsid(farm.getAttendanceWifiSsid())
                 .attendanceWifiBssid(farm.getAttendanceWifiBssid())
                 .attendanceIpAddress(farm.getAttendanceIpAddress())
+                .workStartTime(farm.getWorkStartTime() != null
+                        ? farm.getWorkStartTime().format(DateTimeFormatter.ofPattern("HH:mm"))
+                        : null)
+                .workEndTime(farm.getWorkEndTime() != null
+                        ? farm.getWorkEndTime().format(DateTimeFormatter.ofPattern("HH:mm"))
+                        : null)
                 .createdAt(farm.getCreatedAt())
                 .updatedAt(farm.getUpdatedAt())
                 .build();

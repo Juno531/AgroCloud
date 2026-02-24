@@ -25,6 +25,37 @@
 
 
 :root {
+  /* Brand colors */
+  --color-primary: #10b981;
+  --color-brand: #10b981;
+  --color-brand-hover: #059669;
+  --color-brand-light: #34d399;
+  --color-brand-subtle: rgba(16, 185, 129, 0.15);
+
+  /* Neutral backgrounds */
+  --color-bg-1: hsl(240, 6%, 10%);
+  --color-bg-2: hsl(240, 5%, 12%);
+  --color-bg-3: hsl(240, 5%, 14%);
+  --color-bg-4: hsl(240, 4%, 18%);
+  --color-bg-5: hsl(240, 4%, 22%);
+  --color-bg-6: hsl(240, 4%, 26%);
+
+  /* Text colors */
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #A1A1AA;
+  --color-text-muted: #71717A;
+
+  /* Border colors */
+  --color-border-subtle: hsla(0, 0%, 100%, 0.08);
+  --color-border-default: hsla(0, 0%, 100%, 0.12);
+  --color-border-strong: hsla(0, 0%, 100%, 0.20);
+
+  /* Status colors */
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+  --color-info: #3B82F6;
+
   font-family: inherit;
   line-height: 1.5;
   font-weight: 400;
@@ -48,6 +79,7 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  @apply bg-neutral-bg1 text-text-primary antialiased;
 }
 
 h1 {
@@ -86,6 +118,40 @@ button:hover {
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
+}
+
+/* Glass utility classes */
+@layer components {
+  .glass {
+    @apply backdrop-blur-md bg-white/5 border border-white/10;
+  }
+
+  .glass-card {
+    @apply backdrop-blur-md bg-white/5 border border-white/10 rounded-xl;
+  }
+
+  .glass-panel {
+    @apply backdrop-blur-lg bg-black/40 border border-white/5;
+  }
+
+  .glass-overlay {
+    @apply backdrop-blur-sm bg-black/60;
+  }
+
+  .glass-input {
+    @apply backdrop-blur-sm bg-white/5 border border-white/10 focus:border-brand focus:bg-white/10;
+  }
+}
+
+/* Animation utilities */
+@layer utilities {
+  .animate-in {
+    animation: fadeIn 0.3s ease-out, slideUp 0.3s ease-out;
+  }
+}
+
+html {
+  color-scheme: dark;
 }
 
 @media (prefers-color-scheme: light) {

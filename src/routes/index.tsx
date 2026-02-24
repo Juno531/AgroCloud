@@ -5,17 +5,17 @@ import PrivateRoute from '../components/Auth/PrivateRoute';
 
 // Lazy load pages
 const Dashboard = lazy(() => import('../pages/Dashboard/Dashboard'));
-const YieldManagement = lazy(() => import('../pages/Farm/YieldManagement'));
-const SalesManagement = lazy(() => import('../pages/Farm/SalesManagement'));
 const CultivationManagement = lazy(() => import('../pages/Farm/CultivationManagement'));
-const ProductionManagement = lazy(() => import('../pages/Farm/ProductionManagement'));
 const FarmAdd = lazy(() => import('../pages/Farm/FarmAdd'));
 const FarmSetting = lazy(() => import('../pages/Farm/FarmSetting'));
 const MySecurity = lazy(() => import('../pages/MyPage/MySecurity'));
 const HRManagement = lazy(() => import('../pages/HR/HRManagement'));
+const EmployeeDetail = lazy(() => import('../pages/HR/EmployeeDetail'));
 const Attendance = lazy(() => import('../pages/HR/Attendance'));
 const SuperAdmin = lazy(() => import('../pages/SuperAdmin/SuperAdmin'));
 const Login = lazy(() => import('../pages/Auth/Login'));
+const MyAttendance = lazy(() => import('../pages/HR/MyAttendance'));
+const MyLeave = lazy(() => import('../pages/HR/MyLeave'));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -57,11 +57,9 @@ export const router = createBrowserRouter([
                 children: [
                     { path: '/', element: <SuspenseWrapper><Dashboard /></SuspenseWrapper> },
                     { path: '/farm/cultivation', element: <SuspenseWrapper><CultivationManagement /></SuspenseWrapper> },
-                    { path: '/farm/sales', element: <SuspenseWrapper><SalesManagement /></SuspenseWrapper> },
                     { path: '/farm/setting/add', element: <SuspenseWrapper><FarmAdd /></SuspenseWrapper> },
-                    { path: '/farm/production', element: <SuspenseWrapper><ProductionManagement /></SuspenseWrapper> },
-                    { path: '/farm/yield', element: <SuspenseWrapper><YieldManagement /></SuspenseWrapper> },
                     { path: '/hr/*', element: <SuspenseWrapper><HRManagement /></SuspenseWrapper> },
+                    { path: '/hr/employees/:id', element: <SuspenseWrapper><EmployeeDetail /></SuspenseWrapper> },
                 ]
             }
         ]
@@ -98,6 +96,8 @@ export const router = createBrowserRouter([
                 element: <Layout />,
                 children: [
                     { path: '/attendance', element: <SuspenseWrapper><Attendance /></SuspenseWrapper> },
+                    { path: '/hr/my-attendance', element: <SuspenseWrapper><MyAttendance /></SuspenseWrapper> },
+                    { path: '/hr/my-leave', element: <SuspenseWrapper><MyLeave /></SuspenseWrapper> },
                 ]
             }
         ]

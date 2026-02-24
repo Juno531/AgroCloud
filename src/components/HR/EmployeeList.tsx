@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Edit, Trash2, User, Phone, Calendar, DollarSign, CreditCard, Mail, Lock, Search } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { User, Phone, Calendar, Mail, Lock, Search } from 'lucide-react';
 import { EmployeeService } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import EmployeeForm from './EmployeeForm';
-import ConfirmDialog from '../UI/ConfirmDialog';
 
 import { EmployeeProfile } from '../../types';
 
@@ -14,18 +14,10 @@ const EmployeeList = () => {
     const [employees, setEmployees] = useState<EmployeeProfile[]>([]);
     const [loading, setLoading] = useState(true);
     const [isFormOpen, setIsFormOpen] = useState(false);
-    const [editingEmployee, setEditingEmployee] = useState<EmployeeProfile | null>(null);
-    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-    const [confirmDialog, setConfirmDialog] = useState({
-        isOpen: false,
-        title: '',
-        message: '',
-        onConfirm: () => { },
-        variant: 'danger' as 'danger' | 'info' | 'warning'
-    });
     const [fetchError, setFetchError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterType, setFilterType] = useState<'ALL' | 'FULL_TIME' | 'PART_TIME'>('ALL');
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
     useEffect(() => {
         fetchEmployees();
@@ -66,32 +58,8 @@ const EmployeeList = () => {
         }
     };
 
-    const handleEdit = (employee: EmployeeProfile) => {
-        setEditingEmployee(employee);
-        setIsFormOpen(true);
-    };
-
-    const handleDelete = (employee: EmployeeProfile) => {
-        setConfirmDialog({
-            isOpen: true,
-            title: '직원 삭제',
-            message: `"${employee.name}" 직원을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`,
-            variant: 'danger',
-            onConfirm: async () => {
-                try {
-                    await EmployeeService.deleteEmployee(employee.id);
-                    await fetchEmployees();
-                } catch (error) {
-                    console.error('Failed to delete employee:', error);
-                    alert('직원 삭제에 실패했습니다.');
-                }
-            }
-        });
-    };
-
     const handleFormClose = () => {
         setIsFormOpen(false);
-        setEditingEmployee(null);
     };
 
     const handleFormSuccess = () => {
@@ -99,13 +67,6 @@ const EmployeeList = () => {
         fetchEmployees();
     };
 
-    const formatCurrency = (amount: number | undefined) => {
-        if (amount === undefined || amount === null) return '-';
-        return new Intl.NumberFormat('ko-KR', {
-            style: 'currency',
-            currency: 'KRW'
-        }).format(amount);
-    };
 
     const formatDate = (dateString: string | undefined) => {
         if (!dateString) return '-';
@@ -168,7 +129,6 @@ const EmployeeList = () => {
                 </h3>
                 <button
                     onClick={() => {
-                        setEditingEmployee(null);
                         setIsFormOpen(true);
                     }}
                     className="btn btn-primary"
@@ -323,7 +283,19 @@ const EmployeeList = () => {
                                         {employee.name ? employee.name.charAt(0) : '?'}
                                     </div>
                                     <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                        <strong style={{ fontSize: '1.125rem' }}>{employee.name || '미등록'}</strong>
+                                        <Link
+                                            to={`/hr/employees/${employee.id}`}
+                                            style={{
+                                                fontSize: '1.125rem',
+                                                fontWeight: 700,
+                                                color: 'inherit',
+                                                textDecoration: 'none'
+                                            }}
+                                            onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-primary)'}
+                                            onMouseLeave={(e) => e.currentTarget.style.color = 'inherit'}
+                                        >
+                                            {employee.name || '미등록'}
+                                        </Link>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.25rem', flexWrap: 'wrap' }}>
                                             <span style={{
                                                 fontSize: '0.75rem',
@@ -347,29 +319,6 @@ const EmployeeList = () => {
                                             )}
                                         </div>
                                     </div>
-                                </div>
-                                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                    <button
-                                        onClick={() => handleEdit(employee)}
-                                        className="btn btn-outline"
-                                        style={{ padding: '0.5rem', minWidth: 'auto' }}
-                                        title="수정"
-                                    >
-                                        <Edit size={18} />
-                                    </button>
-                                    <button
-                                        onClick={() => handleDelete(employee)}
-                                        className="btn btn-outline"
-                                        style={{
-                                            padding: '0.5rem',
-                                            minWidth: 'auto',
-                                            color: 'var(--color-danger)',
-                                            borderColor: 'var(--color-danger)'
-                                        }}
-                                        title="삭제"
-                                    >
-                                        <Trash2 size={18} />
-                                    </button>
                                 </div>
                             </div>
 
@@ -398,30 +347,6 @@ const EmployeeList = () => {
                                             <Calendar size={16} style={{ color: 'var(--color-text-secondary)', flexShrink: 0 }} />
                                             <span style={{ fontSize: '0.9375rem' }}>입사일: {formatDate(employee.hireDate)}</span>
                                         </div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                            <DollarSign size={16} style={{ color: 'var(--color-text-secondary)', flexShrink: 0 }} />
-                                            <strong style={{ color: 'var(--color-primary)', fontSize: '1rem' }}>
-                                                {formatCurrency(employee.hourlyWage)}
-                                            </strong>
-                                        </div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                            <CreditCard size={16} style={{ color: 'var(--color-text-secondary)', flexShrink: 0 }} />
-                                            <div style={{ fontSize: '0.875rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                                                <span>{employee.bankAccount || '미등록'}</span>
-                                                {employee.accountHolder && (
-                                                    <span style={{ color: 'var(--color-text-secondary)' }}>
-                                                        {employee.accountHolder}
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </div>
-                                        <div style={{
-                                            fontSize: '0.875rem',
-                                            color: 'var(--color-text-secondary)',
-                                            marginTop: '0.25rem'
-                                        }}>
-                                            급여 지급일: 매월 {employee.paymentDate}일
-                                        </div>
                                     </>
                                 )}
                             </div>
@@ -444,11 +369,6 @@ const EmployeeList = () => {
                                     <th style={{ padding: '1rem', textAlign: 'left', fontWeight: 600 }}>계정 정보</th>
                                     <th style={{ padding: '1rem', textAlign: 'left', fontWeight: 600 }}>연락처</th>
                                     <th style={{ padding: '1rem', textAlign: 'left', fontWeight: 600 }}>입사일</th>
-                                    <th style={{ padding: '1rem', textAlign: 'left', fontWeight: 600 }}>급여(기본급/시급)</th>
-                                    <th style={{ padding: '1rem', textAlign: 'left', fontWeight: 600 }}>계좌번호</th>
-                                    <th style={{ padding: '1rem', textAlign: 'left', fontWeight: 600 }}>예금주</th>
-                                    <th style={{ padding: '1rem', textAlign: 'left', fontWeight: 600 }}>급여지급일</th>
-                                    <th style={{ padding: '1rem', textAlign: 'center', fontWeight: 600 }}>작업</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -478,9 +398,21 @@ const EmployeeList = () => {
                                                     {(employee.name || '?').charAt(0)}
                                                 </div>
                                                 <div style={{ display: 'flex', flexDirection: 'column', minWidth: '0' }}>
-                                                    <strong style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                    <Link
+                                                        to={`/hr/employees/${employee.id}`}
+                                                        style={{
+                                                            fontWeight: 700,
+                                                            color: 'inherit',
+                                                            textDecoration: 'none',
+                                                            whiteSpace: 'nowrap',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis'
+                                                        }}
+                                                        onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-primary)'}
+                                                        onMouseLeave={(e) => e.currentTarget.style.color = 'inherit'}
+                                                    >
                                                         {employee.name || '미등록'}
-                                                    </strong>
+                                                    </Link>
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.2rem', }}>
                                                         <span style={{
                                                             fontSize: '0.75rem',
@@ -539,62 +471,6 @@ const EmployeeList = () => {
                                                 {employee.role === 'USER' ? formatDate(employee.hireDate) : '-'}
                                             </div>
                                         </td>
-                                        <td style={{ padding: '1rem' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                <DollarSign size={16} style={{ color: 'var(--color-text-secondary)' }} />
-                                                {employee.role === 'USER' ? (
-                                                    <strong style={{ color: 'var(--color-primary)' }}>
-                                                        {formatCurrency(employee.hourlyWage)}
-                                                    </strong>
-                                                ) : '-'}
-                                            </div>
-                                        </td>
-                                        <td style={{ padding: '1rem' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                <CreditCard size={16} style={{ color: 'var(--color-text-secondary)' }} />
-                                                {employee.role === 'USER' ? (
-                                                    <>
-                                                        {employee.bankAccount}
-                                                        {employee.accountHolder && (
-                                                            <span style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>
-                                                                ({employee.accountHolder})
-                                                            </span>
-                                                        )}
-                                                    </>
-                                                ) : '-'}
-                                            </div>
-                                        </td>
-                                        <td style={{ padding: '1rem' }}>
-                                            {employee.role === 'USER' ? employee.accountHolder : '-'}
-                                        </td>
-                                        <td style={{ padding: '1rem' }}>
-                                            {employee.role === 'USER' && employee.paymentDate ? `매월 ${employee.paymentDate}일` : '-'}
-                                        </td>
-                                        <td style={{ padding: '1rem' }}>
-                                            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
-                                                <button
-                                                    onClick={() => handleEdit(employee)}
-                                                    className="btn btn-outline"
-                                                    style={{ padding: '0.5rem', minWidth: 'auto' }}
-                                                    title="수정"
-                                                >
-                                                    <Edit size={16} />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete(employee)}
-                                                    className="btn btn-outline"
-                                                    style={{
-                                                        padding: '0.5rem',
-                                                        minWidth: 'auto',
-                                                        color: 'var(--color-danger)',
-                                                        borderColor: 'var(--color-danger)'
-                                                    }}
-                                                    title="삭제"
-                                                >
-                                                    <Trash2 size={16} />
-                                                </button>
-                                            </div>
-                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -603,24 +479,13 @@ const EmployeeList = () => {
                 </div>
             )}
 
-            {/* Employee Form Modal (수정 전용) */}
+            {/* Employee Form Modal (등록 전용) */}
             {isFormOpen && (
                 <EmployeeForm
-                    employee={editingEmployee}
                     onClose={handleFormClose}
                     onSuccess={handleFormSuccess}
                 />
             )}
-
-            {/* Confirm Dialog */}
-            <ConfirmDialog
-                isOpen={confirmDialog.isOpen}
-                onClose={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
-                onConfirm={confirmDialog.onConfirm}
-                title={confirmDialog.title}
-                message={confirmDialog.message}
-                variant={confirmDialog.variant}
-            />
         </div>
     );
 };

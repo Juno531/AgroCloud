@@ -17,16 +17,37 @@ const MySecurity = () => {
     // false | true
     const [isChangingPassword, setIsChangingPassword] = useState(false);
 
-    // Password Form State
     const [passwordData, setPasswordData] = useState({
         currentPassword: '',
         newPassword: '',
         confirmPassword: ''
     });
 
+    // Email Verification State
+    const [emailLoading, setEmailLoading] = useState(false);
+    const [verificationSent, setVerificationSent] = useState(false);
+    const [verificationCode, setVerificationCode] = useState('');
+    const [timer, setTimer] = useState(0);
+
     useEffect(() => {
         setTitle('내 정보 관리');
     }, [setTitle]);
+
+    useEffect(() => {
+        let interval: NodeJS.Timeout;
+        if (timer > 0) {
+            interval = setInterval(() => {
+                setTimer((prev) => prev - 1);
+            }, 1000);
+        }
+        return () => clearInterval(interval);
+    }, [timer]);
+
+    const formatTime = (seconds: number) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    };
 
     const handleVerifyPassword = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -81,9 +102,41 @@ const MySecurity = () => {
         }
     };
 
+    const handleSendEmailVerification = async () => {
+        setEmailLoading(true);
+        setMessage({ type: '', text: '' });
+        try {
+            await AuthService.sendEmailVerification();
+            setVerificationSent(true);
+            setTimer(180); // 3 minutes
+            setMessage({ type: 'success', text: '인증 번호가 이메일로 발송되었습니다.' });
+        } catch (error: any) {
+            setMessage({ type: 'error', text: error.response?.data?.message || '인증 번호 발송에 실패했습니다.' });
+        } finally {
+            setEmailLoading(false);
+        }
+    };
+
+    const handleVerifyEmail = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setEmailLoading(true);
+        setMessage({ type: '', text: '' });
+        try {
+            await AuthService.verifyEmail(verificationCode);
+            setMessage({ type: 'success', text: '이메일 인증이 완료되었습니다.' });
+            setVerificationSent(false);
+            setTimer(0);
+            window.location.reload();
+        } catch (error: any) {
+            setMessage({ type: 'error', text: error.response?.data?.message || '인증에 실패했습니다.' });
+        } finally {
+            setEmailLoading(false);
+        }
+    };
+
     if (!isVerified) {
         return (
-            <div style={{ padding: 'var(--spacing-lg)', maxWidth: '600px', margin: '4rem auto' }}>
+            <div style={{ maxWidth: '600px', margin: '4rem auto' }}>
                 {message.text && (
                     <div style={{
                         padding: '1rem',
@@ -160,7 +213,7 @@ const MySecurity = () => {
     }
 
     return (
-        <div style={{ padding: 'var(--spacing-lg)', maxWidth: '800px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '800px', margin: '0 auto' }}>
             {message.text && (
                 <div style={{
                     padding: '1rem',
@@ -271,6 +324,109 @@ const MySecurity = () => {
                                     </button>
                                 </div>
                             </div>
+                        </form>
+                    )}
+                </div>
+            </div>
+
+            <div style={{
+                backgroundColor: 'var(--color-surface)',
+                padding: 'var(--spacing-xl)',
+                borderRadius: 'var(--radius-lg)',
+                boxShadow: 'var(--shadow-sm)',
+                marginTop: '1.5rem'
+            }}>
+                <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem', fontSize: '1.125rem' }}>
+                    이메일 인증
+                </h3>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                            <span style={{ fontWeight: 500 }}>{user?.email}</span>
+                            {user?.isEmailVerified ? (
+                                <span style={{
+                                    padding: '0.25rem 0.5rem',
+                                    borderRadius: '1rem',
+                                    backgroundColor: '#def7ec',
+                                    color: '#03543f',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 600
+                                }}>인증됨</span>
+                            ) : (
+                                <span style={{
+                                    padding: '0.25rem 0.5rem',
+                                    borderRadius: '1rem',
+                                    backgroundColor: '#fde8e8',
+                                    color: '#9b1c1c',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 600
+                                }}>미인증</span>
+                            )}
+                        </div>
+                        {!user?.isEmailVerified && !verificationSent && (
+                            <button
+                                onClick={handleSendEmailVerification}
+                                disabled={emailLoading}
+                                className="btn btn-primary"
+                                style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                            >
+                                {emailLoading ? '발송 중...' : '인증 번호 발송'}
+                            </button>
+                        )}
+                    </div>
+
+                    {verificationSent && (
+                        <form onSubmit={handleVerifyEmail} style={{
+                            marginTop: '1rem',
+                            padding: '1.5rem',
+                            backgroundColor: '#f9fafb',
+                            borderRadius: 'var(--radius-md)',
+                            border: '1px solid var(--color-border)'
+                        }}>
+                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500 }}>
+                                인증 번호 입력
+                                <span style={{ marginLeft: '1rem', color: '#e02424', fontSize: '0.875rem' }}>{formatTime(timer)}</span>
+                            </label>
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                <input
+                                    type="text"
+                                    value={verificationCode}
+                                    onChange={(e) => setVerificationCode(e.target.value)}
+                                    maxLength={6}
+                                    placeholder="6자리 숫자 입력"
+                                    style={{
+                                        flex: 1,
+                                        padding: '0.75rem',
+                                        borderRadius: 'var(--radius-md)',
+                                        border: '1px solid var(--color-border)',
+                                        textAlign: 'center',
+                                        fontSize: '1.125rem',
+                                        letterSpacing: '0.25rem'
+                                    }}
+                                    required
+                                />
+                                <button
+                                    type="submit"
+                                    disabled={emailLoading || timer === 0}
+                                    className="btn btn-primary"
+                                    style={{ padding: '0 1.5rem' }}
+                                >
+                                    {emailLoading ? '확인 중...' : '인증하기'}
+                                </button>
+                            </div>
+                            {timer === 0 && (
+                                <p style={{ marginTop: '0.5rem', color: '#e02424', fontSize: '0.75rem' }}>
+                                    인증 시간이 만료되었습니다. 다시 발송해주세요.
+                                    <button
+                                        type="button"
+                                        onClick={handleSendEmailVerification}
+                                        style={{ marginLeft: '0.5rem', color: 'var(--color-primary)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}
+                                    >
+                                        재발송
+                                    </button>
+                                </p>
+                            )}
                         </form>
                     )}
                 </div>

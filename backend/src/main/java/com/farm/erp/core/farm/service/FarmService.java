@@ -23,6 +23,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -94,6 +95,8 @@ public class FarmService {
                 .attendanceWifiSsid(request.getAttendanceWifiSsid())
                 .attendanceWifiBssid(request.getAttendanceWifiBssid())
                 .attendanceIpAddress(request.getAttendanceIpAddress())
+                .workStartTime(request.getWorkStartTime() != null ? LocalTime.parse(request.getWorkStartTime()) : null)
+                .workEndTime(request.getWorkEndTime() != null ? LocalTime.parse(request.getWorkEndTime()) : null)
                 .status(FarmStatus.ACTIVE)
                 .userId(userId) // 현재 사용자 ID 설정
                 .build();
@@ -163,7 +166,7 @@ public class FarmService {
      * Update farm (본인 농장만 수정 가능)
      */
     @Transactional
-    @CacheEvict(value = "farms", key = "#id")
+    @CacheEvict(value = "farms", allEntries = true)
     public FarmResponse updateFarm(Long id, FarmRequest request) {
         Long userId = getCurrentUserId();
 
@@ -188,7 +191,9 @@ public class FarmService {
                 request.getAttendanceRadius(),
                 request.getAttendanceWifiSsid(),
                 request.getAttendanceWifiBssid(),
-                request.getAttendanceIpAddress());
+                request.getAttendanceIpAddress(),
+                request.getWorkStartTime() != null ? LocalTime.parse(request.getWorkStartTime()) : null,
+                request.getWorkEndTime() != null ? LocalTime.parse(request.getWorkEndTime()) : null);
 
         log.info("Updated farm: {} for user: {}", id, userId);
 

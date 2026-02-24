@@ -11,6 +11,7 @@ export interface User {
     attendanceRadius?: number;
     lastPasswordChangedAt?: string;
     employmentType?: 'FULL_TIME' | 'PART_TIME';
+    isEmailVerified?: boolean;
 }
 
 export interface Company {
@@ -67,6 +68,8 @@ export interface EmployeeProfile {
     paymentDate: number;
     role: 'USER' | 'ADMIN';
     employmentType?: 'FULL_TIME' | 'PART_TIME'; // 정규직/비정규직(알바)
+    address?: string;
+    isEmailVerified?: boolean;
 }
 
 export interface YieldData {
@@ -125,7 +128,8 @@ export interface CompanyCreateRequest {
 
     // Admin User Details
     adminName: string;
-    adminEmail: string;
+    adminEmail?: string;
+    isEmailVerified?: boolean;
     adminPassword: string;
     adminPhone?: string;
 }

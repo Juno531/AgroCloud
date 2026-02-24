@@ -152,7 +152,7 @@ const FarmSetting: React.FC = () => {
     }
 
     return (
-        <div className="max-w-full px-10 pt-10 animate-in fade-in duration-500">
+        <>
             <div className="flex flex-col lg:flex-row gap-6">
 
                 {/* Left: Interactive List */}
@@ -408,7 +408,7 @@ const FarmSetting: React.FC = () => {
                     )}
                 </div>
             </div>
-        </div>
+        </>
     );
 };
 

@@ -4,9 +4,10 @@ import { EmployeeService } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 
 interface EmployeeFormProps {
-    employee: any | null;
+    employee?: any | null;
     onClose: () => void;
     onSuccess: () => void;
+    isInline?: boolean;
 }
 
 interface FormData {
@@ -29,7 +30,7 @@ interface FormData {
     paymentDate: number;
 }
 
-const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onClose, onSuccess }) => {
+const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onClose, onSuccess, isInline = false }) => {
     const { user } = useAuth();
     const [formData, setFormData] = useState<FormData>({
         // For existing employee, use their data. For new, defaults.
@@ -116,7 +117,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onClose, onSucces
     };
 
     return (
-        <div style={{
+        <div style={isInline ? { width: '100%' } : {
             position: 'fixed',
             top: 0,
             left: 0,
@@ -131,13 +132,14 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onClose, onSucces
         }}>
             <div style={{
                 backgroundColor: 'var(--color-surface)',
-                borderRadius: isMobile ? 'var(--radius-lg) var(--radius-lg) 0 0' : 'var(--radius-lg)',
-                maxWidth: isMobile ? '100%' : '600px',
+                borderRadius: (isInline || !isMobile) ? 'var(--radius-lg)' : 'var(--radius-lg) var(--radius-lg) 0 0',
+                maxWidth: isInline ? '100%' : (isMobile ? '100%' : '600px'),
                 width: '100%',
-                maxHeight: isMobile ? '90vh' : '90vh',
+                maxHeight: isInline ? 'none' : '90vh',
                 display: 'flex',
                 flexDirection: 'column',
-                boxShadow: 'var(--shadow-lg)'
+                boxShadow: isInline ? 'none' : 'var(--shadow-lg)',
+                border: isInline ? '1px solid var(--color-border)' : 'none'
             }}>
                 {/* Header */}
                 <div style={{
@@ -482,7 +484,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onClose, onSucces
                                 padding: isMobile ? '0.875rem 1rem' : '0.625rem 1rem'
                             }}
                         >
-                            {loading ? '저장 중...' : (employee ? '수정' : '등록')}
+                            {loading ? '저장 중...' : (employee ? '저장' : '등록')}
                         </button>
                     </div>
                 </form>

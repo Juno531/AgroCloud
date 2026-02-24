@@ -6,6 +6,12 @@ import { FarmService } from '../../services/api';
 import KakaoMap from '../../components/Map/KakaoMap';
 import SuspenseLoader from '../../components/UI/SuspenseLoader';
 
+
+
+
+
+/* ─────────────────────────────────────────────────────────────────── */
+
 const AttendanceSetting: React.FC = () => {
     const { user } = useAuth();
     const { fields, refreshData, loading: contextLoading } = useFarm();
@@ -15,6 +21,7 @@ const AttendanceSetting: React.FC = () => {
     const [selectedFarmId, setSelectedFarmId] = useState<number | ''>('');
     const [farmData, setFarmData] = useState<any>(null);
     const [isFetchingIp, setIsFetchingIp] = useState(false);
+    const [isManualUpdate, setIsManualUpdate] = useState(false);
 
     useEffect(() => {
         if (fields && fields.length > 0 && !selectedFarmId) {
@@ -26,20 +33,30 @@ const AttendanceSetting: React.FC = () => {
     }, [fields, selectedFarmId]);
 
     useEffect(() => {
+        if (isManualUpdate) return; // 저장 직후엔 fields로 덮어쓰지 않음
         if (selectedFarmId && fields.length > 0) {
             const selected = fields.find(f => f.id === Number(selectedFarmId));
             if (selected) {
                 setFarmData({ ...selected });
             }
         }
-    }, [selectedFarmId, fields]);
+    }, [selectedFarmId, fields, isManualUpdate]);
+
 
     const handleFarmUpdate = useCallback(async () => {
         if (!farmData) return;
         setSaveLoading(true);
         setMessage({ type: '', text: '' });
         try {
-            await FarmService.updateFarm(farmData.id, farmData);
+            const response = await FarmService.updateFarm(farmData.id, farmData);
+            const updated = response.data.data;
+            // API 응답값으로 직접 갱신 (refreshData의 fields 덮어쓰기 방지)
+            setIsManualUpdate(true);
+            setFarmData((prev: any) => ({
+                ...prev,
+                attendanceRadius: updated.attendanceRadius ?? prev.attendanceRadius,
+                attendanceIpAddress: updated.attendanceIpAddress ?? prev.attendanceIpAddress,
+            }));
             await refreshData();
             setMessage({ type: 'success', text: `[${farmData.name}] 출퇴근 설정이 정상적으로 저장되었습니다.` });
             setTimeout(() => setMessage({ type: '', text: '' }), 3000);
@@ -48,6 +65,7 @@ const AttendanceSetting: React.FC = () => {
             setMessage({ type: 'error', text: '저장 중 오류가 발생했습니다.' });
         } finally {
             setSaveLoading(false);
+            setIsManualUpdate(false);
         }
     }, [farmData, refreshData]);
 
@@ -134,12 +152,6 @@ const AttendanceSetting: React.FC = () => {
                                     <div className="font-bold text-sm text-slate-800 dark:text-slate-200 truncate mb-1">{farm.name}</div>
                                     <div className="text-xs text-slate-500 truncate flex items-center gap-1">
                                         <MapPin size={10} /> {farm.location || '주소 없음'}
-                                    </div>
-                                    <div className="mt-2 flex gap-1">
-                                        <span className="text-[10px] px-1.5 py-0.5 bg-slate-100 dark:bg-zinc-800 rounded text-slate-600 font-medium">GPS: {farm.attendanceRadius || 100}m</span>
-                                        {farm.attendanceIpAddress && (
-                                            <span className="text-[10px] px-1.5 py-0.5 bg-purple-50 dark:bg-purple-900/30 rounded text-purple-600 font-medium truncate max-w-[100px]">IP: On</span>
-                                        )}
                                     </div>
                                 </button>
                             ))}

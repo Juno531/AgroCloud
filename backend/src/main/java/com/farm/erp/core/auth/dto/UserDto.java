@@ -13,12 +13,14 @@ public class UserDto {
     private Long companyId;
     private String companyCode;
     private String employmentType;
+    private boolean isEmailVerified;
 
     public UserDto(User user) {
         this.id = user.getId();
         this.email = user.getEmail();
         this.name = user.getName();
         this.role = user.getRole().name();
+        this.isEmailVerified = user.isEmailVerified();
         if (user.getCompany() != null) {
             this.companyId = user.getCompany().getId();
             this.companyCode = user.getCompany().getCode();

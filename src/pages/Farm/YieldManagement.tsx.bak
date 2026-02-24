@@ -216,7 +216,7 @@ const YieldManagement = ({ activeFarm = 'All' }: { activeFarm?: any }) => {
             {loading ? (
                 <div style={{ textAlign: 'center', padding: '2rem' }}>Loading...</div>
             ) : (
-                <>
+                <div key={activeTab} className="animate-in fade-in duration-500">
                     {activeTab === 'dashboard' ? (
                         <>
                             <YieldStats data={filteredYields} activeFarm={activeFarm} />
@@ -234,7 +234,7 @@ const YieldManagement = ({ activeFarm = 'All' }: { activeFarm?: any }) => {
                     ) : (
                         <YieldHistory data={yields} />
                     )}
-                </>
+                </div>
             )}
 
             <Modal

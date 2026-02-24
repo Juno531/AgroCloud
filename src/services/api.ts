@@ -60,6 +60,8 @@ export const AuthService = {
     verifyPassword: async (password: string) => {
         return api.post('/auth/verify-password', { password });
     },
+    sendEmailVerification: () => api.post('/auth/email/send-verification'),
+    verifyEmail: (code: string) => api.post('/auth/email/verify', { code }),
 };
 
 export const FarmService = {
@@ -150,8 +152,8 @@ export const CultivationService = {
 
 export const EmployeeService = {
     getAllEmployees: () => api.get('/employees'),
-    getEmployeesByFarm: (farmId: number) => api.get('/employees', { params: { farmId } }),
-    getEmployeesByCompany: (companyCode: string) => api.get('/employees', { params: { companyCode } }),
+    getEmployeesByFarm: (farmId: number) => api.get(`/employees?farmId=${farmId}`),
+    getEmployeesByCompany: (companyCode: string) => api.get(`/employees?companyCode=${companyCode}`),
     getEmployee: (id: number) => api.get(`/employees/${id}`),
     getEmployeeByUserId: (userId: number) => api.get(`/employees/user/${userId}`),
     registerEmployee: (data: any) => api.post('/employees', data),
@@ -166,6 +168,14 @@ export const AttendanceService = {
     getFarmAttendance: (farmId: number, start?: string, end?: string) => api.get(`/attendance/farm/${farmId}`, { params: { startDate: start, endDate: end } }),
     getCompanyAttendance: (companyCode: string, start?: string, end?: string) => api.get(`/attendance/company/${companyCode}`, { params: { startDate: start, endDate: end } }),
     getUserStatus: () => api.get('/attendance/status'),
+    getMonthlySummary: (year: number, month: number) => api.get('/attendance/summary', { params: { year, month } }),
+};
+
+
+export const LeaveService = {
+    saveLeave: (data: { leaveDate: string; reason?: string }) => api.post('/leaves', data),
+    deleteLeave: (date: string) => api.delete(`/leaves/${date}`),
+    getMyLeaves: () => api.get('/leaves/me'),
 };
 
 // Super Admin Services

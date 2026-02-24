@@ -15,7 +15,7 @@ const Dashboard = () => {
         <div className="flex-1 flex flex-col min-w-0">
 
 
-            <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto custom-scrollbar">
                 <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4 w-full">
                     <div className="flex-1">
                         <p className="text-slate-500 font-medium text-sm sm:text-base mt-1">SP Agri 모니터링 • <span className="text-primary font-bold">2023년 10월 24일</span></p>
@@ -79,48 +79,6 @@ const Dashboard = () => {
                         <div className="absolute left-1/2 -bottom-24 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl pointer-events-none"></div>
                     </div>
 
-                    {!isPartTime && (
-                        <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 sm:p-8 shadow-xl shadow-slate-200/50 dark:shadow-none border border-primary/10 flex flex-col justify-between">
-                            <div className="flex justify-between items-center mb-8">
-                                <h3 className="font-bold text-xl text-slate-800 dark:text-white">자원 현황</h3>
-                                <button className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors">
-                                    <span className="material-icons-round">more_horiz</span>
-                                </button>
-                            </div>
-                            <div className="space-y-8 flex-1">
-                                <div>
-                                    <div className="flex justify-between items-end mb-3">
-                                        <div>
-                                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">NPK 비료</p>
-                                            <p className="text-2xl font-bold text-slate-800 dark:text-white mt-1">420 kg</p>
-                                        </div>
-                                        <span className="text-amber-500 font-extrabold text-sm">22%</span>
-                                    </div>
-                                    <div className="w-full h-4 bg-slate-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-                                        <div className="h-full bg-gradient-to-r from-amber-400 to-amber-600 rounded-full transition-all duration-1000 ease-out shadow-sm" style={{ width: '22%' }}></div>
-                                    </div>
-                                    <p className="text-[11px] text-amber-500 font-bold mt-3 flex items-center gap-2 bg-amber-50 dark:bg-amber-900/10 w-fit px-3 py-1 rounded-full">
-                                        <span className="material-icons-round text-sm">warning</span> 보충 필요함
-                                    </p>
-                                </div>
-                                <div>
-                                    <div className="flex justify-between items-end mb-3">
-                                        <div>
-                                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">농업용수</p>
-                                            <p className="text-2xl font-bold text-slate-800 dark:text-white mt-1">12,500 L</p>
-                                        </div>
-                                        <span className="text-primary font-extrabold text-sm">78%</span>
-                                    </div>
-                                    <div className="w-full h-4 bg-slate-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-                                        <div className="h-full bg-gradient-to-r from-primary to-green-600 rounded-full transition-all duration-1000 ease-out shadow-sm" style={{ width: '78%' }}></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <button className="w-full mt-10 py-4 bg-slate-50 dark:bg-zinc-800/50 text-slate-600 dark:text-slate-300 font-bold rounded-2xl hover:bg-primary/10 hover:text-primary border-2 border-transparent hover:border-primary/20 transition-all text-sm group">
-                                재고 관리 시스템 <span className="material-icons-round text-xs ml-1 align-middle group-hover:translate-x-1 transition-transform">arrow_forward</span>
-                            </button>
-                        </div>
-                    )}
                 </div>
 
                 <div className={`grid grid-cols-1 ${isPartTime ? 'lg:grid-cols-1' : 'lg:grid-cols-3'} gap-6 w-full items-start`}>
@@ -175,9 +133,9 @@ const Dashboard = () => {
                                     </thead>
                                     <tbody className="divide-y divide-slate-100 dark:divide-zinc-800">
                                         {[
-                                            { title: '4구역 관개 작업', time: '오전 06:00', icon: 'water_drop', bg: 'bg-blue-100', color: 'text-blue-600', person: '김민수', priority: '높음', pColor: 'text-primary bg-primary/10' },
-                                            { title: '2단계 비료 살포', time: '오전 10:30', icon: 'science', bg: 'bg-emerald-100', color: 'text-emerald-600', person: '이영희', priority: '보통', pColor: 'text-slate-500 bg-slate-100' },
-                                            { title: '트랙터 정비', time: '오후 02:00', icon: 'build', bg: 'bg-amber-100', color: 'text-amber-600', person: '박철수', priority: '보통', pColor: 'text-slate-500 bg-slate-100' }
+                                            { title: '4구역 조루 관주', time: '오전 06:00', icon: 'water_drop', bg: 'bg-blue-100', color: 'text-blue-600', person: '지준호', priority: '높음', pColor: 'text-primary bg-primary/10' },
+                                            { title: '흰가루 방제', time: '오전 10:30', icon: 'science', bg: 'bg-emerald-100', color: 'text-emerald-600', person: '홍길동', priority: '보통', pColor: 'text-slate-500 bg-slate-100' },
+                                            { title: '무인방제기 정비', time: '오후 02:00', icon: 'build', bg: 'bg-amber-100', color: 'text-amber-600', person: '김철수', priority: '보통', pColor: 'text-slate-500 bg-slate-100' }
                                         ].map((task, id) => (
                                             <tr key={id} className="hover:bg-slate-50/50 dark:hover:bg-zinc-800/50 transition-all cursor-pointer group">
                                                 <td className="px-6 py-6">

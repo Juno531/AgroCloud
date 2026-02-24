@@ -472,7 +472,7 @@
     }
 
     .app-content {
-        padding: var(--spacing-md);
+        padding: var(--spacing-sm);
     }
 
     .user-profile span {

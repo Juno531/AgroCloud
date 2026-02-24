@@ -87,4 +87,20 @@ public class AuthController {
         }
         return ResponseEntity.ok(com.farm.erp.common.dto.ApiResponse.success("로그아웃 되었습니다.", null));
     }
+
+    @PostMapping("/email/send-verification")
+    public ResponseEntity<com.farm.erp.common.dto.ApiResponse<Void>> sendEmailVerification(
+            @org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails) {
+        authService.sendEmailVerification(userDetails.getUsername());
+        return ResponseEntity.ok(com.farm.erp.common.dto.ApiResponse.success("인증 번호가 발송되었습니다.", null));
+    }
+
+    @PostMapping("/email/verify")
+    public ResponseEntity<com.farm.erp.common.dto.ApiResponse<Void>> verifyEmail(
+            @org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails,
+            @RequestBody java.util.Map<String, String> request) {
+        String code = request.get("code");
+        authService.verifyEmail(userDetails.getUsername(), code);
+        return ResponseEntity.ok(com.farm.erp.common.dto.ApiResponse.success("이메일 인증이 완료되었습니다.", null));
+    }
 }

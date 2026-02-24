@@ -40,6 +40,7 @@ public class AuthService {
         private final com.farm.erp.core.audit.service.AuditLogService auditLogService;
         private final com.farm.erp.core.company.service.RegistrationCodeService registrationCodeService;
         private final com.farm.erp.core.auth.repository.RefreshTokenRepository refreshTokenRepository;
+        private final EmailService emailService;
 
         @Transactional
         public AuthResponse login(LoginRequest request) {
@@ -246,6 +247,39 @@ public class AuthService {
                                         "비밀번호가 일치하지 않습니다.");
                 }
                 log.info("Password verified successfully for user: {}", email);
+        }
+
+        @Transactional
+        public void sendEmailVerification(String email) {
+                User user = userRepository.findByEmail(email)
+                                .orElseThrow(() -> new org.springframework.security.core.userdetails.UsernameNotFoundException(
+                                                "User not found"));
+
+                // 6자리 난수 생성
+                String code = String.format("%06d", new java.util.Random().nextInt(1000000));
+                user.setVerificationCode(code, java.time.LocalDateTime.now().plusMinutes(3));
+                userRepository.save(user);
+
+                emailService.sendVerificationCode(user.getEmail(), code);
+        }
+
+        @Transactional
+        public void verifyEmail(String email, String code) {
+                User user = userRepository.findByEmail(email)
+                                .orElseThrow(() -> new org.springframework.security.core.userdetails.UsernameNotFoundException(
+                                                "User not found"));
+
+                if (user.getVerificationCode() == null || !user.getVerificationCode().equals(code)) {
+                        throw new RuntimeException("인증 번호가 일치하지 않습니다.");
+                }
+
+                if (user.getVerificationCodeExpiresAt().isBefore(java.time.LocalDateTime.now())) {
+                        throw new RuntimeException("인증 번호가 만료되었습니다.");
+                }
+
+                user.updateEmailVerification(true);
+                userRepository.save(user);
+                log.info("Email verified successfully for user: {}", email);
         }
 
         private Long getFarmIdForUser(User user) {

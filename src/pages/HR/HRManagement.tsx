@@ -1,20 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useLocation, Navigate } from 'react-router-dom';
 import EmployeeList from '../../components/HR/EmployeeList';
 import AttendanceLog from '../../components/HR/AttendanceLog';
 import AttendanceSetting from '../../components/HR/AttendanceSetting';
-
+import AttendanceManagement from '../../components/HR/AttendanceManagement';
 import { useLayout } from '../../context/LayoutContext';
 
 const HRManagement = () => {
     const location = useLocation();
     const { setTitle } = useLayout();
-    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
     const getPageTitle = () => {
         if (location.pathname.includes('/hr/employees')) return '직원 관리';
         if (location.pathname.includes('/hr/attendance-log')) return '출퇴근 기록';
         if (location.pathname.includes('/hr/attendance-settings')) return '출퇴근 설정';
+        if (location.pathname.includes('/hr/attendance-management')) return '근태 관리';
         return '인사 관리';
     };
 
@@ -22,16 +22,6 @@ const HRManagement = () => {
         setTitle(getPageTitle());
     }, [location.pathname, setTitle]);
 
-    useEffect(() => {
-        const handleResize = () => {
-            setIsMobile(window.innerWidth < 768);
-        };
-
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
-
-    // Redirect to default sub-page if at root /hr
     if (location.pathname === '/hr' || location.pathname === '/hr/') {
         return <Navigate to="/hr/employees" replace />;
     }
@@ -40,12 +30,12 @@ const HRManagement = () => {
         if (location.pathname.includes('/hr/employees')) return <EmployeeList />;
         if (location.pathname.includes('/hr/attendance-log')) return <AttendanceLog />;
         if (location.pathname.includes('/hr/attendance-settings')) return <AttendanceSetting />;
+        if (location.pathname.includes('/hr/attendance-management')) return <AttendanceManagement />;
         return <EmployeeList />;
     };
 
     return (
-        <div style={{ padding: isMobile ? 'var(--spacing-md)' : 'var(--spacing-lg)' }}>
-            {/* Tab Content */}
+        <div>
             <div>
                 {renderContent()}
             </div>

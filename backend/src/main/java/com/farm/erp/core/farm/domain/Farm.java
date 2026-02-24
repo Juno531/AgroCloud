@@ -9,6 +9,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 /**
  * Farm Aggregate Root
@@ -54,6 +55,12 @@ public class Farm {
     @Column(name = "attendance_ip_address", length = 50)
     private String attendanceIpAddress;
 
+    @Column(name = "work_start_time")
+    private LocalTime workStartTime;
+
+    @Column(name = "work_end_time")
+    private LocalTime workEndTime;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     @Builder.Default
@@ -90,7 +97,7 @@ public class Farm {
     public void update(String name, String location, BigDecimal area, String description,
             String ownerName, String contactNumber, BigDecimal latitude, BigDecimal longitude,
             Integer attendanceRadius, String attendanceWifiSsid, String attendanceWifiBssid,
-            String attendanceIpAddress) {
+            String attendanceIpAddress, LocalTime workStartTime, LocalTime workEndTime) {
         if (name != null)
             this.name = name;
         if (location != null)
@@ -113,6 +120,8 @@ public class Farm {
         this.attendanceWifiSsid = attendanceWifiSsid;
         this.attendanceWifiBssid = attendanceWifiBssid;
         this.attendanceIpAddress = attendanceIpAddress;
+        this.workStartTime = workStartTime;
+        this.workEndTime = workEndTime;
     }
 
     /**

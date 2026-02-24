@@ -13,6 +13,8 @@ interface Field {
     attendanceWifiSsid?: string | null;
     attendanceWifiBssid?: string | null;
     attendanceIpAddress?: string | null;
+    workStartTime?: string | null;
+    workEndTime?: string | null;
 }
 
 interface Crop {
@@ -83,7 +85,9 @@ export const FarmProvider: React.FC<FarmProviderProps> = ({ children }) => {
                 attendanceRadius: f.attendanceRadius,
                 attendanceWifiSsid: f.attendanceWifiSsid,
                 attendanceWifiBssid: f.attendanceWifiBssid,
-                attendanceIpAddress: f.attendanceIpAddress
+                attendanceIpAddress: f.attendanceIpAddress,
+                workStartTime: f.workStartTime,
+                workEndTime: f.workEndTime
             })));
 
             setCrops(cropsData.map((c: any) => ({
@@ -135,7 +139,9 @@ export const FarmProvider: React.FC<FarmProviderProps> = ({ children }) => {
                 attendanceRadius: createdFarm.attendanceRadius,
                 attendanceWifiSsid: createdFarm.attendanceWifiSsid,
                 attendanceWifiBssid: createdFarm.attendanceWifiBssid,
-                attendanceIpAddress: createdFarm.attendanceIpAddress
+                attendanceIpAddress: createdFarm.attendanceIpAddress,
+                workStartTime: createdFarm.workStartTime,
+                workEndTime: createdFarm.workEndTime
             };
 
             // Update UI with real data

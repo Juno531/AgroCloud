@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import CompanyManagement from '../../components/SuperAdmin/CompanyManagement';
 import { useLayout } from '../../context/LayoutContext';
@@ -38,9 +38,9 @@ const SuperAdmin = () => {
     }, [title, setTitle]);
 
     return (
-        <div className="flex-1 flex flex-col h-full bg-gray-50 dark:bg-zinc-950 overflow-hidden">
+        <div className="flex-1 flex flex-col h-full">
             {/* Dynamic Content Area */}
-            <main className="flex-1 overflow-auto p-6">
+            <main className="flex-1 overflow-auto">
                 {description && (
                     <div className="mb-6">
                         <p className="text-gray-500 dark:text-gray-400">{description}</p>

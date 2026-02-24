@@ -2,6 +2,7 @@ package com.farm.erp.api.v1;
 
 import com.farm.erp.api.v1.dto.AttendanceRequest;
 import com.farm.erp.api.v1.dto.AttendanceResponse;
+import com.farm.erp.api.v1.dto.AttendanceSummaryResponse;
 import com.farm.erp.core.attendance.domain.AttendanceRecord;
 import com.farm.erp.core.attendance.service.AttendanceService;
 import com.farm.erp.core.auth.domain.User;
@@ -14,6 +15,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -118,9 +120,27 @@ public class AttendanceController {
         AttendanceRecord.AttendanceType status = attendanceService.getUserStatus(user.getId());
 
         if (status == null) {
-            return ResponseEntity.ok("NONE"); // No recent records
+            return ResponseEntity.ok("NONE");
         }
 
         return ResponseEntity.ok(status.toString());
+    }
+
+    @GetMapping("/summary")
+    public ResponseEntity<List<AttendanceSummaryResponse>> getMonthlySummary(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam("year") int year,
+            @RequestParam("month") int month) {
+
+        User user = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        String companyCode = user.getCompany() != null ? user.getCompany().getCode() : null;
+        if (companyCode == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        List<AttendanceSummaryResponse> summary = attendanceService.getMonthlySummary(companyCode, year, month);
+        return ResponseEntity.ok(summary);
     }
 }

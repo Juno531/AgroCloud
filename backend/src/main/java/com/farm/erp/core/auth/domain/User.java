@@ -32,6 +32,13 @@ public class User {
     @Enumerated(EnumType.STRING)
     private Role role;
 
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean isEmailVerified = false;
+
+    private String verificationCode;
+
+    private LocalDateTime verificationCodeExpiresAt;
+
     @Builder
     public User(String email, String password, String name, Role role, Company company) {
         this.email = email;
@@ -39,6 +46,7 @@ public class User {
         this.name = name;
         this.role = role;
         this.company = company;
+        this.isEmailVerified = false;
     }
 
     public void updatePassword(String encodedPassword) {
@@ -47,6 +55,17 @@ public class User {
 
     public void updateName(String name) {
         this.name = name;
+    }
+
+    public void updateEmailVerification(boolean verified) {
+        this.isEmailVerified = verified;
+        this.verificationCode = null;
+        this.verificationCodeExpiresAt = null;
+    }
+
+    public void setVerificationCode(String code, LocalDateTime expiresAt) {
+        this.verificationCode = code;
+        this.verificationCodeExpiresAt = expiresAt;
     }
 
     public enum Role {

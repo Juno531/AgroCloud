@@ -450,7 +450,7 @@ const CultivationManagement = () => {
     ];
 
     return (
-        <div className="cultivation-page" style={{ padding: 'var(--spacing-lg)' }}>
+        <div className="cultivation-page">
             <div className="page-header" style={{ marginBottom: '1rem' }}>
                 <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                     {tabButtons.map(tab => {
@@ -467,577 +467,578 @@ const CultivationManagement = () => {
                         );
                     })}
                 </div>
-
-                {/* Planting Management Tab */}
-                {
-                    activeTab === 'planting' && (
-                        <>
-                            <div style={{ ...sectionStyle, marginTop: '1.5rem', marginBottom: '1rem', display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                                <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: '200px' }}>
-                                    <label style={{ fontSize: '0.875rem', marginBottom: '0.25rem', fontWeight: 500 }}>농장</label>
-                                    <select
-                                        value={selectedFarm || ''}
-                                        onChange={(e) => setSelectedFarm(Number(e.target.value))}
-                                        style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--color-border)', fontSize: '1rem' }}
-                                    >
-                                        {fields.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
-                                    </select>
-                                </div>
-
-                                <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: '200px' }}>
-                                    <label style={{ fontSize: '0.875rem', marginBottom: '0.25rem', fontWeight: 500 }}>품종 필터</label>
-                                    <select
-                                        value={selectedCropFilter}
-                                        onChange={(e) => setSelectedCropFilter(e.target.value)}
-                                        style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--color-border)', fontSize: '1rem' }}
-                                    >
-                                        <option value="">전체</option>
-                                        {crops.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                    </select>
-                                </div>
-                            </div>
-
-                            {/* Bed Grid for Planting */}
-                            <div style={sectionStyle}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                                    <h3>베드 선택하여 정식 추가</h3>
-                                    {selectedBeds.length > 0 && (
-                                        <button
-                                            className="btn btn-primary"
-                                            onClick={() => {
-                                                setNewPlanting({ ...newPlanting, bedId: selectedBeds[0] });
-                                                openModal('planting');
-                                            }}
+                <div key={activeTab} className="animate-in fade-in duration-500">
+                    {/* Planting Management Tab */}
+                    {
+                        activeTab === 'planting' && (
+                            <>
+                                <div style={{ ...sectionStyle, marginTop: '1.5rem', marginBottom: '1rem', display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: '200px' }}>
+                                        <label style={{ fontSize: '0.875rem', marginBottom: '0.25rem', fontWeight: 500 }}>농장</label>
+                                        <select
+                                            value={selectedFarm || ''}
+                                            onChange={(e) => setSelectedFarm(Number(e.target.value))}
+                                            style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--color-border)', fontSize: '1rem' }}
                                         >
-                                            <Plus size={16} style={{ marginRight: '0.5rem' }} />
-                                            선택한 베드에 정식 ({selectedBeds.length}개)
-                                        </button>
-                                    )}
+                                            {fields.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+                                        </select>
+                                    </div>
+
+                                    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: '200px' }}>
+                                        <label style={{ fontSize: '0.875rem', marginBottom: '0.25rem', fontWeight: 500 }}>품종 필터</label>
+                                        <select
+                                            value={selectedCropFilter}
+                                            onChange={(e) => setSelectedCropFilter(e.target.value)}
+                                            style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--color-border)', fontSize: '1rem' }}
+                                        >
+                                            <option value="">전체</option>
+                                            {crops.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                        </select>
+                                    </div>
                                 </div>
 
-                                {layoutBeds.length === 0 ? (
-                                    <div style={{
-                                        textAlign: 'center',
-                                        padding: '3rem',
-                                        color: 'var(--color-text-secondary)',
-                                        backgroundColor: 'var(--color-background)',
-                                        borderRadius: 'var(--radius-md)',
-                                        border: '2px dashed var(--color-border)'
-                                    }}>
-                                        <Layers size={48} style={{ opacity: 0.3, marginBottom: '1rem' }} />
-                                        <p style={{ fontSize: '1.125rem', marginBottom: '0.5rem' }}>베드 레이아웃이 없습니다</p>
-                                        <p style={{ fontSize: '0.875rem' }}>"베드 관리" 탭에서 먼저 베드 레이아웃을 설정하세요</p>
+                                {/* Bed Grid for Planting */}
+                                <div style={sectionStyle}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                                        <h3>베드 선택하여 정식 추가</h3>
+                                        {selectedBeds.length > 0 && (
+                                            <button
+                                                className="btn btn-primary"
+                                                onClick={() => {
+                                                    setNewPlanting({ ...newPlanting, bedId: selectedBeds[0] });
+                                                    openModal('planting');
+                                                }}
+                                            >
+                                                <Plus size={16} style={{ marginRight: '0.5rem' }} />
+                                                선택한 베드에 정식 ({selectedBeds.length}개)
+                                            </button>
+                                        )}
                                     </div>
-                                ) : (
-                                    <>
-                                        {/* Group beds by zone */}
-                                        {Object.entries(
-                                            layoutBeds.reduce((acc: any, bed: any) => {
-                                                if (!acc[bed.zoneName]) acc[bed.zoneName] = [];
-                                                acc[bed.zoneName].push(bed);
-                                                return acc;
-                                            }, {})
-                                        ).map(([zoneName, zoneBeds]: [string, any]) => (
-                                            <div key={zoneName} style={{ marginBottom: '1.5rem' }}>
-                                                <h4 style={{ marginBottom: '0.75rem', color: 'var(--color-text-secondary)' }}>{zoneName}</h4>
-                                                <div style={{
-                                                    display: 'grid',
-                                                    gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
-                                                    gap: '0.75rem'
-                                                }}>
-                                                    {zoneBeds.map((bed: any) => {
-                                                        const hasPlanting = allPlantings.some((p: any) => p.bedName === bed.name);
-                                                        const planting = allPlantings.find((p: any) => p.bedName === bed.name);
-                                                        const isSelected = selectedBeds.includes(bed.id);
 
-                                                        return (
-                                                            <div
-                                                                key={bed.id}
-                                                                onClick={() => {
-                                                                    if (isSelected) {
-                                                                        setSelectedBeds(selectedBeds.filter(id => id !== bed.id));
-                                                                    } else {
-                                                                        setSelectedBeds([...selectedBeds, bed.id]);
-                                                                    }
-                                                                }}
-                                                                style={{
-                                                                    backgroundColor: hasPlanting ? '#4ade80' : isSelected ? '#60a5fa' : '#f3f4f6',
-                                                                    border: `2px solid ${hasPlanting ? '#22c55e' : isSelected ? '#3b82f6' : '#d1d5db'}`,
-                                                                    borderRadius: '8px',
-                                                                    padding: '1rem',
-                                                                    textAlign: 'center',
-                                                                    cursor: 'pointer',
-                                                                    transition: 'all 0.2s ease',
-                                                                    position: 'relative'
-                                                                }}
-                                                            >
-                                                                <div style={{ fontSize: '0.75rem', color: hasPlanting ? '#15803d' : '#6b7280', marginBottom: '4px' }}>
-                                                                    B-{bed.bedNumber}
-                                                                </div>
-                                                                {hasPlanting ? (
-                                                                    <>
-                                                                        <div style={{ fontSize: '0.875rem', fontWeight: 600, color: '#15803d' }}>
-                                                                            {planting?.cropName || '정식됨'}
-                                                                        </div>
-                                                                        <div style={{ fontSize: '0.7rem', color: '#166534', marginTop: '2px' }}>
-                                                                            {planting?.plantingDate}
-                                                                        </div>
-                                                                    </>
-                                                                ) : (
-                                                                    <button
-                                                                        className="btn btn-sm"
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            setNewPlanting({ ...newPlanting, bedId: bed.id, bedName: bed.name });
-                                                                            openModal('planting');
-                                                                        }}
-                                                                        style={{
-                                                                            backgroundColor: 'var(--color-primary)',
-                                                                            color: 'white',
-                                                                            border: 'none',
+                                    {layoutBeds.length === 0 ? (
+                                        <div style={{
+                                            textAlign: 'center',
+                                            padding: '3rem',
+                                            color: 'var(--color-text-secondary)',
+                                            backgroundColor: 'var(--color-background)',
+                                            borderRadius: 'var(--radius-md)',
+                                            border: '2px dashed var(--color-border)'
+                                        }}>
+                                            <Layers size={48} style={{ opacity: 0.3, marginBottom: '1rem' }} />
+                                            <p style={{ fontSize: '1.125rem', marginBottom: '0.5rem' }}>베드 레이아웃이 없습니다</p>
+                                            <p style={{ fontSize: '0.875rem' }}>"베드 관리" 탭에서 먼저 베드 레이아웃을 설정하세요</p>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            {/* Group beds by zone */}
+                                            {Object.entries(
+                                                layoutBeds.reduce((acc: any, bed: any) => {
+                                                    if (!acc[bed.zoneName]) acc[bed.zoneName] = [];
+                                                    acc[bed.zoneName].push(bed);
+                                                    return acc;
+                                                }, {})
+                                            ).map(([zoneName, zoneBeds]: [string, any]) => (
+                                                <div key={zoneName} style={{ marginBottom: '1.5rem' }}>
+                                                    <h4 style={{ marginBottom: '0.75rem', color: 'var(--color-text-secondary)' }}>{zoneName}</h4>
+                                                    <div style={{
+                                                        display: 'grid',
+                                                        gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
+                                                        gap: '0.75rem'
+                                                    }}>
+                                                        {zoneBeds.map((bed: any) => {
+                                                            const hasPlanting = allPlantings.some((p: any) => p.bedName === bed.name);
+                                                            const planting = allPlantings.find((p: any) => p.bedName === bed.name);
+                                                            const isSelected = selectedBeds.includes(bed.id);
+
+                                                            return (
+                                                                <div
+                                                                    key={bed.id}
+                                                                    onClick={() => {
+                                                                        if (isSelected) {
+                                                                            setSelectedBeds(selectedBeds.filter(id => id !== bed.id));
+                                                                        } else {
+                                                                            setSelectedBeds([...selectedBeds, bed.id]);
+                                                                        }
+                                                                    }}
+                                                                    style={{
+                                                                        backgroundColor: hasPlanting ? '#4ade80' : isSelected ? '#60a5fa' : '#f3f4f6',
+                                                                        border: `2px solid ${hasPlanting ? '#22c55e' : isSelected ? '#3b82f6' : '#d1d5db'}`,
+                                                                        borderRadius: '8px',
+                                                                        padding: '1rem',
+                                                                        textAlign: 'center',
+                                                                        cursor: 'pointer',
+                                                                        transition: 'all 0.2s ease',
+                                                                        position: 'relative'
+                                                                    }}
+                                                                >
+                                                                    <div style={{ fontSize: '0.75rem', color: hasPlanting ? '#15803d' : '#6b7280', marginBottom: '4px' }}>
+                                                                        B-{bed.bedNumber}
+                                                                    </div>
+                                                                    {hasPlanting ? (
+                                                                        <>
+                                                                            <div style={{ fontSize: '0.875rem', fontWeight: 600, color: '#15803d' }}>
+                                                                                {planting?.cropName || '정식됨'}
+                                                                            </div>
+                                                                            <div style={{ fontSize: '0.7rem', color: '#166534', marginTop: '2px' }}>
+                                                                                {planting?.plantingDate}
+                                                                            </div>
+                                                                        </>
+                                                                    ) : (
+                                                                        <button
+                                                                            className="btn btn-sm"
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                setNewPlanting({ ...newPlanting, bedId: bed.id, bedName: bed.name });
+                                                                                openModal('planting');
+                                                                            }}
+                                                                            style={{
+                                                                                backgroundColor: 'var(--color-primary)',
+                                                                                color: 'white',
+                                                                                border: 'none',
+                                                                                borderRadius: '50%',
+                                                                                width: '28px',
+                                                                                height: '28px',
+                                                                                padding: 0,
+                                                                                display: 'flex',
+                                                                                alignItems: 'center',
+                                                                                justifyContent: 'center'
+                                                                            }}
+                                                                        >
+                                                                            <Plus size={16} />
+                                                                        </button>
+                                                                    )}
+                                                                    {isSelected && !hasPlanting && (
+                                                                        <div style={{
+                                                                            position: 'absolute',
+                                                                            top: '4px',
+                                                                            right: '4px',
+                                                                            backgroundColor: '#3b82f6',
                                                                             borderRadius: '50%',
-                                                                            width: '28px',
-                                                                            height: '28px',
-                                                                            padding: 0,
+                                                                            width: '18px',
+                                                                            height: '18px',
                                                                             display: 'flex',
                                                                             alignItems: 'center',
                                                                             justifyContent: 'center'
-                                                                        }}
-                                                                    >
-                                                                        <Plus size={16} />
-                                                                    </button>
-                                                                )}
-                                                                {isSelected && !hasPlanting && (
-                                                                    <div style={{
-                                                                        position: 'absolute',
-                                                                        top: '4px',
-                                                                        right: '4px',
-                                                                        backgroundColor: '#3b82f6',
-                                                                        borderRadius: '50%',
-                                                                        width: '18px',
-                                                                        height: '18px',
-                                                                        display: 'flex',
-                                                                        alignItems: 'center',
-                                                                        justifyContent: 'center'
-                                                                    }}>
-                                                                        <Check size={12} color="white" />
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        );
-                                                    })}
+                                                                        }}>
+                                                                            <Check size={12} color="white" />
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        ))}
-                                    </>
-                                )}
-                            </div>
-
-                            {/* Existing Plantings Table */}
-                            <div style={{ ...sectionStyle, marginTop: '1rem' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                                    <h3>정식 현황</h3>
+                                            ))}
+                                        </>
+                                    )}
                                 </div>
-                                {loading ? (
-                                    <p style={{ textAlign: 'center', padding: '2rem', color: 'var(--color-text-secondary)' }}>로딩 중...</p>
-                                ) : allPlantings.length === 0 ? (
-                                    <p style={{ textAlign: 'center', padding: '2rem', color: 'var(--color-text-secondary)' }}>정식 기록이 없습니다</p>
-                                ) : (
-                                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                                        <thead>
-                                            <tr style={{ borderBottom: '2px solid var(--color-border)', textAlign: 'left' }}>
-                                                <th style={{ padding: '0.75rem' }}>베드</th>
-                                                <th style={{ padding: '0.75rem' }}>품종</th>
-                                                <th style={{ padding: '0.75rem' }}>정식일</th>
-                                                <th style={{ padding: '0.75rem' }}>주수</th>
-                                                <th style={{ padding: '0.75rem' }}>작업</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {allPlantings
-                                                .filter((p: any) => !selectedCropFilter || p.cropId === Number(selectedCropFilter))
-                                                .map((planting: any) => (
-                                                    <tr key={planting.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                                                        <td style={{ padding: '0.75rem' }}>{planting.bedName}</td>
-                                                        <td style={{ padding: '0.75rem' }}>{planting.cropName}</td>
-                                                        <td style={{ padding: '0.75rem' }}>{planting.plantingDate}</td>
-                                                        <td style={{ padding: '0.75rem' }}>{planting.plantCount || '-'}</td>
-                                                        <td style={{ padding: '0.75rem' }}>
-                                                            <button
-                                                                className="btn btn-sm btn-outline"
-                                                                style={{ color: 'var(--color-danger)', borderColor: 'var(--color-danger)' }}
-                                                                onClick={() => handleDeletePlanting(planting.id, planting)}
-                                                            >
-                                                                <Trash2 size={14} style={{ marginRight: '4px' }} />
-                                                                삭제
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                ))
-                                            }
-                                        </tbody>
-                                    </table>
-                                )}
-                            </div>
-                        </>
-                    )
-                }
 
-                {/* Bed Management Tab */}
-                {
-                    activeTab === 'beds' && (
-                        <>
-                            {/* Farm and House Selection */}
-                            <div style={{ ...sectionStyle, marginTop: '1.5rem', display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                                <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: '200px' }}>
-                                    <label style={{ fontSize: '0.875rem', marginBottom: '0.25rem', fontWeight: 500 }}>농장</label>
+                                {/* Existing Plantings Table */}
+                                <div style={{ ...sectionStyle, marginTop: '1rem' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                                        <h3>정식 현황</h3>
+                                    </div>
+                                    {loading ? (
+                                        <p style={{ textAlign: 'center', padding: '2rem', color: 'var(--color-text-secondary)' }}>로딩 중...</p>
+                                    ) : allPlantings.length === 0 ? (
+                                        <p style={{ textAlign: 'center', padding: '2rem', color: 'var(--color-text-secondary)' }}>정식 기록이 없습니다</p>
+                                    ) : (
+                                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                            <thead>
+                                                <tr style={{ borderBottom: '2px solid var(--color-border)', textAlign: 'left' }}>
+                                                    <th style={{ padding: '0.75rem' }}>베드</th>
+                                                    <th style={{ padding: '0.75rem' }}>품종</th>
+                                                    <th style={{ padding: '0.75rem' }}>정식일</th>
+                                                    <th style={{ padding: '0.75rem' }}>주수</th>
+                                                    <th style={{ padding: '0.75rem' }}>작업</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {allPlantings
+                                                    .filter((p: any) => !selectedCropFilter || p.cropId === Number(selectedCropFilter))
+                                                    .map((planting: any) => (
+                                                        <tr key={planting.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
+                                                            <td style={{ padding: '0.75rem' }}>{planting.bedName}</td>
+                                                            <td style={{ padding: '0.75rem' }}>{planting.cropName}</td>
+                                                            <td style={{ padding: '0.75rem' }}>{planting.plantingDate}</td>
+                                                            <td style={{ padding: '0.75rem' }}>{planting.plantCount || '-'}</td>
+                                                            <td style={{ padding: '0.75rem' }}>
+                                                                <button
+                                                                    className="btn btn-sm btn-outline"
+                                                                    style={{ color: 'var(--color-danger)', borderColor: 'var(--color-danger)' }}
+                                                                    onClick={() => handleDeletePlanting(planting.id, planting)}
+                                                                >
+                                                                    <Trash2 size={14} style={{ marginRight: '4px' }} />
+                                                                    삭제
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    ))
+                                                }
+                                            </tbody>
+                                        </table>
+                                    )}
+                                </div>
+                            </>
+                        )
+                    }
+
+                    {/* Bed Management Tab */}
+                    {
+                        activeTab === 'beds' && (
+                            <>
+                                {/* Farm and House Selection */}
+                                <div style={{ ...sectionStyle, marginTop: '1.5rem', display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: '200px' }}>
+                                        <label style={{ fontSize: '0.875rem', marginBottom: '0.25rem', fontWeight: 500 }}>농장</label>
+                                        <select
+                                            value={selectedFarm || ''}
+                                            onChange={(e) => setSelectedFarm(Number(e.target.value))}
+                                            style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--color-border)', fontSize: '1rem' }}
+                                        >
+                                            {fields.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+                                        </select>
+                                    </div>
+
+                                    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: '200px' }}>
+                                        <label style={{ fontSize: '0.875rem', marginBottom: '0.25rem', fontWeight: 500 }}>하우스</label>
+                                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                            <select
+                                                value={selectedHouse || ''}
+                                                onChange={(e) => setSelectedHouse(Number(e.target.value))}
+                                                style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--color-border)', fontSize: '1rem', flex: 1 }}
+                                            >
+                                                <option value="">하우스 선택</option>
+                                                {houses.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
+                                            </select>
+                                            <button
+                                                className="btn btn-outline"
+                                                onClick={() => openModal('house')}
+                                                style={{ padding: '0.5rem 1rem' }}
+                                            >
+                                                <Plus size={16} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Bed Layout Editor */}
+                                {selectedFarm && (
+                                    <div style={{ marginTop: '1rem' }}>
+                                        <BedLayoutEditor farmId={selectedFarm} farmName={fields.find(f => f.id === selectedFarm)?.name || ''} />
+                                    </div>
+                                )}
+
+                                {/* Help Text */}
+                                <div style={{
+                                    ...sectionStyle,
+                                    marginTop: '1rem',
+                                    backgroundColor: 'var(--color-info-bg, #e0f2fe)',
+                                    border: '1px solid var(--color-info-border, #7dd3fc)',
+                                    borderRadius: '8px',
+                                    padding: '1rem'
+                                }}>
+                                    <p style={{ fontSize: '0.875rem', color: 'var(--color-info-text, #0369a1)', margin: 0 }}>
+                                        💡 <strong>베드 레이아웃 사용법:</strong> 위의 에디터에서 구역을 추가하고 베드 수를 설정한 후 "저장" 버튼을 클릭하세요.
+                                        저장된 베드는 "정식 관리" 탭에서 정식 작업에 사용할 수 있습니다.
+                                    </p>
+                                </div>
+                            </>
+                        )
+                    }
+
+                    {/* Common Filters for other tabs */}
+                    {
+                        activeTab !== 'beds' && (
+                            <div style={{ ...sectionStyle, marginTop: '1.5rem', marginBottom: '1rem', display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                    <label style={{ fontSize: '0.875rem', marginBottom: '0.25rem' }}>농장</label>
                                     <select
                                         value={selectedFarm || ''}
                                         onChange={(e) => setSelectedFarm(Number(e.target.value))}
-                                        style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--color-border)', fontSize: '1rem' }}
+                                        style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--color-border)' }}
                                     >
                                         {fields.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
                                     </select>
                                 </div>
 
-                                <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: '200px' }}>
-                                    <label style={{ fontSize: '0.875rem', marginBottom: '0.25rem', fontWeight: 500 }}>하우스</label>
-                                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                        <select
-                                            value={selectedHouse || ''}
-                                            onChange={(e) => setSelectedHouse(Number(e.target.value))}
-                                            style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--color-border)', fontSize: '1rem', flex: 1 }}
-                                        >
-                                            <option value="">하우스 선택</option>
-                                            {houses.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
-                                        </select>
-                                        <button
-                                            className="btn btn-outline"
-                                            onClick={() => openModal('house')}
-                                            style={{ padding: '0.5rem 1rem' }}
-                                        >
-                                            <Plus size={16} />
-                                        </button>
-                                    </div>
-                                </div>
+                                {activeTab === 'growth' && (
+                                    <>
+                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                            <label style={{ fontSize: '0.875rem', marginBottom: '0.25rem' }}>작기</label>
+                                            <select
+                                                value={selectedSeason}
+                                                onChange={(e) => setSelectedSeason(e.target.value)}
+                                                style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--color-border)' }}
+                                            >
+                                                <option value="">작기 선택</option>
+                                                {seasons.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                            </select>
+                                        </div>
+                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                            <label style={{ fontSize: '0.875rem', marginBottom: '0.25rem' }}>파종/정식</label>
+                                            <select
+                                                value={selectedPlanting}
+                                                onChange={(e) => setSelectedPlanting(e.target.value)}
+                                                style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--color-border)' }}
+                                            >
+                                                <option value="">파종/정식 선택</option>
+                                                {plantings.map(p => <option key={p.id} value={p.id}>{p.cropName} ({p.bedName})</option>)}
+                                            </select>
+                                        </div>
+                                    </>
+                                )}
+
+                                {(activeTab === 'pest' || activeTab === 'work') && (
+                                    <>
+                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                            <label style={{ fontSize: '0.875rem', marginBottom: '0.25rem' }}>하우스</label>
+                                            <select
+                                                value={selectedHouse}
+                                                onChange={(e) => setSelectedHouse(e.target.value)}
+                                                style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--color-border)' }}
+                                            >
+                                                <option value="">하우스 선택</option>
+                                                {houses.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
+                                            </select>
+                                        </div>
+                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                            <label style={{ fontSize: '0.875rem', marginBottom: '0.25rem' }}>베드</label>
+                                            <select
+                                                value={selectedBed}
+                                                onChange={(e) => setSelectedBed(e.target.value)}
+                                                style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--color-border)' }}
+                                            >
+                                                <option value="">베드 선택</option>
+                                                {beds.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                                            </select>
+                                        </div>
+                                    </>
+                                )}
                             </div>
+                        )
+                    }
 
-                            {/* Bed Layout Editor */}
-                            {selectedFarm && (
-                                <div style={{ marginTop: '1rem' }}>
-                                    <BedLayoutEditor farmId={selectedFarm} farmName={fields.find(f => f.id === selectedFarm)?.name || ''} />
-                                </div>
-                            )}
-
-                            {/* Help Text */}
-                            <div style={{
-                                ...sectionStyle,
-                                marginTop: '1rem',
-                                backgroundColor: 'var(--color-info-bg, #e0f2fe)',
-                                border: '1px solid var(--color-info-border, #7dd3fc)',
-                                borderRadius: '8px',
-                                padding: '1rem'
-                            }}>
-                                <p style={{ fontSize: '0.875rem', color: 'var(--color-info-text, #0369a1)', margin: 0 }}>
-                                    💡 <strong>베드 레이아웃 사용법:</strong> 위의 에디터에서 구역을 추가하고 베드 수를 설정한 후 "저장" 버튼을 클릭하세요.
-                                    저장된 베드는 "정식 관리" 탭에서 정식 작업에 사용할 수 있습니다.
-                                </p>
-                            </div>
-                        </>
-                    )
-                }
-
-                {/* Common Filters for other tabs */}
-                {
-                    activeTab !== 'beds' && (
-                        <div style={{ ...sectionStyle, marginTop: '1.5rem', marginBottom: '1rem', display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                <label style={{ fontSize: '0.875rem', marginBottom: '0.25rem' }}>농장</label>
-                                <select
-                                    value={selectedFarm || ''}
-                                    onChange={(e) => setSelectedFarm(Number(e.target.value))}
-                                    style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--color-border)' }}
-                                >
-                                    {fields.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
-                                </select>
-                            </div>
-
-                            {activeTab === 'growth' && (
-                                <>
-                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                        <label style={{ fontSize: '0.875rem', marginBottom: '0.25rem' }}>작기</label>
-                                        <select
-                                            value={selectedSeason}
-                                            onChange={(e) => setSelectedSeason(e.target.value)}
-                                            style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--color-border)' }}
-                                        >
-                                            <option value="">작기 선택</option>
-                                            {seasons.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                                        </select>
-                                    </div>
-                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                        <label style={{ fontSize: '0.875rem', marginBottom: '0.25rem' }}>파종/정식</label>
-                                        <select
-                                            value={selectedPlanting}
-                                            onChange={(e) => setSelectedPlanting(e.target.value)}
-                                            style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--color-border)' }}
-                                        >
-                                            <option value="">파종/정식 선택</option>
-                                            {plantings.map(p => <option key={p.id} value={p.id}>{p.cropName} ({p.bedName})</option>)}
-                                        </select>
-                                    </div>
-                                </>
-                            )}
-
-                            {(activeTab === 'pest' || activeTab === 'work') && (
-                                <>
-                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                        <label style={{ fontSize: '0.875rem', marginBottom: '0.25rem' }}>하우스</label>
-                                        <select
-                                            value={selectedHouse}
-                                            onChange={(e) => setSelectedHouse(e.target.value)}
-                                            style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--color-border)' }}
-                                        >
-                                            <option value="">하우스 선택</option>
-                                            {houses.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
-                                        </select>
-                                    </div>
-                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                        <label style={{ fontSize: '0.875rem', marginBottom: '0.25rem' }}>베드</label>
-                                        <select
-                                            value={selectedBed}
-                                            onChange={(e) => setSelectedBed(e.target.value)}
-                                            style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--color-border)' }}
-                                        >
-                                            <option value="">베드 선택</option>
-                                            {beds.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-                                        </select>
-                                    </div>
-                                </>
-                            )}
-                        </div>
-                    )
-                }
-
-                {
-                    activeTab === 'growth' && (
-                        <div style={sectionStyle}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                                <h3>생육 조사 기록</h3>
-                                <button className="btn btn-primary" onClick={() => openModal('growth')} disabled={!selectedPlanting}>
-                                    <Plus size={16} style={{ marginRight: '0.5rem' }} />
-                                    기록 추가
-                                </button>
-                            </div>
-                            {!selectedPlanting ? (
-                                <p style={{ color: 'var(--color-text-secondary)' }}>작기와 파종/정식을 선택해주세요.</p>
-                            ) : (
-                                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                                    <thead>
-                                        <tr style={{ borderBottom: '1px solid var(--color-border)', textAlign: 'left' }}>
-                                            <th style={{ padding: '0.75rem' }}>날짜</th>
-                                            <th style={{ padding: '0.75rem' }}>초장 (cm)</th>
-                                            <th style={{ padding: '0.75rem' }}>엽수 (매)</th>
-                                            <th style={{ padding: '0.75rem' }}>엽장 (cm)</th>
-                                            <th style={{ padding: '0.75rem' }}>엽폭 (cm)</th>
-                                            <th style={{ padding: '0.75rem' }}>관부직경 (mm)</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {growthRecords.map(record => (
-                                            <tr key={record.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                                                <td style={{ padding: '0.75rem' }}>{record.recordDate}</td>
-                                                <td style={{ padding: '0.75rem' }}>{record.plantHeight}</td>
-                                                <td style={{ padding: '0.75rem' }}>{record.leafCount}</td>
-                                                <td style={{ padding: '0.75rem' }}>{record.leafLength}</td>
-                                                <td style={{ padding: '0.75rem' }}>{record.leafWidth}</td>
-                                                <td style={{ padding: '0.75rem' }}>{record.crownDiameter}</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            )}
-                        </div>
-                    )
-                }
-
-                {
-                    activeTab === 'pest' && (
-                        <div style={sectionStyle}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                                <h3>병해충 예찰 기록</h3>
-                                <button className="btn btn-primary" onClick={() => openModal('pest')} disabled={!selectedBed}>
-                                    <Plus size={16} style={{ marginRight: '0.5rem' }} />
-                                    기록 추가
-                                </button>
-                            </div>
-                            {!selectedBed ? (
-                                <p style={{ color: 'var(--color-text-secondary)' }}>하우스와 베드를 선택해주세요.</p>
-                            ) : (
-                                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                                    <thead>
-                                        <tr style={{ borderBottom: '1px solid var(--color-border)', textAlign: 'left' }}>
-                                            <th style={{ padding: '0.75rem' }}>날짜</th>
-                                            <th style={{ padding: '0.75rem' }}>종류</th>
-                                            <th style={{ padding: '0.75rem' }}>심각도</th>
-                                            <th style={{ padding: '0.75rem' }}>비고</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {pestRecords.map(record => (
-                                            <tr key={record.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                                                <td style={{ padding: '0.75rem' }}>{record.recordDate}</td>
-                                                <td style={{ padding: '0.75rem' }}>{record.pestType}</td>
-                                                <td style={{ padding: '0.75rem' }}>
-                                                    <span style={{
-                                                        padding: '0.25rem 0.5rem',
-                                                        borderRadius: '4px',
-                                                        backgroundColor: record.severity === 'HIGH' ? 'var(--color-error-bg)' :
-                                                            record.severity === 'MEDIUM' ? 'var(--color-warning-bg)' : 'var(--color-success-bg)',
-                                                        color: record.severity === 'HIGH' ? 'var(--color-error)' :
-                                                            record.severity === 'MEDIUM' ? 'var(--color-warning)' : 'var(--color-success)'
-                                                    }}>
-                                                        {record.severity}
-                                                    </span>
-                                                </td>
-                                                <td style={{ padding: '0.75rem' }}>{record.notes}</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            )}
-                        </div>
-                    )
-                }
-
-                {
-                    activeTab === 'work' && (
-                        <div style={sectionStyle}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                                <h3>작업 일지</h3>
-                                <button className="btn btn-primary" onClick={() => openModal('work')} disabled={!selectedBed}>
-                                    <Plus size={16} style={{ marginRight: '0.5rem' }} />
-                                    일지 추가
-                                </button>
-                            </div>
-                            {!selectedBed ? (
-                                <p style={{ color: 'var(--color-text-secondary)' }}>하우스와 베드를 선택해주세요.</p>
-                            ) : (
-                                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                                    <thead>
-                                        <tr style={{ borderBottom: '1px solid var(--color-border)', textAlign: 'left' }}>
-                                            <th style={{ padding: '0.75rem' }}>날짜</th>
-                                            <th style={{ padding: '0.75rem' }}>작업 종류</th>
-                                            <th style={{ padding: '0.75rem' }}>인원</th>
-                                            <th style={{ padding: '0.75rem' }}>시간 (분)</th>
-                                            <th style={{ padding: '0.75rem' }}>비고</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {workRecords.map(record => (
-                                            <tr key={record.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                                                <td style={{ padding: '0.75rem' }}>{record.workDate}</td>
-                                                <td style={{ padding: '0.75rem' }}>{record.workType}</td>
-                                                <td style={{ padding: '0.75rem' }}>{record.workerCount}</td>
-                                                <td style={{ padding: '0.75rem' }}>{record.durationMinutes}</td>
-                                                <td style={{ padding: '0.75rem' }}>{record.notes}</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            )}
-                        </div>
-                    )
-                }
-
-                {
-                    activeTab === 'prediction' && (
-                        <div style={sectionStyle}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                                <h3>수확 예측</h3>
-                                <button className="btn btn-primary" onClick={() => openModal('prediction')}>
-                                    <Plus size={16} style={{ marginRight: '0.5rem' }} />
-                                    예측 생성
-                                </button>
-                            </div>
-                            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                                <thead>
-                                    <tr style={{ borderBottom: '1px solid var(--color-border)', textAlign: 'left' }}>
-                                        <th style={{ padding: '0.75rem' }}>베드</th>
-                                        <th style={{ padding: '0.75rem' }}>예상 수확일</th>
-                                        <th style={{ padding: '0.75rem' }}>예상 수확량(kg)</th>
-                                        <th style={{ padding: '0.75rem' }}>신뢰도</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {predictions.map(pred => (
-                                        <tr key={pred.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                                            <td style={{ padding: '0.75rem' }}>{pred.plantingName}</td>
-                                            <td style={{ padding: '0.75rem' }}>{pred.expectedHarvestDate}</td>
-                                            <td style={{ padding: '0.75rem' }}>{pred.expectedYield} kg</td>
-                                            <td style={{ padding: '0.75rem' }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                    <div style={{ flex: 1, height: '8px', backgroundColor: 'var(--color-border)', borderRadius: '4px', overflow: 'hidden' }}>
-                                                        <div style={{ width: `${pred.confidence * 100}%`, height: '100%', backgroundColor: 'var(--color-primary)' }}></div>
-                                                    </div>
-                                                    <span>{Math.round(pred.confidence * 100)}%</span>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    )
-                }
-
-                {/* Nutrient Management Tab */}
-                {
-                    activeTab === 'nutrient' && (
-                        <>
-
-
+                    {
+                        activeTab === 'growth' && (
                             <div style={sectionStyle}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                                    <h3>양액 기록</h3>
-                                    <button
-                                        className="btn btn-primary"
-                                        onClick={async () => {
-                                            setEditingNutrient(null);
-                                            await fetchLayoutBeds(); // Ensure beds are loaded
-                                            setModalType('nutrient');
-                                            setIsModalOpen(true);
-                                        }}
-                                        disabled={loading}
-                                    >
+                                    <h3>생육 조사 기록</h3>
+                                    <button className="btn btn-primary" onClick={() => openModal('growth')} disabled={!selectedPlanting}>
                                         <Plus size={16} style={{ marginRight: '0.5rem' }} />
                                         기록 추가
                                     </button>
                                 </div>
-                                {loading ? (
-                                    <p style={{ textAlign: 'center', padding: '2rem', color: 'var(--color-text-secondary)' }}>로딩 중...</p>
+                                {!selectedPlanting ? (
+                                    <p style={{ color: 'var(--color-text-secondary)' }}>작기와 파종/정식을 선택해주세요.</p>
                                 ) : (
-                                    <NutrientDataTable
-                                        records={nutrientRecords}
-                                        onEdit={handleNutrientEdit}
-                                        onDelete={handleNutrientDelete}
-                                    />
+                                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                        <thead>
+                                            <tr style={{ borderBottom: '1px solid var(--color-border)', textAlign: 'left' }}>
+                                                <th style={{ padding: '0.75rem' }}>날짜</th>
+                                                <th style={{ padding: '0.75rem' }}>초장 (cm)</th>
+                                                <th style={{ padding: '0.75rem' }}>엽수 (매)</th>
+                                                <th style={{ padding: '0.75rem' }}>엽장 (cm)</th>
+                                                <th style={{ padding: '0.75rem' }}>엽폭 (cm)</th>
+                                                <th style={{ padding: '0.75rem' }}>관부직경 (mm)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {growthRecords.map(record => (
+                                                <tr key={record.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
+                                                    <td style={{ padding: '0.75rem' }}>{record.recordDate}</td>
+                                                    <td style={{ padding: '0.75rem' }}>{record.plantHeight}</td>
+                                                    <td style={{ padding: '0.75rem' }}>{record.leafCount}</td>
+                                                    <td style={{ padding: '0.75rem' }}>{record.leafLength}</td>
+                                                    <td style={{ padding: '0.75rem' }}>{record.leafWidth}</td>
+                                                    <td style={{ padding: '0.75rem' }}>{record.crownDiameter}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
                                 )}
                             </div>
+                        )
+                    }
 
-                            <div style={{ ...sectionStyle, marginTop: '1rem' }}>
-                                <h3 style={{ marginBottom: '1rem' }}>양액 트렌드</h3>
-                                {nutrientRecords.length > 0 ? (
-                                    <NutrientChart records={nutrientRecords} />
+                    {
+                        activeTab === 'pest' && (
+                            <div style={sectionStyle}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                                    <h3>병해충 예찰 기록</h3>
+                                    <button className="btn btn-primary" onClick={() => openModal('pest')} disabled={!selectedBed}>
+                                        <Plus size={16} style={{ marginRight: '0.5rem' }} />
+                                        기록 추가
+                                    </button>
+                                </div>
+                                {!selectedBed ? (
+                                    <p style={{ color: 'var(--color-text-secondary)' }}>하우스와 베드를 선택해주세요.</p>
                                 ) : (
-                                    <p style={{ textAlign: 'center', padding: '2rem', color: 'var(--color-text-secondary)' }}>
-                                        데이터가 없습니다.
-                                    </p>
+                                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                        <thead>
+                                            <tr style={{ borderBottom: '1px solid var(--color-border)', textAlign: 'left' }}>
+                                                <th style={{ padding: '0.75rem' }}>날짜</th>
+                                                <th style={{ padding: '0.75rem' }}>종류</th>
+                                                <th style={{ padding: '0.75rem' }}>심각도</th>
+                                                <th style={{ padding: '0.75rem' }}>비고</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {pestRecords.map(record => (
+                                                <tr key={record.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
+                                                    <td style={{ padding: '0.75rem' }}>{record.recordDate}</td>
+                                                    <td style={{ padding: '0.75rem' }}>{record.pestType}</td>
+                                                    <td style={{ padding: '0.75rem' }}>
+                                                        <span style={{
+                                                            padding: '0.25rem 0.5rem',
+                                                            borderRadius: '4px',
+                                                            backgroundColor: record.severity === 'HIGH' ? 'var(--color-error-bg)' :
+                                                                record.severity === 'MEDIUM' ? 'var(--color-warning-bg)' : 'var(--color-success-bg)',
+                                                            color: record.severity === 'HIGH' ? 'var(--color-error)' :
+                                                                record.severity === 'MEDIUM' ? 'var(--color-warning)' : 'var(--color-success)'
+                                                        }}>
+                                                            {record.severity}
+                                                        </span>
+                                                    </td>
+                                                    <td style={{ padding: '0.75rem' }}>{record.notes}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
                                 )}
                             </div>
-                        </>
-                    )
-                }
+                        )
+                    }
+
+                    {
+                        activeTab === 'work' && (
+                            <div style={sectionStyle}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                                    <h3>작업 일지</h3>
+                                    <button className="btn btn-primary" onClick={() => openModal('work')} disabled={!selectedBed}>
+                                        <Plus size={16} style={{ marginRight: '0.5rem' }} />
+                                        일지 추가
+                                    </button>
+                                </div>
+                                {!selectedBed ? (
+                                    <p style={{ color: 'var(--color-text-secondary)' }}>하우스와 베드를 선택해주세요.</p>
+                                ) : (
+                                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                        <thead>
+                                            <tr style={{ borderBottom: '1px solid var(--color-border)', textAlign: 'left' }}>
+                                                <th style={{ padding: '0.75rem' }}>날짜</th>
+                                                <th style={{ padding: '0.75rem' }}>작업 종류</th>
+                                                <th style={{ padding: '0.75rem' }}>인원</th>
+                                                <th style={{ padding: '0.75rem' }}>시간 (분)</th>
+                                                <th style={{ padding: '0.75rem' }}>비고</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {workRecords.map(record => (
+                                                <tr key={record.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
+                                                    <td style={{ padding: '0.75rem' }}>{record.workDate}</td>
+                                                    <td style={{ padding: '0.75rem' }}>{record.workType}</td>
+                                                    <td style={{ padding: '0.75rem' }}>{record.workerCount}</td>
+                                                    <td style={{ padding: '0.75rem' }}>{record.durationMinutes}</td>
+                                                    <td style={{ padding: '0.75rem' }}>{record.notes}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                )}
+                            </div>
+                        )
+                    }
+
+                    {
+                        activeTab === 'prediction' && (
+                            <div style={sectionStyle}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                                    <h3>수확 예측</h3>
+                                    <button className="btn btn-primary" onClick={() => openModal('prediction')}>
+                                        <Plus size={16} style={{ marginRight: '0.5rem' }} />
+                                        예측 생성
+                                    </button>
+                                </div>
+                                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                    <thead>
+                                        <tr style={{ borderBottom: '1px solid var(--color-border)', textAlign: 'left' }}>
+                                            <th style={{ padding: '0.75rem' }}>베드</th>
+                                            <th style={{ padding: '0.75rem' }}>예상 수확일</th>
+                                            <th style={{ padding: '0.75rem' }}>예상 수확량(kg)</th>
+                                            <th style={{ padding: '0.75rem' }}>신뢰도</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {predictions.map(pred => (
+                                            <tr key={pred.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
+                                                <td style={{ padding: '0.75rem' }}>{pred.plantingName}</td>
+                                                <td style={{ padding: '0.75rem' }}>{pred.expectedHarvestDate}</td>
+                                                <td style={{ padding: '0.75rem' }}>{pred.expectedYield} kg</td>
+                                                <td style={{ padding: '0.75rem' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                        <div style={{ flex: 1, height: '8px', backgroundColor: 'var(--color-border)', borderRadius: '4px', overflow: 'hidden' }}>
+                                                            <div style={{ width: `${pred.confidence * 100}%`, height: '100%', backgroundColor: 'var(--color-primary)' }}></div>
+                                                        </div>
+                                                        <span>{Math.round(pred.confidence * 100)}%</span>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )
+                    }
+
+                    {/* Nutrient Management Tab */}
+                    {
+                        activeTab === 'nutrient' && (
+                            <>
+
+
+                                <div style={sectionStyle}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                                        <h3>양액 기록</h3>
+                                        <button
+                                            className="btn btn-primary"
+                                            onClick={async () => {
+                                                setEditingNutrient(null);
+                                                await fetchLayoutBeds(); // Ensure beds are loaded
+                                                setModalType('nutrient');
+                                                setIsModalOpen(true);
+                                            }}
+                                            disabled={loading}
+                                        >
+                                            <Plus size={16} style={{ marginRight: '0.5rem' }} />
+                                            기록 추가
+                                        </button>
+                                    </div>
+                                    {loading ? (
+                                        <p style={{ textAlign: 'center', padding: '2rem', color: 'var(--color-text-secondary)' }}>로딩 중...</p>
+                                    ) : (
+                                        <NutrientDataTable
+                                            records={nutrientRecords}
+                                            onEdit={handleNutrientEdit}
+                                            onDelete={handleNutrientDelete}
+                                        />
+                                    )}
+                                </div>
+
+                                <div style={{ ...sectionStyle, marginTop: '1rem' }}>
+                                    <h3 style={{ marginBottom: '1rem' }}>양액 트렌드</h3>
+                                    {nutrientRecords.length > 0 ? (
+                                        <NutrientChart records={nutrientRecords} />
+                                    ) : (
+                                        <p style={{ textAlign: 'center', padding: '2rem', color: 'var(--color-text-secondary)' }}>
+                                            데이터가 없습니다.
+                                        </p>
+                                    )}
+                                </div>
+                            </>
+                        )
+                    }
+                </div>
 
                 {/* Generic Modal */}
                 <Modal

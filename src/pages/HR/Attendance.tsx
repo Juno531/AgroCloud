@@ -278,7 +278,7 @@ const Attendance = () => {
     };
 
     return (
-        <div className="attendance-container" style={{ paddingTop: 'var(--spacing-lg)' }}>
+        <div className="attendance-container">
             <div className="attendance-content">
                 <div className="flex flex-col items-center justify-center bg-gradient-to-br from-slate-800 to-slate-900 dark:from-zinc-800 dark:to-zinc-900 text-white p-8 rounded-3xl shadow-xl w-full max-w-[430px] mb-6 relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-3xl"></div>

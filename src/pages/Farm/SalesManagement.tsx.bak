@@ -168,7 +168,7 @@ const SalesManagement = () => {
             {loading ? (
                 <div style={{ textAlign: 'center', padding: '2rem' }}>Loading...</div>
             ) : (
-                <>
+                <div key={activeTab} className="animate-in fade-in duration-500">
                     {activeTab === 'orders' ? (
                         <div style={sectionStyle}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
@@ -240,7 +240,7 @@ const SalesManagement = () => {
                             </table>
                         </div>
                     )}
-                </>
+                </div>
             )}
 
             <Modal
