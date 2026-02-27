@@ -6,6 +6,8 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+*_logs.txt
+recent_400_logs.txt
 
 node_modules
 dist
@@ -33,3 +35,6 @@ dist-ssr/
 playwright-report/
 test-results/
 *.png
+test_failure.png
+testsprite_tests/tmp/
+verify_company_crud.cjs

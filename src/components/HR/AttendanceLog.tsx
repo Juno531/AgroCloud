@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { format, startOfMonth, endOfMonth, getISOWeek, startOfISOWeek, endOfISOWeek, startOfYear, endOfYear } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { Search, Download, Users, UserCheck, UserX, Calendar, Filter, MapPin, CalendarDays, Check } from 'lucide-react';
@@ -20,12 +21,14 @@ interface AttendanceResponse {
 }
 
 const AttendanceLog = () => {
+    const navigate = useNavigate();
     const { user } = useAuth();
     const { fields } = useFarm();
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [clockInFilters, setClockInFilters] = useState<number[]>([]);
     const [clockOutFilters, setClockOutFilters] = useState<number[]>([]);
     const [statusFilters, setStatusFilters] = useState<string[]>([]);
+    const [employmentTypeFilters, setEmploymentTypeFilters] = useState<string[]>([]);
     const [currentDate, setCurrentDate] = useState(new Date());
     const [records, setRecords] = useState<AttendanceResponse[]>([]);
     const [employees, setEmployees] = useState<EmployeeProfile[]>([]);
@@ -39,9 +42,6 @@ const AttendanceLog = () => {
             fetchData();
             return;
         }
-
-        // 회사 관리자가 아니면서 아직 farm 데이터를 못 불러온 경우 대기 (context로 인해 곧 들어옴)
-        // 기존엔 selectedFarm을 설정했으나 이제 user.farmId를 기반으로 바로 가져옴
     }, [fields, user]);
 
     useEffect(() => {
@@ -91,20 +91,13 @@ const AttendanceLog = () => {
                 attendancePromise = AttendanceService.getCompanyAttendance(companyCodeToUse, startDateStr, endDateStr);
                 employeesPromise = EmployeeService.getEmployeesByCompany(companyCodeToUse);
             } else {
-                // farmToUse가 명학히 있을 때만 호출 (위의 guard에서 걸러짐)
                 attendancePromise = AttendanceService.getFarmAttendance(farmToUse!, startDateStr, endDateStr);
                 employeesPromise = EmployeeService.getEmployeesByFarm(farmToUse!);
             }
 
             const [attendanceRes, employeesRes] = await Promise.all([
-                attendancePromise.catch(err => {
-                    console.error("Attendance API Error Details:", err.response?.data || err.message);
-                    throw err;
-                }),
-                employeesPromise.catch(err => {
-                    console.error("Employees API Error Details:", err.response?.data || err.message);
-                    throw err;
-                })
+                attendancePromise,
+                employeesPromise
             ]);
 
             setRecords(Array.isArray(attendanceRes.data) ? attendanceRes.data : []);
@@ -112,14 +105,15 @@ const AttendanceLog = () => {
 
         } catch (error: any) {
             console.error("Failed to fetch attendance data:", error);
-            if (error.response) {
-                console.error("Server responded with 400. Data:", error.response.data);
-            }
             setRecords([]);
             setEmployees([]);
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleExport = () => {
+        navigate('/hr/attendance-export');
     };
 
     const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -132,9 +126,11 @@ const AttendanceLog = () => {
         const currentMonthStr = format(currentDate, 'yyyy-MM');
         const currentYearStr = format(currentDate, 'yyyy');
 
-        // 직원 목록 필터링 (검색어)
+        // 직원 목록 필터링 (검색어 + 고용 형태)
         const filteredEmployees = employees.filter(emp => {
-            return emp.name.toLowerCase().includes(searchTerm.toLowerCase());
+            const matchSearch = emp.name.toLowerCase().includes(searchTerm.toLowerCase());
+            const matchEmploymentType = employmentTypeFilters.length === 0 || (emp.employmentType && employmentTypeFilters.includes(emp.employmentType));
+            return matchSearch && matchEmploymentType;
         });
 
         let result = [];
@@ -224,8 +220,6 @@ const AttendanceLog = () => {
                     const recordDate = new Date(r.timestamp);
                     if (viewMode === 'monthly') return format(recordDate, 'yyyy-MM') === currentMonthStr;
                     if (viewMode === 'yearly') return format(recordDate, 'yyyy') === currentYearStr;
-                    // For weekly, we assume records fetched are already bound by the API date range
-                    // but we can add a week check if desired. For now, we return true.
                     return true;
                 })
                 .map(r => {
@@ -271,8 +265,6 @@ const AttendanceLog = () => {
             present = processedData.filter(r => r.status === 'PRESENT' || r.status === 'LATE').length;
             leave = processedData.filter(r => r.status === 'ABSENT' || r.status === 'LEAVE').length;
         } else {
-            // 월간은 필터링된 범위 내 고유 직원 수 또는 전체 대비 비율 등 고민 필요
-            // 일단 요청하신 대로 "직원 인원수" 위주로 표시
             const activeUserIds = new Set(processedData.map(r => r.userId));
             present = activeUserIds.size;
             leave = total - present;
@@ -449,6 +441,37 @@ const AttendanceLog = () => {
                                     </div>
 
                                     <div className="space-y-6 overflow-y-auto pr-2 custom-scrollbar flex-1">
+                                        {/* 고용 형태 필터 */}
+                                        <div>
+                                            <label className="block text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">고용 형태</label>
+                                            <div className="space-y-1">
+                                                {[
+                                                    { value: 'FULL_TIME', label: '정규직' },
+                                                    { value: 'PART_TIME', label: '비정규직' }
+                                                ].map(et => {
+                                                    const checked = employmentTypeFilters.includes(et.value);
+                                                    return (
+                                                        <label key={et.value} className="flex items-center gap-3 p-1.5 -mx-1.5 hover:bg-slate-50 dark:hover:bg-zinc-700/30 rounded-lg cursor-pointer group transition-colors select-none">
+                                                            <div className={`flex-shrink-0 w-4 h-4 rounded-[4px] flex items-center justify-center border transition-all duration-200 ${checked ? 'bg-primary border-primary' : 'bg-white dark:bg-zinc-900 border-slate-300 dark:border-zinc-600 group-hover:border-primary/50'}`}>
+                                                                {checked && <Check size={12} className="text-white" strokeWidth={3} />}
+                                                            </div>
+                                                            <span className={`text-sm font-medium transition-colors ${checked ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200'}`}>
+                                                                {et.label}
+                                                            </span>
+                                                            <input
+                                                                type="checkbox"
+                                                                className="hidden"
+                                                                checked={checked}
+                                                                onChange={() => {
+                                                                    setEmploymentTypeFilters(prev => prev.includes(et.value) ? prev.filter(item => item !== et.value) : [...prev, et.value]);
+                                                                }}
+                                                            />
+                                                        </label>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+
                                         {/* 출결 상태 필터 */}
                                         <div>
                                             <label className="block text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">출결 상태</label>
@@ -554,7 +577,10 @@ const AttendanceLog = () => {
                             />
                         </div>
 
-                        <button className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-zinc-700 transition-colors text-sm font-medium whitespace-nowrap">
+                        <button
+                            onClick={handleExport}
+                            className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-zinc-700 transition-colors text-sm font-medium whitespace-nowrap"
+                        >
                             <Download size={18} />
                             <span className="hidden sm:inline">내보내기</span>
                         </button>

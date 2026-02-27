@@ -13,7 +13,7 @@ const { chromium } = require('playwright');
         console.log('Logging in as Super Admin...');
         // Use HTTPS
         await page.goto('https://127.0.0.1:5173/login');
-        await page.fill('input[type="email"]', 'super@farmerp.com');
+        await page.fill('input[type="email"]', 'super@AgroCloud.com');
         await page.fill('input[type="password"]', '1234');
         await page.click('button[type="submit"]');
 
@@ -74,7 +74,7 @@ const { chromium } = require('playwright');
         if (count === 0) {
             console.error('Could not find company card with Edit button');
             // Take screenshot to see what's there
-            await page.screenshot({ path: 'c:/AntiProject/FarmErp/debug_no_card.png' });
+            await page.screenshot({ path: 'c:/AntiProject/AgroCloud/debug_no_card.png' });
             throw new Error('Company card not found');
         }
 
@@ -125,7 +125,7 @@ const { chromium } = require('playwright');
 
     } catch (error) {
         console.error('Test Failed:', error);
-        await page.screenshot({ path: 'c:/AntiProject/FarmErp/test_failure.png' });
+        await page.screenshot({ path: 'c:/AntiProject/AgroCloud/test_failure.png' });
     } finally {
         await browser.close();
     }

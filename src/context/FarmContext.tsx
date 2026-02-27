@@ -12,9 +12,9 @@ interface Field {
     attendanceRadius?: number;
     attendanceWifiSsid?: string | null;
     attendanceWifiBssid?: string | null;
-    attendanceIpAddress?: string | null;
     workStartTime?: string | null;
     workEndTime?: string | null;
+    companyCode?: string;
 }
 
 interface Crop {
@@ -85,9 +85,9 @@ export const FarmProvider: React.FC<FarmProviderProps> = ({ children }) => {
                 attendanceRadius: f.attendanceRadius,
                 attendanceWifiSsid: f.attendanceWifiSsid,
                 attendanceWifiBssid: f.attendanceWifiBssid,
-                attendanceIpAddress: f.attendanceIpAddress,
                 workStartTime: f.workStartTime,
-                workEndTime: f.workEndTime
+                workEndTime: f.workEndTime,
+                companyCode: f.companyCode
             })));
 
             setCrops(cropsData.map((c: any) => ({
@@ -124,7 +124,6 @@ export const FarmProvider: React.FC<FarmProviderProps> = ({ children }) => {
                 attendanceRadius: radiusNum,
                 attendanceWifiSsid: field.attendanceWifiSsid,
                 attendanceWifiBssid: field.attendanceWifiBssid,
-                attendanceIpAddress: field.attendanceIpAddress
             });
 
             // Use the real ID from backend response
@@ -139,9 +138,9 @@ export const FarmProvider: React.FC<FarmProviderProps> = ({ children }) => {
                 attendanceRadius: createdFarm.attendanceRadius,
                 attendanceWifiSsid: createdFarm.attendanceWifiSsid,
                 attendanceWifiBssid: createdFarm.attendanceWifiBssid,
-                attendanceIpAddress: createdFarm.attendanceIpAddress,
                 workStartTime: createdFarm.workStartTime,
-                workEndTime: createdFarm.workEndTime
+                workEndTime: createdFarm.workEndTime,
+                companyCode: createdFarm.companyCode
             };
 
             // Update UI with real data

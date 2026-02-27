@@ -3,7 +3,7 @@
 ---
 
 ## 1️⃣ Document Metadata
-- **Project Name:** FarmErp
+- **Project Name:** AgroCloud
 - **Date:** 2026-02-21
 - **Prepared by:** TestSprite AI Team / Antigravity
 

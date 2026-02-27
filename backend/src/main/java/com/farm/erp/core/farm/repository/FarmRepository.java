@@ -88,6 +88,13 @@ public interface FarmRepository extends JpaRepository<Farm, Long> {
     /**
      * Find farms by company code
      */
-    @Query("SELECT f FROM Farm f WHERE f.user.company.code = :companyCode AND f.status = :status")
+    @Query("SELECT DISTINCT f FROM Farm f JOIN FETCH f.user u JOIN FETCH u.company c WHERE c.code = :companyCode AND f.status = :status")
     List<Farm> findByCompanyCodeAndStatus(@Param("companyCode") String companyCode, @Param("status") FarmStatus status);
+
+    /**
+     * Find farm by ID and company code (ADMIN 권한 체크용)
+     */
+    @Query("SELECT f FROM Farm f JOIN FETCH f.user u JOIN FETCH u.company c WHERE f.id = :id AND c.code = :companyCode AND f.status = :status")
+    Optional<Farm> findByIdAndCompanyCodeAndStatus(@Param("id") Long id, @Param("companyCode") String companyCode,
+            @Param("status") FarmStatus status);
 }

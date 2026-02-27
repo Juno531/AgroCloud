@@ -40,7 +40,7 @@ public class MqttConfig {
      * public MessageProducer inbound() {
      * MqttPahoMessageDrivenChannelAdapter adapter =
      * new MqttPahoMessageDrivenChannelAdapter("tcp://localhost:1883",
-     * "farm-erp-backend", "sensors/#");
+     * "agrocloud-backend", "sensors/#");
      * adapter.setCompletionTimeout(5000);
      * adapter.setConverter(new DefaultPahoMessageConverter());
      * adapter.setQos(1);

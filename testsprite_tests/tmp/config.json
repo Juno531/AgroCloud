@@ -7,8 +7,8 @@
   "backendUsername": "sp@sp.sp",
   "backendPassword": "1234",
   "executionArgs": {
-    "projectName": "FarmErp",
-    "projectPath": "c:\\AntiProject\\FarmErp",
+    "projectName": "AgroCloud",
+    "projectPath": "c:\\AntiProject\\AgroCloud",
     "testIds": [],
     "additionalInstruction": "",
     "envs": {

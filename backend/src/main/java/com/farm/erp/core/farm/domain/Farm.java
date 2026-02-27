@@ -52,9 +52,6 @@ public class Farm {
     @Column(name = "attendance_wifi_bssid", length = 50)
     private String attendanceWifiBssid;
 
-    @Column(name = "attendance_ip_address", length = 50)
-    private String attendanceIpAddress;
-
     @Column(name = "work_start_time")
     private LocalTime workStartTime;
 
@@ -97,7 +94,7 @@ public class Farm {
     public void update(String name, String location, BigDecimal area, String description,
             String ownerName, String contactNumber, BigDecimal latitude, BigDecimal longitude,
             Integer attendanceRadius, String attendanceWifiSsid, String attendanceWifiBssid,
-            String attendanceIpAddress, LocalTime workStartTime, LocalTime workEndTime) {
+            LocalTime workStartTime, LocalTime workEndTime) {
         if (name != null)
             this.name = name;
         if (location != null)
@@ -119,7 +116,7 @@ public class Farm {
         this.attendanceRadius = attendanceRadius;
         this.attendanceWifiSsid = attendanceWifiSsid;
         this.attendanceWifiBssid = attendanceWifiBssid;
-        this.attendanceIpAddress = attendanceIpAddress;
+        this.attendanceWifiBssid = attendanceWifiBssid;
         this.workStartTime = workStartTime;
         this.workEndTime = workEndTime;
     }

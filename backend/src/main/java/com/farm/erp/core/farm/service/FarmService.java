@@ -94,7 +94,6 @@ public class FarmService {
                                                                                                                // 300m
                 .attendanceWifiSsid(request.getAttendanceWifiSsid())
                 .attendanceWifiBssid(request.getAttendanceWifiBssid())
-                .attendanceIpAddress(request.getAttendanceIpAddress())
                 .workStartTime(request.getWorkStartTime() != null ? LocalTime.parse(request.getWorkStartTime()) : null)
                 .workEndTime(request.getWorkEndTime() != null ? LocalTime.parse(request.getWorkEndTime()) : null)
                 .status(FarmStatus.ACTIVE)
@@ -108,46 +107,60 @@ public class FarmService {
     }
 
     /**
-     * Get farm by ID (본인 농장만 조회 가능)
+     * Get farm by ID
+     * - ADMIN/USER: 소속 company 소속 농장만 조회
      */
     @Cacheable(value = "farms", key = "#id")
     public FarmResponse getFarm(Long id) {
-        Long userId = getCurrentUserId();
+        User currentUser = getCurrentUser();
 
-        Farm farm = farmRepository.findByIdAndUserIdAndStatus(id, userId, FarmStatus.ACTIVE)
-                .orElseThrow(() -> new BusinessException(ErrorCode.FARM_NOT_FOUND));
+        Farm farm;
+        if (currentUser.getRole() == User.Role.SUPER_ADMIN) {
+            farm = farmRepository.findById(id)
+                    .filter(f -> f.getStatus() == FarmStatus.ACTIVE)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.FARM_NOT_FOUND));
+        } else if (currentUser.getCompany() != null) {
+            // ADMIN, USER: 소속 company 농장만
+            farm = farmRepository
+                    .findByIdAndCompanyCodeAndStatus(id, currentUser.getCompany().getCode(), FarmStatus.ACTIVE)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.FARM_NOT_FOUND));
+        } else {
+            // company 없는 경우 fallback: 자신 userId로
+            farm = farmRepository.findByIdAndUserIdAndStatus(id, currentUser.getId(), FarmStatus.ACTIVE)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.FARM_NOT_FOUND));
+        }
 
         return FarmResponse.from(farm);
     }
 
     /**
      * Get all farms
-     * - ADMIN: 본인의 농장만 반환
-     * - USER (Employee): 소속 회사의 모든 농장 반환
+     * - ADMIN/USER: 소속 company의 모든 농장 반환
+     * - SUPER_ADMIN: 전체 농장 반환
      */
     public PageResponse<FarmResponse> getAllFarms(Pageable pageable) {
         User currentUser = getCurrentUser();
         List<Farm> farms;
 
-        if (currentUser.getRole() == User.Role.USER) {
-            // 직원의 경우 소속 회사의 모든 농장 조회
+        if (currentUser.getRole() == User.Role.USER || currentUser.getRole() == User.Role.ADMIN) {
+            // ADMIN, USER 모두 소속 회사의 전체 농장 조회
             if (currentUser.getCompany() == null) {
-                log.warn("User {} (USER role) has no assigned company code", currentUser.getEmail());
-                farms = List.of();
+                log.warn("User {} ({}) has no assigned company code", currentUser.getEmail(), currentUser.getRole());
+                // company 없는 ADMIN은 자신이 생성한 농장만 fallback
+                farms = farmRepository.findByUserIdAndStatus(currentUser.getId(), FarmStatus.ACTIVE);
             } else {
                 String companyCode = currentUser.getCompany().getCode();
-                log.info("Fetching farms for company: {} for user: {}", companyCode, currentUser.getEmail());
+                log.info("Fetching farms for company: {} for user: {} (role: {})", companyCode, currentUser.getEmail(),
+                        currentUser.getRole());
                 farms = farmRepository.findByCompanyCodeAndStatus(companyCode, FarmStatus.ACTIVE);
                 log.info("Found {} farms for company code: {}", farms.size(), companyCode);
             }
         } else {
-            // 어드민의 경우 본인의 농장만 조회
-            log.info("Fetching farms for admin: {}", currentUser.getEmail());
-            farms = farmRepository.findByUserIdAndStatus(currentUser.getId(), FarmStatus.ACTIVE);
-            log.info("Found {} farms for admin user ID: {}", farms.size(), currentUser.getId());
+            // SUPER_ADMIN: 전체 농장 조회
+            log.info("Fetching all farms for SUPER_ADMIN: {}", currentUser.getEmail());
+            farms = farmRepository.findByStatus(FarmStatus.ACTIVE);
         }
 
-        // 페이지네이션 적용
         int start = (int) pageable.getOffset();
         int end = Math.min((start + pageable.getPageSize()), farms.size());
 
@@ -191,7 +204,6 @@ public class FarmService {
                 request.getAttendanceRadius(),
                 request.getAttendanceWifiSsid(),
                 request.getAttendanceWifiBssid(),
-                request.getAttendanceIpAddress(),
                 request.getWorkStartTime() != null ? LocalTime.parse(request.getWorkStartTime()) : null,
                 request.getWorkEndTime() != null ? LocalTime.parse(request.getWorkEndTime()) : null);
 

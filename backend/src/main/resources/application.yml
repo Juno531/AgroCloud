@@ -2,10 +2,10 @@ spring:
   profiles:
     active: dev
   application:
-    name: farm-erp-backend
+    name: agrocloud-backend
 
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/farm_erp}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/agrocloud}
     username: ${SPRING_DATASOURCE_USERNAME:postgres}
     password: ${SPRING_DATASOURCE_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
@@ -48,7 +48,7 @@ spring:
   kafka:
     bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     consumer:
-      group-id: farm-erp-group
+      group-id: agrocloud-group
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
@@ -105,7 +105,7 @@ springdoc:
   default-produces-media-type: application/json
 
 jwt:
-  secret: ${JWT_SECRET:farm-erp-secret-key-change-this-in-production-must-be-at-least-256-bits-long}
+  secret: ${JWT_SECRET:agrocloud-secret-key-change-this-in-production-must-be-at-least-256-bits-long}
   expiration: 86400000  # 24 hours in milliseconds
   refresh-expiration: 604800000  # 7 days in milliseconds
 

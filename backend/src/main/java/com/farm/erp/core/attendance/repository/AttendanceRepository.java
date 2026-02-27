@@ -8,8 +8,14 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.data.querydsl.QuerydslPredicateExecutor;
+import org.springframework.stereotype.Repository;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
 @Repository
-public interface AttendanceRepository extends JpaRepository<AttendanceRecord, Long> {
+public interface AttendanceRepository extends JpaRepository<AttendanceRecord, Long>, QuerydslPredicateExecutor<AttendanceRecord> {
 
         @EntityGraph(attributePaths = { "user" })
         List<AttendanceRecord> findByUserIdOrderByTimestampDesc(Long userId);

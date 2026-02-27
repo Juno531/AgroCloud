@@ -43,6 +43,7 @@ const Sidebar = () => {
             ? [
                 { to: '/hr/my-attendance', label: '근태 현황', icon: 'schedule' },
                 { to: '/hr/my-leave', label: '휴무 관리', icon: 'event_busy' },
+                { to: '/attendance', label: '출퇴근', icon: 'event' },
                 {
                     to: '/mypage/mysecurity',
                     label: '설정',
@@ -60,7 +61,7 @@ const Sidebar = () => {
                     icon: 'yard',
                     children: [
                         { to: '/farm/setting', label: '농장 설정' },
-                        { to: '/farm/cultivation', label: '재배 관리' },
+                        // { to: '/farm/cultivation', label: '재배 관리' }, // 일단 잠시 기능 보류
                     ]
                 },
                 {
@@ -72,6 +73,17 @@ const Sidebar = () => {
                         { to: '/hr/attendance-log', label: '출퇴근 기록' },
                         { to: '/hr/attendance-settings', label: '출퇴근 설정' },
                         { to: '/hr/attendance-management', label: '근태 관리' },
+                        { to: '/hr/attendance-export', label: '기록 내보내기' },
+                    ]
+                },
+                {
+                    to: '/hr/my-attendance',
+                    label: '내 근태',
+                    icon: 'person_pin_circle',
+                    children: [
+                        { to: '/attendance', label: '출퇴근' },
+                        { to: '/hr/my-attendance', label: '내 근태 현황' },
+                        { to: '/hr/my-leave', label: '내 휴무 관리' },
                     ]
                 },
                 {
@@ -83,6 +95,7 @@ const Sidebar = () => {
                     ]
                 },
             ];
+
 
 
     return (

@@ -280,9 +280,7 @@ const Attendance = () => {
     return (
         <div className="attendance-container">
             <div className="attendance-content">
-                <div className="flex flex-col items-center justify-center bg-gradient-to-br from-slate-800 to-slate-900 dark:from-zinc-800 dark:to-zinc-900 text-white p-8 rounded-3xl shadow-xl w-full max-w-[430px] mb-6 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-3xl"></div>
-                    <div className="absolute bottom-0 left-0 w-24 h-24 bg-blue-500/20 rounded-full blur-2xl"></div>
+                <div className="flex flex-col items-center justify-center bg-slate-800 dark:bg-zinc-900 text-white p-8 rounded-3xl shadow-xl w-full max-w-[430px] mb-2 relative overflow-hidden">
 
                     <div className="flex items-center gap-2 text-slate-300 mb-2 z-10">
                         <Clock size={18} className="text-primary-400" />
@@ -293,7 +291,7 @@ const Attendance = () => {
                     </h2>
                 </div>
 
-                <div className="w-full max-w-[430px] bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-2xl flex items-center gap-4 mb-6 border border-indigo-100 dark:border-indigo-800/30 shadow-sm relative overflow-hidden">
+                <div className="w-full max-w-[430px] bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-2xl flex items-center gap-4 mb-3 border border-indigo-100 dark:border-indigo-800/30 shadow-sm relative overflow-hidden">
                     {/* Ripple animation layer when actively scanning GPS */}
                     {isLocating && (
                         <div className="absolute inset-0 bg-indigo-500/5 animate-pulse -z-0"></div>
@@ -353,90 +351,79 @@ const Attendance = () => {
                     {!isLocating && currentCoordinates && currentCoordinates.accuracy > 100 && (
                         <div className="absolute font-bold items-center gap-1.5 bottom-0 left-0 right-0 bg-rose-500/90 text-white text-[10px] py-1 px-3 flex justify-center z-20 backdrop-blur-sm">
                             <AlertTriangle size={12} />
-                            오차가 매우 큽니다. 창가로 가시거나 Wi-Fi를 켜주세요.
+                            오차가 매우 큽니다. Wi-Fi를 켜주세요.
                         </div>
                     )}
                 </div>
 
-                <div className="farm-selector" style={{
-                    marginBottom: '24px',
-                    width: '100%',
-                    maxWidth: '430px',
-                    backgroundColor: 'white',
-                    padding: '1.25rem',
-                    borderRadius: '16px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
-                    border: '1px solid #f1f5f9'
-                }}>
-                    <label style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        marginBottom: '12px',
-                        fontWeight: '700',
-                        fontSize: '1.1rem',
-                        color: '#1e293b'
-                    }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <MapPin size={20} className="text-primary" />
-                            근무 농장 선택
+                {/* ── 근무 농장 선택 ── dark glass card */}
+                <div className="w-full max-w-[430px] rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-zinc-900 p-5 shadow-lg mb-3 relative overflow-hidden">
+                    {/* 배경 글로우 (다크모드에서만 미세하게) */}
+                    <div className="absolute -top-6 -right-6 w-28 h-28 rounded-full bg-violet-600/5 dark:bg-violet-600/20 blur-2xl pointer-events-none" />
+
+                    {/* 헤더 */}
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-lg bg-violet-100 dark:bg-violet-500/20 flex items-center justify-center">
+                                <MapPin size={16} className="text-violet-600 dark:text-violet-400" />
+                            </div>
+                            <span className="text-sm font-bold text-slate-800 dark:text-white tracking-wide">근무 농장 선택</span>
                         </div>
+
                         {distanceInfo && (
-                            <span style={{
-                                fontSize: '0.85rem',
-                                padding: '4px 8px',
-                                borderRadius: '12px',
-                                backgroundColor: distanceInfo.isWithinRadius ? '#dcfce7' : '#fee2e2',
-                                color: distanceInfo.isWithinRadius ? '#166534' : '#991b1b',
-                                fontWeight: '600',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '4px'
-                            }}>
-                                {distanceInfo.isWithinRadius ? <CheckCircle size={14} /> : <AlertTriangle size={14} />}
+                            <span className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full transition-all ${distanceInfo.isWithinRadius
+                                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                                : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                                }`}>
+                                {distanceInfo.isWithinRadius
+                                    ? <CheckCircle size={13} />
+                                    : <AlertTriangle size={13} />}
                                 {distanceInfo.distance > 1000
                                     ? `${(distanceInfo.distance / 1000).toFixed(1)}km`
                                     : `${distanceInfo.distance}m`}
                             </span>
                         )}
-                    </label>
-                    <select
-                        value={selectedFarmId}
-                        onChange={(e) => setSelectedFarmId(Number(e.target.value))}
-                        disabled={farms.length === 0}
-                        style={{
-                            width: '100%',
-                            padding: '12px 16px',
-                            borderRadius: '12px',
-                            border: '2px solid #e2e8f0',
-                            fontSize: '16px',
-                            backgroundColor: farms.length === 0 ? '#f8fafc' : 'white',
-                            color: '#0f172a',
-                            fontWeight: '500',
-                            appearance: 'none',
-                            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
-                            backgroundRepeat: 'no-repeat',
-                            backgroundPosition: 'right 16px center',
-                            backgroundSize: '18px',
-                            cursor: farms.length === 0 ? 'not-allowed' : 'pointer',
-                            transition: 'all 0.2s ease'
-                        }}
-                    >
-                        {farms.length === 0 ? (
-                            <option value="">배정된 농장이 없습니다</option>
-                        ) : (
-                            farms.map(farm => (
-                                <option key={farm.id} value={farm.id}>
-                                    {farm.name} {farm.location ? `(${farm.location})` : ''}
-                                </option>
-                            ))
-                        )}
-                    </select>
+                    </div>
 
+                    {/* 드롭다운 */}
+                    <div className="relative">
+                        <select
+                            value={selectedFarmId}
+                            onChange={(e) => setSelectedFarmId(Number(e.target.value))}
+                            disabled={farms.length === 0}
+                            className={`w-full px-4 py-3 sm:py-3.5 pr-10 rounded-xl text-xs sm:text-sm font-medium
+                                bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10
+                                text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-white/40
+                                appearance-none outline-none
+                                transition-all duration-200
+                                focus:border-violet-500/60 focus:bg-white dark:focus:bg-white/10 focus:ring-1 focus:ring-violet-500/40
+                                ${farms.length === 0 ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-100 dark:hover:bg-white/10'}
+                            `}
+                            style={{
+                                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%237c3aed' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E")`,
+                                backgroundRepeat: 'no-repeat',
+                                backgroundPosition: 'right 14px center',
+                                backgroundSize: '16px',
+                            }}
+                        >
+                            {farms.length === 0 ? (
+                                <option value="">배정된 농장이 없습니다</option>
+                            ) : (
+                                farms.map(farm => (
+                                    <option key={farm.id} value={farm.id} className="bg-white dark:bg-[#1e1b2e] text-slate-800 dark:text-white">
+                                        {farm.name} {farm.location ? `(${farm.location})` : ''}
+                                    </option>
+                                ))
+                            )}
+                        </select>
+                    </div>
+
+                    {/* 반경 초과 경고 */}
                     {distanceInfo && !distanceInfo.isWithinRadius && (
-                        <p style={{ marginTop: '8px', fontSize: '0.85rem', color: '#ef4444', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <AlertTriangle size={14} /> 허용 반경({distanceInfo.radius}m)을 벗어났습니다.
-                        </p>
+                        <div className="mt-2 sm:mt-3 flex items-center gap-2 px-3 py-2 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[10px] sm:text-xs font-semibold">
+                            <AlertTriangle size={12} />
+                            허용 반경({distanceInfo.radius}m)을 벗어났습니다.
+                        </div>
                     )}
                 </div>
 
@@ -504,7 +491,7 @@ const Attendance = () => {
                     </button>
                 </div>
 
-                <div className="info-text" style={{ marginTop: '20px', color: '#6b7280', fontSize: '14px', textAlign: 'center' }}>
+                <div className="info-text mb-2 flex flex-col items-center justify-center w-full" style={{ color: '#6b7280', fontSize: '14px', textAlign: 'center' }}>
                     <p>📍 현재 위치를 기반으로 출퇴근을 기록합니다.</p>
                     <p>브라우저의 위치 정보 권한을 허용해주세요.</p>
                 </div>

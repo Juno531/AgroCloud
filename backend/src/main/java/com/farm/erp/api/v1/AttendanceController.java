@@ -1,21 +1,25 @@
 package com.farm.erp.api.v1;
 
+import com.farm.erp.api.v1.dto.AttendanceFilterRequest;
 import com.farm.erp.api.v1.dto.AttendanceRequest;
 import com.farm.erp.api.v1.dto.AttendanceResponse;
 import com.farm.erp.api.v1.dto.AttendanceSummaryResponse;
 import com.farm.erp.core.attendance.domain.AttendanceRecord;
+import com.farm.erp.core.attendance.service.AttendanceExcelService;
 import com.farm.erp.core.attendance.service.AttendanceService;
 import com.farm.erp.core.auth.domain.User;
 import com.farm.erp.core.auth.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,6 +29,7 @@ import java.util.stream.Collectors;
 public class AttendanceController {
 
     private final AttendanceService attendanceService;
+    private final AttendanceExcelService attendanceExcelService;
     private final UserRepository userRepository;
 
     @PostMapping
@@ -37,12 +42,6 @@ public class AttendanceController {
         User user = userRepository.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        // Extract client IP
-        String clientIp = httpServletRequest.getHeader("X-Forwarded-For");
-        if (clientIp == null || clientIp.isEmpty() || "unknown".equalsIgnoreCase(clientIp)) {
-            clientIp = httpServletRequest.getRemoteAddr();
-        }
-
         // Parse attendance type
         AttendanceRecord.AttendanceType type = AttendanceRecord.AttendanceType.valueOf(request.getType());
 
@@ -50,7 +49,7 @@ public class AttendanceController {
         String companyCode = user.getCompany() != null ? user.getCompany().getCode() : request.getCompanyCode();
 
         AttendanceRecord record = attendanceService.recordAttendance(user.getId(), type, request.getFarmId(),
-                companyCode, request.getLatitude(), request.getLongitude(), clientIp);
+                companyCode, request.getLatitude(), request.getLongitude());
 
         return ResponseEntity.ok(AttendanceResponse.from(record));
     }
@@ -142,5 +141,25 @@ public class AttendanceController {
 
         List<AttendanceSummaryResponse> summary = attendanceService.getMonthlySummary(companyCode, year, month);
         return ResponseEntity.ok(summary);
+    }
+
+    @PostMapping("/filter")
+    public List<AttendanceResponse> filterAttendance(@RequestBody AttendanceFilterRequest request) {
+        return attendanceExcelService.filterAttendance(request).stream()
+                .map(AttendanceResponse::from)
+                .collect(Collectors.toList());
+    }
+
+    @PostMapping("/export")
+    public ResponseEntity<byte[]> exportAttendance(@RequestBody AttendanceFilterRequest request) throws IOException {
+        List<AttendanceRecord> records = attendanceExcelService.filterAttendance(request);
+        byte[] excelContent = attendanceExcelService.generateAttendanceExcel(records);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=attendance_export.xlsx")
+                .contentType(
+                        MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .contentLength(excelContent.length)
+                .body(excelContent);
     }
 }

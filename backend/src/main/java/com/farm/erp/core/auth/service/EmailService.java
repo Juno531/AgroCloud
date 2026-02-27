@@ -18,7 +18,7 @@ public class EmailService {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setTo(to);
-            message.setSubject("[안티그래비티 팜] 이메일 인증 번호");
+            message.setSubject("[AgroCloud] 이메일 인증 번호");
             message.setText("인증 번호: " + code + "\n3분 이내에 입력해주세요.");
             mailSender.send(message);
         } catch (Exception e) {

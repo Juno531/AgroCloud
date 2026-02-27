@@ -157,7 +157,7 @@ const FarmSetting: React.FC = () => {
 
                 {/* Left: Interactive List */}
                 <div className="lg:w-[380px] flex flex-col gap-4">
-                    <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-zinc-800 flex flex-col h-[calc(100vh-140px)] min-h-[600px]">
+                    <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-zinc-800 flex flex-col h-fit max-h-[calc(100vh-140px)] min-h-[200px]">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="text-xl font-extrabold tracking-tight flex items-center gap-2">
                                 <Settings className="text-primary" size={24} /> 농장 설정
@@ -368,9 +368,16 @@ const FarmSetting: React.FC = () => {
                                                             lng: Number(farmData.longitude) || 126.9786567
                                                         }}
                                                         draggableMarker={true}
-                                                        onMapClick={(lat: number, lng: number) => setFarmData((prev: any) => ({ ...prev, latitude: lat, longitude: lng }))}
-                                                        onMarkerDragEnd={(lat: number, lng: number) => setFarmData((prev: any) => ({ ...prev, latitude: lat, longitude: lng }))}
-                                                        onAddressChange={(address: string) => setFarmData((prev: any) => ({ ...prev, location: address }))}
+                                                        onMapClick={(lat: number, lng: number) => {
+                                                            setFarmData((prev: any) => ({ ...prev, latitude: lat, longitude: lng }));
+                                                        }}
+                                                        onMarkerDragEnd={(lat: number, lng: number) => {
+                                                            setFarmData((prev: any) => ({ ...prev, latitude: lat, longitude: lng }));
+                                                        }}
+                                                        onAddressChange={(address: string) => {
+                                                            setFarmData((prev: any) => ({ ...prev, location: address }));
+                                                        }}
+                                                        address={farmData.location}
                                                         circleRadius={farmData.attendanceRadius || 300}
                                                         height="100%"
                                                     />

@@ -18,7 +18,7 @@ interface ThemeProviderProps {
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     const [theme, setTheme] = useState<'light' | 'dark'>(() => {
         // Check localStorage for saved theme, default to light
-        const savedTheme = localStorage.getItem('farm-erp-theme');
+        const savedTheme = localStorage.getItem('agrocloud-theme');
         return (savedTheme as 'light' | 'dark') || 'light';
     });
 
@@ -36,7 +36,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
             root.classList.remove('dark');
         }
 
-        localStorage.setItem('farm-erp-theme', theme);
+        localStorage.setItem('agrocloud-theme', theme);
     }, [theme]);
 
     const toggleTheme = () => {

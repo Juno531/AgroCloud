@@ -15,7 +15,7 @@
     <groupId>com.farm</groupId>
     <artifactId>erp-backend</artifactId>
     <version>1.0.0</version>
-    <name>Farm ERP Backend</name>
+    <name>Agrocloud Backend</name>
     <description>Enterprise Resource Planning System for Farm Management</description>
 
     <properties>
@@ -180,6 +180,13 @@
             <groupId>org.springframework.kafka</groupId>
             <artifactId>spring-kafka-test</artifactId>
             <scope>test</scope>
+        </dependency>
+
+        <!-- Excel Export (Apache POI) -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>5.2.5</version>
         </dependency>
     </dependencies>
 

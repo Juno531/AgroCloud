@@ -20,7 +20,6 @@ const AttendanceSetting: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedFarmId, setSelectedFarmId] = useState<number | ''>('');
     const [farmData, setFarmData] = useState<any>(null);
-    const [isFetchingIp, setIsFetchingIp] = useState(false);
     const [isManualUpdate, setIsManualUpdate] = useState(false);
 
     useEffect(() => {
@@ -69,25 +68,6 @@ const AttendanceSetting: React.FC = () => {
         }
     }, [farmData, refreshData]);
 
-    const handleFetchCurrentIp = async () => {
-        setIsFetchingIp(true);
-        try {
-            const response = await fetch('https://api.ipify.org?format=json');
-            const data = await response.json();
-            if (data.ip) {
-                setFarmData((prev: any) => ({
-                    ...prev,
-                    attendanceIpAddress: data.ip
-                }));
-                setMessage({ type: 'success', text: `현재 공인 IP(${data.ip})를 불러왔습니다. 우측 상단의 설정을 저장하세요.` });
-            }
-        } catch (error) {
-            console.error('Failed to fetch IP', error);
-            setMessage({ type: 'error', text: '공인 IP 주소를 가져오는데 실패했습니다.' });
-        } finally {
-            setIsFetchingIp(false);
-        }
-    };
 
     const filteredFarms = fields.filter(farm =>
         farm.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -111,7 +91,7 @@ const AttendanceSetting: React.FC = () => {
             <div className="flex flex-col lg:flex-row gap-6">
                 {/* Left: Interactive List */}
                 <div className="lg:w-[320px] flex flex-col gap-4">
-                    <div className="bg-white dark:bg-zinc-900 rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-zinc-800 flex flex-col h-[calc(100vh-200px)] min-h-[500px]">
+                    <div className="bg-white dark:bg-zinc-900 rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-zinc-800 flex flex-col h-fit max-h-[calc(100vh-200px)] min-h-[200px]">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-bold flex items-center gap-2 text-slate-800 dark:text-slate-100">
                                 <Settings className="text-primary" size={20} /> 설정 대상 농장
@@ -167,11 +147,11 @@ const AttendanceSetting: React.FC = () => {
                 {/* Right: Settings Panel */}
                 <div className="flex-1 flex flex-col gap-6">
                     {farmData ? (
-                        <>
+                        <div className="flex flex-col gap-6">
                             <div className="bg-white dark:bg-zinc-900 rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-zinc-800 flex items-center justify-between">
                                 <div>
                                     <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-1">{farmData.name} 출퇴근 인증 설정</h2>
-                                    <p className="text-slate-500 text-sm">GPS 반경 또는 특정 Wi-Fi 연결을 통한 출퇴근 허용 범위를 지정합니다.</p>
+                                    <p className="text-slate-500 text-sm">GPS 반경을 통한 출퇴근 허용 범위를 지정합니다.</p>
                                 </div>
                                 <button
                                     onClick={handleFarmUpdate}
@@ -193,9 +173,9 @@ const AttendanceSetting: React.FC = () => {
                                 </div>
                             )}
 
-                            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
-                                {/* GPS Setting */}
-                                <div className="flex flex-col gap-4">
+                            <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 mb-6">
+                                {/* GPS Setting Column */}
+                                <div className="xl:col-span-5 flex flex-col gap-4">
                                     <div className="bg-white dark:bg-zinc-900 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-zinc-800 h-full">
                                         <div className="flex items-center gap-2 mb-2">
                                             <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600"><MapPin size={16} /></div>
@@ -203,7 +183,7 @@ const AttendanceSetting: React.FC = () => {
                                         </div>
                                         <p className="text-sm text-slate-500 mb-6">농장 중심 좌표로부터 직원이 출퇴근을 인증할 수 있는 최대 반경 거리를 설정합니다.</p>
 
-                                        <div className="p-5 bg-slate-50 dark:bg-zinc-800/50 rounded-xl border border-slate-100 dark:border-zinc-700 mb-6">
+                                        <div className="p-5 bg-slate-50 dark:bg-zinc-800/50 rounded-xl border border-slate-100 dark:border-zinc-700">
                                             <div className="flex items-center justify-between mb-4">
                                                 <label className="text-sm font-bold text-slate-700 dark:text-slate-300">허용 반경 거리</label>
                                                 <span className="text-2xl font-black text-emerald-600">{farmData.attendanceRadius || 100}<span className="text-sm ml-1 opacity-70">m</span></span>
@@ -224,7 +204,20 @@ const AttendanceSetting: React.FC = () => {
                                             </div>
                                         </div>
 
-                                        <div className="h-[200px] rounded-xl overflow-hidden border border-slate-200 dark:border-zinc-700 relative">
+                                        <div className="mt-6 p-4 bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 rounded-xl">
+                                            <p className="text-xs text-amber-700 dark:text-amber-500 leading-relaxed">
+                                                <Info size={12} className="inline mr-1 mb-1" />
+                                                우측 지도의 원형 영역 내에서만 출퇴근 인증이 가능합니다.
+                                                농장의 크기와 지형지물을 고려하여 적절한 반경을 설정해 주세요.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Map Column */}
+                                <div className="xl:col-span-7 h-[500px] min-h-[400px]">
+                                    <div className="bg-white dark:bg-zinc-900 rounded-2xl p-3 shadow-sm border border-slate-200 dark:border-zinc-800 h-full relative">
+                                        <div className="h-full rounded-xl overflow-hidden border border-slate-200 dark:border-zinc-700">
                                             <Suspense fallback={<SuspenseLoader />}>
                                                 <KakaoMap
                                                     latitude={Number(farmData.latitude) || 37.566826}
@@ -234,84 +227,21 @@ const AttendanceSetting: React.FC = () => {
                                                         lng: Number(farmData.longitude) || 126.9786567
                                                     }}
                                                     draggableMarker={false}
+                                                    address={farmData.location}
                                                     circleRadius={farmData.attendanceRadius || 100}
                                                     height="100%"
                                                 />
                                             </Suspense>
-                                            <div className="absolute top-2 right-2 bg-white/90 px-2 py-1 flex items-center gap-1 rounded shadow text-[10px] font-bold text-slate-600">
-                                                <MapPin size={10} className="text-emerald-500" /> {farmData.location}
+                                            <div className="absolute top-5 right-5 bg-white/90 dark:bg-zinc-900/90 backdrop-blur px-3 py-2 flex items-center gap-2 rounded-xl shadow-lg border border-slate-200 dark:border-zinc-700 text-xs font-bold text-slate-700 dark:text-slate-200">
+                                                <MapPin size={14} className="text-emerald-500" /> {farmData.location}
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* IP Setting */}
-                            <div className="bg-white dark:bg-zinc-900 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-zinc-800">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600"><Globe size={16} /></div>
-                                    <h4 className="text-lg font-bold text-slate-800 dark:text-slate-100">지정 IP 인증 설정 (사내 망)</h4>
-                                </div>
-                                <p className="text-sm text-slate-500 mb-6">특정 공인 IP(회사 인터넷)에서만 출퇴근이 가능하게 엄격히 통제합니다. IP가 등록되어 있으면 해당 IP에서만 출근/퇴근 기록이 가능합니다.</p>
 
-                                {/* Current IP Status */}
-                                <div className="mb-6">
-                                    {farmData.attendanceIpAddress ? (
-                                        <div className="p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800/50 rounded-xl relative overflow-hidden">
-                                            <div className="absolute right-0 top-0 h-full w-2 bg-purple-500"></div>
-                                            <div className="flex items-start justify-between">
-                                                <div>
-                                                    <div className="text-xs text-purple-600 font-bold mb-1 uppercase tracking-wider">현재 허용된 인증 IP</div>
-                                                    <div className="font-bold text-slate-800 dark:text-slate-100 text-lg flex items-center gap-2">
-                                                        {farmData.attendanceIpAddress}
-                                                    </div>
-                                                </div>
-                                                <button
-                                                    onClick={() => setFarmData({ ...farmData, attendanceIpAddress: null })}
-                                                    className="p-2 hover:bg-white rounded transition-colors text-slate-400 hover:text-rose-500"
-                                                    title="등록 취소"
-                                                >
-                                                    <Trash size={16} />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="p-4 bg-slate-50 dark:bg-zinc-800 rounded-xl border border-dashed border-slate-300 dark:border-zinc-600 flex items-center gap-3">
-                                            <Globe className="text-slate-400" size={24} />
-                                            <div>
-                                                <div className="font-bold text-slate-600 dark:text-slate-300 text-sm">등록된 지정 IP가 없습니다.</div>
-                                                <div className="text-xs text-slate-500 mt-1">아래 입력창에 IP를 직접 입력하거나 자동 불러오기를 누르세요.</div>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4">
-                                    <div className="flex-1 w-full">
-                                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">허용할 공인 IP 주소</label>
-                                        <input
-                                            type="text"
-                                            value={farmData.attendanceIpAddress || ''}
-                                            onChange={(e) => setFarmData({ ...farmData, attendanceIpAddress: e.target.value })}
-                                            placeholder="예: 123.456.78.90 (비워두면 IP 통제 사용 안 함, 콤마(,)로 여러개 구분 가능)"
-                                            className="w-full px-4 py-2.5 bg-slate-50 dark:bg-zinc-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary transition-all"
-                                        />
-                                    </div>
-                                    <button
-                                        onClick={handleFetchCurrentIp}
-                                        disabled={isFetchingIp}
-                                        className="w-full sm:w-auto px-4 py-2.5 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 min-h-[42px]"
-                                    >
-                                        <RefreshCw size={16} className={isFetchingIp ? 'animate-spin' : ''} />
-                                        <span>내 기기 IP 불러오기</span>
-                                    </button>
-                                </div>
-                                <div className="mt-3 text-[10px] flex items-start gap-1 text-slate-400">
-                                    <Info size={12} className="flex-shrink-0 mt-0.5" />
-                                    <p>[내 기기 IP 불러오기]를 누르면 현재 관리자가 접속 중인 유무선 네트워크의 외부 공인 IP가 자동으로 기입됩니다. 회사 사무실의 와이파이 환경에서 이 버튼을 눌러 쉽게 세팅하세요.</p>
-                                </div>
-                            </div>
-                        </>
+                        </div>
                     ) : (
                         <div className="bg-white dark:bg-zinc-900 rounded-2xl p-12 text-center shadow-sm border border-slate-100 dark:border-zinc-800 flex flex-col items-center justify-center min-h-[500px]">
                             <div className="w-24 h-24 bg-slate-50 dark:bg-zinc-800 rounded-full flex items-center justify-center mb-6">

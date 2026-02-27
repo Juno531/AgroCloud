@@ -27,7 +27,7 @@ const BottomNav = () => {
             id: 'attendance',
             label: '출퇴근',
             icon: Clock,
-            path: '/hr/attendance-log'
+            path: '/attendance'
         },
         {
             id: 'settings',

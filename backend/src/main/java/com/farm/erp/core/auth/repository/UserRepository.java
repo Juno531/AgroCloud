@@ -12,4 +12,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByRole(User.Role role);
 
     java.util.List<User> findAllByCompanyId(Long companyId);
+
+    java.util.List<User> findAllByCompany_Code(String companyCode);
 }

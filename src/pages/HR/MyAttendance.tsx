@@ -12,7 +12,7 @@ const MyAttendance = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        setTitle('내 근태 현황');
+        setTitle('근태 현황');
         fetchData();
     }, [setTitle]);
 
@@ -41,9 +41,16 @@ const MyAttendance = () => {
 
         if (dayLeaves) {
             return (
-                <div className="mt-1 flex items-center gap-1.5 px-2 py-1 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-lg border border-amber-100 dark:border-amber-800/50">
-                    <Coffee size={12} className="flex-shrink-0" />
-                    <span className="text-[10px] font-black uppercase">휴무</span>
+                <div className="flex flex-col gap-0.5 mt-0.5">
+                    {/* 모바일: dot만 표시 */}
+                    <div className="sm:hidden flex items-center gap-0.5">
+                        <span className="w-2 h-2 rounded-full bg-amber-400 flex-shrink-0" />
+                    </div>
+                    {/* sm 이상: 아이콘 + 텍스트 배지 */}
+                    <div className="hidden sm:flex items-center gap-1.5 px-1.5 py-0.5 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-md border border-amber-100 dark:border-amber-800/50">
+                        <Coffee size={10} className="flex-shrink-0" />
+                        <span className="text-[9px] font-black uppercase">휴무</span>
+                    </div>
                 </div>
             );
         }
@@ -51,19 +58,27 @@ const MyAttendance = () => {
         if (dayRecords.length === 0) return null;
 
         return (
-            <div className="flex flex-col gap-1 mt-1">
-                {clockIn && (
-                    <div className="flex items-center gap-1.5 px-1.5 py-1 bg-emerald-500/10 text-emerald-500 rounded-lg border border-emerald-500/20">
-                        <Clock size={10} className="flex-shrink-0" />
-                        <span className="text-[9px] font-bold">{format(parseISO(clockIn.timestamp), 'HH:mm')}</span>
-                    </div>
-                )}
-                {clockOut && (
-                    <div className="flex items-center gap-1.5 px-1.5 py-1 bg-rose-500/10 text-rose-500 rounded-lg border border-rose-500/20">
-                        <Clock size={10} className="flex-shrink-0" />
-                        <span className="text-[9px] font-bold">{format(parseISO(clockOut.timestamp), 'HH:mm')}</span>
-                    </div>
-                )}
+            <div className="flex flex-col gap-0.5 mt-0.5">
+                {/* 모바일: dot만 표시 */}
+                <div className="sm:hidden flex items-center gap-0.5">
+                    {clockIn && <span className="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0" />}
+                    {clockOut && <span className="w-2 h-2 rounded-full bg-rose-500 flex-shrink-0" />}
+                </div>
+                {/* sm 이상: 아이콘 + 시간 배지 */}
+                <div className="hidden sm:flex flex-col gap-0.5">
+                    {clockIn && (
+                        <div className="flex items-center gap-1 px-1.5 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-md border border-emerald-500/20">
+                            <Clock size={9} className="flex-shrink-0" />
+                            <span className="text-[9px] font-bold">{format(parseISO(clockIn.timestamp), 'HH:mm')}</span>
+                        </div>
+                    )}
+                    {clockOut && (
+                        <div className="flex items-center gap-1 px-1.5 py-0.5 bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-md border border-rose-500/20">
+                            <Clock size={9} className="flex-shrink-0" />
+                            <span className="text-[9px] font-bold">{format(parseISO(clockOut.timestamp), 'HH:mm')}</span>
+                        </div>
+                    )}
+                </div>
             </div>
         );
     };

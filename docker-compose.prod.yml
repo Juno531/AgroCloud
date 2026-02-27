@@ -3,16 +3,16 @@ version: '3.8'
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: farm-erp-db-prod
+    container_name: agrocloud-db-prod
     environment:
-      POSTGRES_DB: farm_erp
+      POSTGRES_DB: agrocloud
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       TZ: Asia/Seoul
     volumes:
       - postgres_data_prod:/var/lib/postgresql/data
     networks:
-      - farm-erp-network-prod
+      - agrocloud-network-prod
     restart: always
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
@@ -22,9 +22,9 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: farm-erp-redis-prod
+    container_name: agrocloud-redis-prod
     networks:
-      - farm-erp-network-prod
+      - agrocloud-network-prod
     restart: always
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
@@ -36,12 +36,12 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: farm-erp-backend-prod
+    container_name: agrocloud-backend-prod
     ports:
       - "8080:8080"
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/farm_erp
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/agrocloud
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
       SPRING_DATA_REDIS_HOST: redis
@@ -53,20 +53,20 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - farm-erp-network-prod
+      - agrocloud-network-prod
     restart: always
 
   frontend:
     build:
       context: .
       dockerfile: frontend.Dockerfile
-    container_name: farm-erp-frontend-prod
+    container_name: agrocloud-frontend-prod
     ports:
       - "80:80"
     depends_on:
       - backend
     networks:
-      - farm-erp-network-prod
+      - agrocloud-network-prod
     restart: always
 
 volumes:
@@ -74,5 +74,5 @@ volumes:
 
 
 networks:
-  farm-erp-network-prod:
+  agrocloud-network-prod:
     driver: bridge

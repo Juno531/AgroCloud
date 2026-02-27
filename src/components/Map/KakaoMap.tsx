@@ -88,7 +88,11 @@ const KakaoMapBase: React.FC<KakaoMapProps> = ({
                 }
 
                 try {
-                    const centerPosition = new window.kakao.maps.LatLng(latitude, longitude);
+                    // Use markerPosition as priority for initialization if available
+                    const startLat = markerPosition?.lat || latitude;
+                    const startLng = markerPosition?.lng || longitude;
+
+                    const centerPosition = new window.kakao.maps.LatLng(startLat, startLng);
                     const options = {
                         center: centerPosition,
                         level: level
@@ -101,27 +105,28 @@ const KakaoMapBase: React.FC<KakaoMapProps> = ({
                     mapRef.current = map;
 
                     // Initialize marker immediately on load
-                    if (markerPosition) {
-                        const mPos = new window.kakao.maps.LatLng(markerPosition.lat, markerPosition.lng);
-                        markerRef.current = new window.kakao.maps.Marker({
-                            position: mPos,
-                            map: map,
-                            draggable: draggableMarker
-                        });
+                    const mPos = new window.kakao.maps.LatLng(startLat, startLng);
+                    markerRef.current = new window.kakao.maps.Marker({
+                        position: mPos,
+                        map: map,
+                        draggable: draggableMarker
+                    });
 
-                        if (draggableMarker) {
-                            window.kakao.maps.event.addListener(markerRef.current, 'dragend', () => {
-                                const newPos = markerRef.current.getPosition();
-                                if (callbacksRef.current.onMarkerDragEnd) {
-                                    callbacksRef.current.onMarkerDragEnd(newPos.getLat(), newPos.getLng());
-                                }
-                                getAddress(newPos.getLat(), newPos.getLng());
-                            });
-                        }
+                    if (draggableMarker) {
+                        window.kakao.maps.event.addListener(markerRef.current, 'dragend', () => {
+                            const newPos = markerRef.current.getPosition();
+                            if (callbacksRef.current.onMarkerDragEnd) {
+                                callbacksRef.current.onMarkerDragEnd(newPos.getLat(), newPos.getLng());
+                            }
+                            getAddress(newPos.getLat(), newPos.getLng());
+                        });
                     }
 
                     setIsLoading(false);
                     if (onMapLoad) onMapLoad(map);
+
+                    // Relayout to ensure proper rendering
+                    setTimeout(() => map.relayout(), 100);
 
                     // Map Click Event
                     window.kakao.maps.event.addListener(map, 'click', (mouseEvent: any) => {
@@ -139,6 +144,16 @@ const KakaoMapBase: React.FC<KakaoMapProps> = ({
                 }
             });
         };
+
+        // Don't initialize until we have a valid non-default coordinate (e.g., from API)
+        // Default Seoul City Hall is roughly (37.5668, 126.9786)
+        // If we have 0 or very early defaults, wait.
+        const hasValidCoords = (latitude !== 37.566826 && latitude !== 0) || (markerPosition && markerPosition.lat !== 37.566826);
+
+        if (!hasValidCoords) {
+            // If coords aren't ready yet, show loading but don't init
+            return;
+        }
 
         // Check if script is already loaded
         if (window.kakao && window.kakao.maps) {
@@ -160,70 +175,48 @@ const KakaoMapBase: React.FC<KakaoMapProps> = ({
 
             return () => clearInterval(checker);
         }
-    }, []); // Only run once on mount
+    }, [latitude, longitude, markerPosition]); // Re-run if coords change while map is not yet initialized
 
     // Update center, marker, and radius when props change
     useEffect(() => {
         if (!mapRef.current || !window.kakao || !window.kakao.maps) return;
 
         const map = mapRef.current;
-        const currentCenter = new window.kakao.maps.LatLng(latitude, longitude);
+        const targetLat = markerPosition?.lat || latitude;
+        const targetLng = markerPosition?.lng || longitude;
+        const currentCenter = new window.kakao.maps.LatLng(targetLat, targetLng);
 
-        // Update map center smoothly
+        // Update map center smoothly if map is already initialized
         map.setCenter(currentCenter);
-        map.relayout();
 
         // Update Marker
-        if (markerPosition) {
-            const mPos = new window.kakao.maps.LatLng(markerPosition.lat, markerPosition.lng);
+        const mPos = new window.kakao.maps.LatLng(targetLat, targetLng);
 
-            if (!markerRef.current && map) {
-                // Create new marker if it doesn't exist yet but map is ready
-                markerRef.current = new window.kakao.maps.Marker({
-                    position: mPos,
-                    map: map,
-                    draggable: draggableMarker
+        if (!markerRef.current) {
+            // Create new marker if it doesn't exist yet but map is ready
+            markerRef.current = new window.kakao.maps.Marker({
+                position: mPos,
+                map: map,
+                draggable: draggableMarker
+            });
+
+            if (draggableMarker) {
+                window.kakao.maps.event.addListener(markerRef.current, 'dragend', () => {
+                    const newPos = markerRef.current.getPosition();
+                    if (callbacksRef.current.onMarkerDragEnd) {
+                        callbacksRef.current.onMarkerDragEnd(newPos.getLat(), newPos.getLng());
+                    }
+                    getAddress(newPos.getLat(), newPos.getLng());
                 });
-
-                if (draggableMarker) {
-                    window.kakao.maps.event.addListener(markerRef.current, 'dragend', () => {
-                        const newPos = markerRef.current.getPosition();
-                        if (callbacksRef.current.onMarkerDragEnd) {
-                            callbacksRef.current.onMarkerDragEnd(newPos.getLat(), newPos.getLng());
-                        }
-                        getAddress(newPos.getLat(), newPos.getLng());
-                    });
-                }
-            } else {
-                // Update existing marker
-                markerRef.current.setMap(map);
-                markerRef.current.setPosition(mPos);
-                markerRef.current.setDraggable(draggableMarker);
             }
-
-            // Update or create infowindow for address
-            if (address && markerRef.current) {
-                if (!infowindowRef.current) {
-                    infowindowRef.current = new window.kakao.maps.InfoWindow({
-                        content: `<div style="padding:5px;font-size:12px;">${address}</div>`
-                    });
-                } else {
-                    infowindowRef.current.setContent(`<div style="padding:5px;font-size:12px;">${address}</div>`);
-                }
-                infowindowRef.current.open(map, markerRef.current);
-            } else if (infowindowRef.current) {
-                infowindowRef.current.close();
-                infowindowRef.current = null;
-            }
-
-        } else if (markerRef.current) {
-            markerRef.current.setMap(null);
-            markerRef.current = null;
-            if (infowindowRef.current) {
-                infowindowRef.current.close();
-                infowindowRef.current = null;
-            }
+        } else {
+            // Update existing marker
+            markerRef.current.setMap(map);
+            markerRef.current.setPosition(mPos);
+            markerRef.current.setDraggable(draggableMarker);
         }
+
+        // InfoWindow logic removed per user request
 
         // Update Circle
         if (circleRadius) {
@@ -250,6 +243,9 @@ const KakaoMapBase: React.FC<KakaoMapProps> = ({
             circleRef.current.setMap(null);
             circleRef.current = null;
         }
+
+        // Extra layout check
+        map.relayout();
 
     }, [latitude, longitude, markerPosition, circleRadius, draggableMarker, address]);
 

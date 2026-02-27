@@ -66,14 +66,24 @@ const MyLeave = () => {
 
         if (dayLeave) {
             return (
-                <div className="mt-1 flex flex-col gap-1">
-                    <div className="flex items-center gap-1.5 px-1.5 py-1 bg-amber-500 text-white rounded-lg shadow-md shadow-amber-500/20 border border-amber-400">
+                <div className="flex flex-col gap-0.5 mt-0.5">
+                    {/* 모바일: dot만 표시 */}
+                    <div className="sm:hidden flex items-center gap-0.5">
+                        {/* <span className="w-2 h-2 rounded-full bg-amber-400 flex-shrink-0" /> */}
+                        <Coffee size={10} className="flex-shrink-0 text-amber-400" />
+                        {/* <span className="text-[9px] font-black uppercase text-amber-400">휴무</span> */}
+
+                    </div>
+                    {/* sm 이상: 아이콘 + 텍스트 배지 */}
+                    <div className="hidden sm:flex items-center gap-1.5 px-1.5 py-0.5 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-md border border-amber-100 dark:border-amber-800/50">
                         <Coffee size={10} className="flex-shrink-0" />
-                        <span className="text-[9px] font-black uppercase">휴무일</span>
+                        <span className="text-[9px] font-black uppercase">휴무</span>
                     </div>
                 </div>
             );
         }
+
+
 
         return (
             <div className="mt-1 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:block">

@@ -35,7 +35,7 @@ api.interceptors.request.use(
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        // 로그인 페이지에서는 401 에러 시 리다이렉트하지 않음
+        // 로그인 페이지에서는 401/403 에러 시 리다이렉트하지 않음
         if (error.response && error.response.status === 401) {
             // 현재 경로가 /login이 아닐 때만 리다이렉트
             if (!window.location.pathname.includes('/login')) {
@@ -169,6 +169,8 @@ export const AttendanceService = {
     getCompanyAttendance: (companyCode: string, start?: string, end?: string) => api.get(`/attendance/company/${companyCode}`, { params: { startDate: start, endDate: end } }),
     getUserStatus: () => api.get('/attendance/status'),
     getMonthlySummary: (year: number, month: number) => api.get('/attendance/summary', { params: { year, month } }),
+    filterAttendance: (data: any) => api.post('/attendance/filter', data),
+    exportAttendance: (data: any) => api.post('/attendance/export', data, { responseType: 'blob' }),
 };
 
 

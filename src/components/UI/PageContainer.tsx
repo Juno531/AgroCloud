@@ -11,7 +11,7 @@ interface PageContainerProps {
  */
 const PageContainer: React.FC<PageContainerProps> = ({ children, className = '' }) => {
     return (
-        <div className={`max-w-full px-4 md:px-10 pt-6 md:pt-10 animate-in fade-in duration-500 ${className}`}>
+        <div className={`max-w-full px-4 md:px-6 lg:px-10 pt-6 md:pt-10 animate-in fade-in duration-500 ${className}`}>
             {children}
         </div>
     );

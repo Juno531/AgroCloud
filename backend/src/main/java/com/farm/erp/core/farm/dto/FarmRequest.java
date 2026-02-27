@@ -42,9 +42,9 @@ public class FarmRequest {
 
     private String attendanceWifiBssid;
 
-    private String attendanceIpAddress;
-
     private String workStartTime; // HH:mm format
 
     private String workEndTime; // HH:mm format
+
+    private String companyCode;
 }

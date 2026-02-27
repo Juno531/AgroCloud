@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('FarmErp E2E Tests', () => {
+test.describe('AgroCloud E2E Tests', () => {
     test.beforeEach(async ({ page }) => {
         // 모든 API 호출에 대한 불필요한 콘솔 출력을 줄임
     });

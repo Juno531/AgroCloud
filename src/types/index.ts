@@ -41,7 +41,6 @@ export interface Farm {
     address?: string;
     size?: number;
     userId: number;
-    attendanceIpAddress?: string;
 }
 
 export interface Crop {

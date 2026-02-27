@@ -20,10 +20,10 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableCaching
 @EnableAsync
 @EnableScheduling
-public class FarmErpApplication {
+public class AgroCloudApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(FarmErpApplication.class, args);
+        SpringApplication.run(AgroCloudApplication.class, args);
     }
 
     @PostConstruct
