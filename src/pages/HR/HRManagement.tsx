@@ -4,6 +4,7 @@ import EmployeeList from '../../components/HR/EmployeeList';
 import AttendanceLog from '../../components/HR/AttendanceLog';
 import AttendanceSetting from '../../components/HR/AttendanceSetting';
 import AttendanceManagement from '../../components/HR/AttendanceManagement';
+import AttendanceStatus from '../../components/HR/AttendanceStatus';
 import { useLayout } from '../../context/LayoutContext';
 
 const HRManagement = () => {
@@ -14,7 +15,8 @@ const HRManagement = () => {
         if (location.pathname.includes('/hr/employees')) return '직원 관리';
         if (location.pathname.includes('/hr/attendance-log')) return '출퇴근 기록';
         if (location.pathname.includes('/hr/attendance-settings')) return '출퇴근 설정';
-        if (location.pathname.includes('/hr/attendance-management')) return '근태 관리';
+        if (location.pathname.includes('/hr/attendance-management')) return '출퇴근 관리';
+        if (location.pathname.includes('/hr/attendance-status')) return '근태 현황';
         return '인사 관리';
     };
 
@@ -31,16 +33,16 @@ const HRManagement = () => {
         if (location.pathname.includes('/hr/attendance-log')) return <AttendanceLog />;
         if (location.pathname.includes('/hr/attendance-settings')) return <AttendanceSetting />;
         if (location.pathname.includes('/hr/attendance-management')) return <AttendanceManagement />;
+        if (location.pathname.includes('/hr/attendance-status')) return <AttendanceStatus />;
         return <EmployeeList />;
     };
 
     return (
-        <div>
-            <div>
-                {renderContent()}
-            </div>
+        <div className="flex flex-col h-full">
+            {renderContent()}
         </div>
     );
 };
 
 export default HRManagement;
+
