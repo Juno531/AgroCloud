@@ -54,8 +54,8 @@ export const router = createBrowserRouter([
                 ]
             },
             {
-                // Routes requiring ADMIN
-                element: <PrivateRoute allowedRoles={['ADMIN']} />,
+                // Routes requiring ADMIN or MASTER_ADMIN
+                element: <PrivateRoute allowedRoles={['ADMIN', 'MASTER_ADMIN']} />,
                 children: [
                     {
                         element: <Layout />,
@@ -70,8 +70,8 @@ export const router = createBrowserRouter([
                 ]
             },
             {
-                // Routes requiring ADMIN or USER
-                element: <PrivateRoute allowedRoles={['ADMIN']} />,
+                // Routes requiring ADMIN, MASTER_ADMIN or USER
+                element: <PrivateRoute allowedRoles={['ADMIN', 'MASTER_ADMIN', 'USER']} />,
                 children: [
                     {
                         element: <Layout />,
@@ -83,8 +83,8 @@ export const router = createBrowserRouter([
                 ]
             },
             {
-                // Routes requiring ADMIN, USER, or SUPER_ADMIN
-                element: <PrivateRoute allowedRoles={['ADMIN', 'USER', 'SUPER_ADMIN']} />,
+                // Routes requiring ADMIN, MASTER_ADMIN, USER, or SUPER_ADMIN
+                element: <PrivateRoute allowedRoles={['ADMIN', 'MASTER_ADMIN', 'USER', 'SUPER_ADMIN']} />,
                 children: [
                     {
                         element: <Layout />,

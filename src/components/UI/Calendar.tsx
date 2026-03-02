@@ -17,12 +17,13 @@ import { getKoreanHolidayName } from '../../utils/koreanHolidays';
 
 interface CalendarProps {
     onDateClick?: (date: Date) => void;
+    onDateLongPress?: (date: Date) => void;
     renderCell?: (date: Date) => React.ReactNode;
     selectedDate?: Date;
     onMonthChange?: (date: Date) => void;
 }
 
-const Calendar = ({ onDateClick, renderCell, selectedDate, onMonthChange }: CalendarProps) => {
+const Calendar = ({ onDateClick, onDateLongPress, renderCell, selectedDate, onMonthChange }: CalendarProps) => {
     const [currentMonth, setCurrentMonth] = useState(selectedDate ?? new Date());
 
     const nextMonth = () => {
@@ -45,6 +46,36 @@ const Calendar = ({ onDateClick, renderCell, selectedDate, onMonthChange }: Cale
         start: startDate,
         end: endDate,
     });
+
+    const [pressTimer, setPressTimer] = useState<NodeJS.Timeout | null>(null);
+    const [isLongPressTriggered, setIsLongPressTriggered] = useState(false);
+
+    const handlePressStart = (day: Date, isOutsideMonth: boolean) => {
+        if (isOutsideMonth) return;
+        setIsLongPressTriggered(false);
+        const timer = setTimeout(() => {
+            setIsLongPressTriggered(true);
+            onDateLongPress?.(day);
+        }, 500); // 500ms 롱프레스 기준
+        setPressTimer(timer);
+    };
+
+    const handlePressEnd = (day: Date, isOutsideMonth: boolean) => {
+        if (pressTimer) {
+            clearTimeout(pressTimer);
+            setPressTimer(null);
+        }
+        if (!isLongPressTriggered && !isOutsideMonth) {
+            onDateClick?.(day);
+        }
+    };
+
+    const handlePressCancel = () => {
+        if (pressTimer) {
+            clearTimeout(pressTimer);
+            setPressTimer(null);
+        }
+    };
 
 
 
@@ -117,7 +148,15 @@ const Calendar = ({ onDateClick, renderCell, selectedDate, onMonthChange }: Cale
                         return (
                             <div
                                 key={day.toString()}
-                                onClick={() => !isOutsideMonth && onDateClick?.(day)}
+                                onMouseDown={() => handlePressStart(day, isOutsideMonth)}
+                                onMouseUp={() => handlePressEnd(day, isOutsideMonth)}
+                                onMouseLeave={handlePressCancel}
+                                onTouchStart={() => handlePressStart(day, isOutsideMonth)}
+                                onTouchEnd={(e) => {
+                                    e.preventDefault(); // onClick 중복 방지
+                                    handlePressEnd(day, isOutsideMonth);
+                                }}
+                                onTouchCancel={handlePressCancel}
                                 className={`
                                     bg-white dark:bg-neutral-bg2 p-1 sm:p-2 transition-all relative group flex flex-col
                                     h-16 sm:h-28 lg:h-32

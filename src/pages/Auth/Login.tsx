@@ -29,7 +29,7 @@ const Login: React.FC = () => {
                 const userData = JSON.parse(storedUser);
                 if (userData.role === 'SUPER_ADMIN') {
                     navigate('/super-admin', { replace: true });
-                } else if (userData.role === 'ADMIN') {
+                } else if (userData.role === 'ADMIN' || userData.role === 'MASTER_ADMIN') {
                     navigate('/', { replace: true });
                 } else {
                     navigate('/attendance', { replace: true });

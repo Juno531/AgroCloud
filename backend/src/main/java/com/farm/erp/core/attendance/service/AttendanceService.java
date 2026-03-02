@@ -37,7 +37,8 @@ public class AttendanceService {
 
         @Transactional
         public AttendanceRecord recordAttendance(Long userId, AttendanceRecord.AttendanceType type, Long farmId,
-                        String companyCode, java.math.BigDecimal latitude, java.math.BigDecimal longitude) {
+                        String companyCode, java.math.BigDecimal latitude, java.math.BigDecimal longitude,
+                        String reason, String remarks, Boolean isForceOutside) {
                 LocalDateTime now = LocalDateTime.now();
                 User user = userRepository.findById(userId)
                                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
@@ -55,9 +56,56 @@ public class AttendanceService {
                 double distance = calculateDistance(
                                 farm.getLatitude().doubleValue(), farm.getLongitude().doubleValue(),
                                 latitude.doubleValue(), longitude.doubleValue());
-                if (distance > radius) {
+
+                AttendanceRecord.RecordStatus status = AttendanceRecord.RecordStatus.NORMAL;
+
+                if (Boolean.TRUE.equals(isForceOutside) && reason != null && !reason.trim().isEmpty()) {
+                        status = AttendanceRecord.RecordStatus.PENDING;
+                } else if (distance > radius) {
                         throw new IllegalArgumentException(
                                         String.format("농장 반경 %dm 밖입니다. (현재 거리: %.0fm)", radius, distance));
+                }
+
+                if (type == AttendanceRecord.AttendanceType.CLOCK_IN) {
+                        LocalTime currentTime = now.toLocalTime();
+                        LocalTime startTime = farm.getAttendanceStartTime();
+                        LocalTime endTime = farm.getAttendanceEndTime();
+
+                        if (startTime != null && endTime != null) {
+                                boolean isValidTime;
+                                if (startTime.isBefore(endTime) || startTime.equals(endTime)) {
+                                        isValidTime = !currentTime.isBefore(startTime) && !currentTime.isAfter(endTime);
+                                } else {
+                                        // Over midnight bounds (e.g., 22:00 to 06:00)
+                                        isValidTime = !currentTime.isBefore(startTime) || !currentTime.isAfter(endTime);
+                                }
+                                if (!isValidTime) {
+                                        throw new IllegalArgumentException("현재는 출근 허용 시간이 아닙니다.");
+                                }
+                        }
+                }
+
+                LocalDateTime timestampToRecord = now;
+                if (type == AttendanceRecord.AttendanceType.CLOCK_IN
+                                && status == AttendanceRecord.RecordStatus.NORMAL) {
+                        try {
+                                com.farm.erp.core.hr.domain.EmployeeProfile profile = employeeProfileRepository
+                                                .findByUserId(userId).orElse(null);
+                                if (profile != null && profile.getEmploymentType() != null) {
+                                        if (profile.getEmploymentType() == com.farm.erp.core.hr.domain.EmploymentType.FULL_TIME
+                                                        && farm.getRegularEmployeeStartTime() != null) {
+                                                timestampToRecord = now.toLocalDate()
+                                                                .atTime(farm.getRegularEmployeeStartTime());
+                                        } else if (profile
+                                                        .getEmploymentType() == com.farm.erp.core.hr.domain.EmploymentType.PART_TIME
+                                                        && farm.getPartTimeEmployeeStartTime() != null) {
+                                                timestampToRecord = now.toLocalDate()
+                                                                .atTime(farm.getPartTimeEmployeeStartTime());
+                                        }
+                                }
+                        } catch (Exception e) {
+                                // Ignore and use now
+                        }
                 }
 
                 List<AttendanceRecord> recentRecords = attendanceRepository
@@ -69,7 +117,15 @@ public class AttendanceService {
                 if (!recentRecords.isEmpty()) {
                         AttendanceRecord lastRecord = recentRecords.get(0);
                         if (lastRecord.getType() == type) {
-                                lastRecord.updateTimestamp(LocalDateTime.now());
+                                lastRecord.updateTimestamp(timestampToRecord);
+                                // Update status and reason for retries
+                                lastRecord.updateStatus(status);
+                                if (reason != null) {
+                                        lastRecord.updateReason(reason);
+                                }
+                                if (remarks != null) {
+                                        lastRecord.updateRemarks(remarks);
+                                }
                                 return attendanceRepository.save(lastRecord);
                         }
                 }
@@ -108,13 +164,24 @@ public class AttendanceService {
                 AttendanceRecord record = AttendanceRecord.builder()
                                 .user(user)
                                 .type(type)
-                                .timestamp(now)
+                                .timestamp(timestampToRecord)
                                 .farmId(farmId)
                                 .companyCode(companyCode)
                                 .weekNumber(weekNumber)
                                 .workingDayIndex(workingDayIndex)
+                                .status(status)
+                                .reason(reason)
+                                .remarks(remarks)
                                 .build();
 
+                return attendanceRepository.save(record);
+        }
+
+        @Transactional
+        public AttendanceRecord updateAttendanceStatus(Long id, AttendanceRecord.RecordStatus status) {
+                AttendanceRecord record = attendanceRepository.findById(id)
+                                .orElseThrow(() -> new IllegalArgumentException("Attendance record not found"));
+                record.updateStatus(status);
                 return attendanceRepository.save(record);
         }
 
@@ -151,7 +218,7 @@ public class AttendanceService {
                                 end);
         }
 
-        public AttendanceRecord.AttendanceType getUserStatus(Long userId) {
+        public AttendanceRecord getUserStatus(Long userId) {
                 List<AttendanceRecord> recentRecords = attendanceRepository
                                 .findByUserIdAndTimestampBetweenOrderByTimestampDesc(
                                                 userId,
@@ -160,7 +227,7 @@ public class AttendanceService {
                 if (recentRecords.isEmpty()) {
                         return null;
                 }
-                return recentRecords.get(0).getType();
+                return recentRecords.get(0);
         }
 
         /**
@@ -191,9 +258,12 @@ public class AttendanceService {
                                 .findByCompanyCodeAndDateBetween(companyCode, startDate, endDate);
 
                 Map<LocalDate, Map<Long, String>> leavesByDate = new LinkedHashMap<>();
+                Map<LocalDate, Map<Long, String>> leaveReasonsByDate = new LinkedHashMap<>();
                 for (com.farm.erp.core.attendance.domain.LeaveRecord leave : leaveRecords) {
                         leavesByDate.computeIfAbsent(leave.getLeaveDate(), k -> new LinkedHashMap<>())
                                         .putIfAbsent(leave.getUser().getId(), leave.getUser().getName());
+                        leaveReasonsByDate.computeIfAbsent(leave.getLeaveDate(), k -> new LinkedHashMap<>())
+                                        .putIfAbsent(leave.getUser().getId(), leave.getReason());
                 }
 
                 // 해당 월 전체 날짜 순회 (근태/휴무 기록 유무에 무관하게 모든 날짜 포함)
@@ -218,6 +288,7 @@ public class AttendanceService {
                 for (LocalDate date : allDates) {
                         Map<Long, String> workers = workersByDate.getOrDefault(date, new LinkedHashMap<>());
                         Map<Long, String> leaves = leavesByDate.getOrDefault(date, new LinkedHashMap<>());
+                        Map<Long, String> leaveReasons = leaveReasonsByDate.getOrDefault(date, new LinkedHashMap<>());
 
                         List<AttendanceSummaryResponse.EmployeeSummary> workerList = workers.entrySet().stream()
                                         .map(e -> AttendanceSummaryResponse.EmployeeSummary.builder()
@@ -232,6 +303,7 @@ public class AttendanceService {
                                                         .userId(e.getKey())
                                                         .name(e.getValue())
                                                         .employmentType(employmentTypeMap.get(e.getKey()))
+                                                        .reason(leaveReasons.get(e.getKey()))
                                                         .build())
                                         .collect(Collectors.toList());
 

@@ -56,14 +56,48 @@ const KakaoMapBase: React.FC<KakaoMapProps> = ({
     const getAddress = (lat: number, lng: number) => {
         if (!window.kakao || !window.kakao.maps || !window.kakao.maps.services) return;
         const geocoder = new window.kakao.maps.services.Geocoder();
+
+        // First try to get the detailed address (parcel/road)
         geocoder.coord2Address(lng, lat, (result: any, status: any) => {
             if (status === window.kakao.maps.services.Status.OK && callbacksRef.current.onAddressChange) {
-                // Strictly prioritize 'address' (parcel/administrative address) for farms
-                // Parcel address is more accurate for farm locations in rural areas.
                 const parcelAddress = result[0].address ? result[0].address.address_name : '';
                 const roadAddress = result[0].road_address ? result[0].road_address.address_name : '';
 
-                callbacksRef.current.onAddressChange(parcelAddress || roadAddress);
+                const finalAddress = parcelAddress || roadAddress;
+
+                if (finalAddress) {
+                    callbacksRef.current.onAddressChange(finalAddress);
+                } else {
+                    // Fallback to administrative region code if no address is found
+                    geocoder.coord2RegionCode(lng, lat, (regResult: any, regStatus: any) => {
+                        if (regStatus === window.kakao.maps.services.Status.OK) {
+                            let adminAddress = '';
+                            for (let i = 0; i < regResult.length; i++) {
+                                if (regResult[i].region_type === 'H') {
+                                    adminAddress = regResult[i].address_name;
+                                    break;
+                                }
+                            }
+                            if (!adminAddress) adminAddress = regResult[0].address_name;
+                            callbacksRef.current.onAddressChange(adminAddress);
+                        }
+                    });
+                }
+            } else if (status === window.kakao.maps.services.Status.ZERO_RESULT) {
+                // If ZERO_RESULT, directly try region code
+                geocoder.coord2RegionCode(lng, lat, (regResult: any, regStatus: any) => {
+                    if (regStatus === window.kakao.maps.services.Status.OK && callbacksRef.current.onAddressChange) {
+                        let adminAddress = '';
+                        for (let i = 0; i < regResult.length; i++) {
+                            if (regResult[i].region_type === 'H') {
+                                adminAddress = regResult[i].address_name;
+                                break;
+                            }
+                        }
+                        if (!adminAddress) adminAddress = regResult[0].address_name;
+                        callbacksRef.current.onAddressChange(adminAddress);
+                    }
+                });
             }
         });
     };
@@ -146,9 +180,7 @@ const KakaoMapBase: React.FC<KakaoMapProps> = ({
         };
 
         // Don't initialize until we have a valid non-default coordinate (e.g., from API)
-        // Default Seoul City Hall is roughly (37.5668, 126.9786)
-        // If we have 0 or very early defaults, wait.
-        const hasValidCoords = (latitude !== 37.566826 && latitude !== 0) || (markerPosition && markerPosition.lat !== 37.566826);
+        const hasValidCoords = latitude !== 0 && longitude !== 0;
 
         if (!hasValidCoords) {
             // If coords aren't ready yet, show loading but don't init

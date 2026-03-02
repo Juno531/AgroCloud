@@ -27,5 +27,6 @@ public class AttendanceSummaryResponse {
         private Long userId;
         private String name;
         private String employmentType; // FULL_TIME / PART_TIME
+        private String reason;
     }
 }

@@ -38,13 +38,13 @@ public class FarmRequest {
 
     private Integer attendanceRadius;
 
-    private String attendanceWifiSsid;
+    private String attendanceStartTime; // HH:mm format
 
-    private String attendanceWifiBssid;
+    private String attendanceEndTime; // HH:mm format
 
-    private String workStartTime; // HH:mm format
+    private String regularEmployeeStartTime; // HH:mm format
 
-    private String workEndTime; // HH:mm format
+    private String partTimeEmployeeStartTime; // HH:mm format
 
     private String companyCode;
 }

@@ -32,6 +32,7 @@ const AttendanceExport = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<number[]>([]);
     const [selectedFarmIds, setSelectedFarmIds] = useState<number[]>([]);
+    const [includeLeaves, setIncludeLeaves] = useState(true);
 
     const [employees, setEmployees] = useState<EmployeeProfile[]>([]);
     const [farms, setFarms] = useState<any[]>([]);
@@ -40,6 +41,21 @@ const AttendanceExport = () => {
     const [errorMessage, setErrorMessage] = useState('');
 
     const [expandedFolders, setExpandedFolders] = useState<string[]>(['FULL_TIME', 'PART_TIME']);
+
+    const defaultFields = [
+        { id: 'date', label: '날짜', checked: true },
+        { id: 'name', label: '이름', checked: true },
+        { id: 'reason', label: '사유', checked: true },
+        { id: 'remarks', label: '비고', checked: true },
+        { id: 'week', label: '주차', checked: true },
+        { id: 'days', label: '일수', checked: true },
+        { id: 'clockIn', label: '출근시간', checked: true },
+        { id: 'clockOut', label: '퇴근시간', checked: true },
+        { id: 'workingHours', label: '근무시간', checked: true },
+        { id: 'hourlyWage', label: '시급', checked: true },
+        { id: 'totalPay', label: '총시급', checked: true }
+    ];
+    const [exportFields, setExportFields] = useState(defaultFields.map(f => f.id));
 
     useEffect(() => {
         fetchInitialData();
@@ -109,7 +125,9 @@ const AttendanceExport = () => {
                 employmentTypes: null,
                 clockInFarmIds: selectedFarmIds.length > 0 ? selectedFarmIds : null,
                 userIds: selectedEmployeeIds.length > 0 ? selectedEmployeeIds : null,
-                searchTerm: searchTerm || null
+                searchTerm: searchTerm || null,
+                exportFields: exportFields,
+                includeLeaves: includeLeaves
             };
 
             const response = await AttendanceService.exportAttendance(filterRequest);
@@ -175,6 +193,12 @@ const AttendanceExport = () => {
             setStartDate(format(startOfMonth(lastMonth), 'yyyy-MM-dd'));
             setEndDate(format(endOfMonth(lastMonth), 'yyyy-MM-dd'));
         }
+    };
+
+    const toggleExportField = (id: string) => {
+        setExportFields(prev =>
+            prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]
+        );
     };
 
     return (
@@ -439,6 +463,25 @@ const AttendanceExport = () => {
                                             지난 달
                                         </button>
                                     </div>
+                                    <div className="pt-2 border-t border-slate-100 dark:border-zinc-800/50 mt-4">
+                                        <label className="flex items-center gap-2 cursor-pointer group w-fit">
+                                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${includeLeaves
+                                                ? 'bg-primary border-primary'
+                                                : 'bg-slate-100 dark:bg-zinc-800 border-slate-300 dark:border-zinc-700'
+                                                }`}>
+                                                {includeLeaves && <Check size={14} className="text-white" />}
+                                            </div>
+                                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
+                                                휴무 기록 포함하기
+                                            </span>
+                                            <input
+                                                type="checkbox"
+                                                className="hidden"
+                                                checked={includeLeaves}
+                                                onChange={(e) => setIncludeLeaves(e.target.checked)}
+                                            />
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
 
@@ -463,6 +506,35 @@ const AttendanceExport = () => {
                                     ))}
                                     {farms.length === 0 && <p className="text-slate-400 text-xs italic">등록된 농장이 없습니다.</p>}
                                 </div>
+                            </div>
+                        </div>
+
+                        {/* Export Fields Selection */}
+                        <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 shadow-sm">
+                            <h2 className="text-lg font-bold mb-4 flex items-center gap-2 text-slate-800 dark:text-slate-200">
+                                <Settings2 size={18} className="text-primary" />
+                                내보내기 정보 선택
+                            </h2>
+                            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                                {defaultFields.map(field => (
+                                    <label key={field.id} className="flex items-center gap-2 cursor-pointer group">
+                                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${exportFields.includes(field.id)
+                                            ? 'bg-primary border-primary'
+                                            : 'bg-slate-100 dark:bg-zinc-800 border-slate-300 dark:border-zinc-700'
+                                            }`}>
+                                            {exportFields.includes(field.id) && <Check size={14} className="text-white" />}
+                                        </div>
+                                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
+                                            {field.label}
+                                        </span>
+                                        <input
+                                            type="checkbox"
+                                            className="hidden"
+                                            checked={exportFields.includes(field.id)}
+                                            onChange={() => toggleExportField(field.id)}
+                                        />
+                                    </label>
+                                ))}
                             </div>
                         </div>
 

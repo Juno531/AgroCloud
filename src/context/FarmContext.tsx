@@ -12,8 +12,10 @@ interface Field {
     attendanceRadius?: number;
     attendanceWifiSsid?: string | null;
     attendanceWifiBssid?: string | null;
-    workStartTime?: string | null;
-    workEndTime?: string | null;
+    attendanceStartTime?: string | null;
+    attendanceEndTime?: string | null;
+    regularEmployeeStartTime?: string | null;
+    partTimeEmployeeStartTime?: string | null;
     companyCode?: string;
 }
 
@@ -56,6 +58,21 @@ export const FarmProvider: React.FC<FarmProviderProps> = ({ children }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    const formatTime = (time: any) => {
+        if (!time) return null;
+        if (typeof time === 'string') {
+            const parts = time.split(':');
+            if (parts.length >= 2 && parts[0] != null && parts[1] != null) {
+                return `${parts[0].padStart(2, '0')}:${parts[1].padStart(2, '0')}`;
+            }
+            return null;
+        }
+        if (Array.isArray(time) && time.length >= 2 && time[0] != null && time[1] != null) {
+            return `${time[0].toString().padStart(2, '0')}:${time[1].toString().padStart(2, '0')}`;
+        }
+        return null;
+    };
+
     const fetchData = async () => {
         if (!user) {
             setFields([]);
@@ -85,8 +102,10 @@ export const FarmProvider: React.FC<FarmProviderProps> = ({ children }) => {
                 attendanceRadius: f.attendanceRadius,
                 attendanceWifiSsid: f.attendanceWifiSsid,
                 attendanceWifiBssid: f.attendanceWifiBssid,
-                workStartTime: f.workStartTime,
-                workEndTime: f.workEndTime,
+                attendanceStartTime: formatTime(f.attendanceStartTime),
+                attendanceEndTime: formatTime(f.attendanceEndTime),
+                regularEmployeeStartTime: formatTime(f.regularEmployeeStartTime),
+                partTimeEmployeeStartTime: formatTime(f.partTimeEmployeeStartTime),
                 companyCode: f.companyCode
             })));
 
@@ -138,8 +157,10 @@ export const FarmProvider: React.FC<FarmProviderProps> = ({ children }) => {
                 attendanceRadius: createdFarm.attendanceRadius,
                 attendanceWifiSsid: createdFarm.attendanceWifiSsid,
                 attendanceWifiBssid: createdFarm.attendanceWifiBssid,
-                workStartTime: createdFarm.workStartTime,
-                workEndTime: createdFarm.workEndTime,
+                attendanceStartTime: formatTime(createdFarm.attendanceStartTime),
+                attendanceEndTime: formatTime(createdFarm.attendanceEndTime),
+                regularEmployeeStartTime: formatTime(createdFarm.regularEmployeeStartTime),
+                partTimeEmployeeStartTime: formatTime(createdFarm.partTimeEmployeeStartTime),
                 companyCode: createdFarm.companyCode
             };
 

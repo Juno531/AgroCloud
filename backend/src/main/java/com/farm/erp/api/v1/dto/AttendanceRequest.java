@@ -23,4 +23,10 @@ public class AttendanceRequest {
 
     @NotNull(message = "경도 정보는 필수입니다.")
     private java.math.BigDecimal longitude;
+
+    private String reason;
+
+    private String remarks;
+
+    private Boolean isForceOutside;
 }

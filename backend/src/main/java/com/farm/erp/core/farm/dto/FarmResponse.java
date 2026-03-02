@@ -31,10 +31,10 @@ public class FarmResponse {
         private BigDecimal latitude;
         private BigDecimal longitude;
         private Integer attendanceRadius;
-        private String attendanceWifiSsid;
-        private String attendanceWifiBssid;
-        private String workStartTime;
-        private String workEndTime;
+        private String attendanceStartTime;
+        private String attendanceEndTime;
+        private String regularEmployeeStartTime;
+        private String partTimeEmployeeStartTime;
         private String companyCode;
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
@@ -55,13 +55,21 @@ public class FarmResponse {
                                 .latitude(farm.getLatitude())
                                 .longitude(farm.getLongitude())
                                 .attendanceRadius(farm.getAttendanceRadius())
-                                .attendanceWifiSsid(farm.getAttendanceWifiSsid())
-                                .attendanceWifiBssid(farm.getAttendanceWifiBssid())
-                                .workStartTime(farm.getWorkStartTime() != null
-                                                ? farm.getWorkStartTime().format(DateTimeFormatter.ofPattern("HH:mm"))
+                                .attendanceStartTime(farm.getAttendanceStartTime() != null
+                                                ? farm.getAttendanceStartTime()
+                                                                .format(DateTimeFormatter.ofPattern("HH:mm"))
                                                 : null)
-                                .workEndTime(farm.getWorkEndTime() != null
-                                                ? farm.getWorkEndTime().format(DateTimeFormatter.ofPattern("HH:mm"))
+                                .attendanceEndTime(farm.getAttendanceEndTime() != null
+                                                ? farm.getAttendanceEndTime()
+                                                                .format(DateTimeFormatter.ofPattern("HH:mm"))
+                                                : null)
+                                .regularEmployeeStartTime(farm.getRegularEmployeeStartTime() != null
+                                                ? farm.getRegularEmployeeStartTime()
+                                                                .format(DateTimeFormatter.ofPattern("HH:mm"))
+                                                : null)
+                                .partTimeEmployeeStartTime(farm.getPartTimeEmployeeStartTime() != null
+                                                ? farm.getPartTimeEmployeeStartTime()
+                                                                .format(DateTimeFormatter.ofPattern("HH:mm"))
                                                 : null)
                                 .companyCode(farm.getUser() != null && farm.getUser().getCompany() != null
                                                 ? farm.getUser().getCompany().getCode()

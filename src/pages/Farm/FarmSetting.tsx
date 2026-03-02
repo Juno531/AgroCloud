@@ -139,7 +139,7 @@ const FarmSetting: React.FC = () => {
         (farm.location && farm.location.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
-    if (user?.role !== 'ADMIN' && user?.role !== 'SUPER_ADMIN') {
+    if (user?.role !== 'ADMIN' && user?.role !== 'SUPER_ADMIN' && user?.role !== 'MASTER_ADMIN') {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
                 <div className="text-center p-8 bg-white rounded-2xl shadow-sm border border-slate-100">

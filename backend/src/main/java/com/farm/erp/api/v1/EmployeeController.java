@@ -43,6 +43,7 @@ public class EmployeeController {
     }
 
     @PostMapping
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('MASTER_ADMIN')")
     public ResponseEntity<EmployeeProfileResponse> registerEmployee(
             @org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails,
             @jakarta.validation.Valid @RequestBody com.farm.erp.core.hr.dto.EmployeeRegistrationRequest request) {

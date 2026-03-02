@@ -11,6 +11,11 @@ const MyLeave = () => {
     const [loading, setLoading] = useState(true);
     const [processing, setProcessing] = useState<string | null>(null);
 
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+    const [leaveType, setLeaveType] = useState('연차');
+    const [leaveReasonText, setLeaveReasonText] = useState('');
+
     useEffect(() => {
         setTitle('내 휴무 관리');
         fetchLeaves();
@@ -38,16 +43,42 @@ const MyLeave = () => {
                 // Delete leave
                 await LeaveService.deleteLeave(dateStr);
                 setLeaves(prev => prev.filter(l => !isSameDay(parseISO(l.leaveDate), date)));
-            } else {
-                // Save leave
-                const response = await LeaveService.saveLeave({ leaveDate: dateStr, reason: 'Personal Leave' });
-                setLeaves(prev => [...prev, response.data]);
             }
         } catch (error) {
             console.error('Failed to update leave:', error);
             alert('휴무 정보 업데이트에 실패했습니다.');
         } finally {
             setProcessing(null);
+        }
+    };
+
+    const handleDateLongPress = (date: Date) => {
+        setSelectedDate(date);
+        setIsModalOpen(true);
+        setLeaveType('연차');
+        setLeaveReasonText('');
+    };
+
+    const handleModalSubmit = async () => {
+        if (!selectedDate) return;
+
+        const dateStr = format(selectedDate, 'yyyy-MM-dd');
+        const fullReason = leaveReasonText.trim() ? `[${leaveType}] ${leaveReasonText}` : `[${leaveType}]`;
+
+        setIsModalOpen(false);
+        try {
+            setProcessing(dateStr);
+            const response = await LeaveService.saveLeave({ leaveDate: dateStr, reason: fullReason });
+            setLeaves(prev => {
+                const filtered = prev.filter(l => !isSameDay(parseISO(l.leaveDate), selectedDate));
+                return [...filtered, response.data];
+            });
+        } catch (error) {
+            console.error('Failed to update leave:', error);
+            alert('휴무 정보 업데이트에 실패했습니다.');
+        } finally {
+            setProcessing(null);
+            setSelectedDate(null);
         }
     };
 
@@ -66,18 +97,15 @@ const MyLeave = () => {
 
         if (dayLeave) {
             return (
-                <div className="flex flex-col gap-0.5 mt-0.5">
+                <div className="flex flex-col gap-0.5 mt-0.5 max-w-full overflow-hidden">
                     {/* 모바일: dot만 표시 */}
                     <div className="sm:hidden flex items-center gap-0.5">
-                        {/* <span className="w-2 h-2 rounded-full bg-amber-400 flex-shrink-0" /> */}
                         <Coffee size={10} className="flex-shrink-0 text-amber-400" />
-                        {/* <span className="text-[9px] font-black uppercase text-amber-400">휴무</span> */}
-
                     </div>
                     {/* sm 이상: 아이콘 + 텍스트 배지 */}
-                    <div className="hidden sm:flex items-center gap-1.5 px-1.5 py-0.5 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-md border border-amber-100 dark:border-amber-800/50">
+                    <div className="hidden sm:flex items-center gap-1.5 px-1.5 py-0.5 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-md border border-amber-100 dark:border-amber-800/50 w-full">
                         <Coffee size={10} className="flex-shrink-0" />
-                        <span className="text-[9px] font-black uppercase">휴무</span>
+                        <span className="text-[9px] font-black uppercase truncate">{dayLeave.reason ? dayLeave.reason : '휴무'}</span>
                     </div>
                 </div>
             );
@@ -125,7 +153,48 @@ const MyLeave = () => {
                 </div>
             </div>
 
-            <Calendar renderCell={renderCell} onDateClick={handleDateClick} />
+            <Calendar renderCell={renderCell} onDateClick={handleDateClick} onDateLongPress={handleDateLongPress} />
+
+            {/* 사유 입력 모달 */}
+            {isModalOpen && selectedDate && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setIsModalOpen(false)}>
+                    <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
+                        <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4">
+                            휴무 지정 ({format(selectedDate, 'M월 d일')})
+                        </h3>
+                        <div className="space-y-4">
+                            <select
+                                value={leaveType}
+                                onChange={(e) => setLeaveType(e.target.value)}
+                                className="w-full p-4 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 dark:text-white"
+                            >
+                                <option value="연차">연차</option>
+                                <option value="휴무">휴무</option>
+                            </select>
+                            <textarea
+                                value={leaveReasonText}
+                                onChange={(e) => setLeaveReasonText(e.target.value)}
+                                placeholder="상세 사유 (선택사항)"
+                                className="w-full p-4 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 h-24 resize-none text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 dark:text-white"
+                            />
+                            <div className="flex gap-3 pt-2">
+                                <button
+                                    onClick={() => setIsModalOpen(false)}
+                                    className="flex-1 py-3.5 rounded-xl font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 transition-colors"
+                                >
+                                    취소
+                                </button>
+                                <button
+                                    onClick={handleModalSubmit}
+                                    className="flex-1 py-3.5 rounded-xl font-bold text-white bg-primary hover:bg-primary/90 transition-colors shadow-lg shadow-primary/30"
+                                >
+                                    등록
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

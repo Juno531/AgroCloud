@@ -283,7 +283,7 @@ public class AuthService {
         }
 
         private Long getFarmIdForUser(User user) {
-                if (user.getRole() == Role.ADMIN) {
+                if (user.getRole() == Role.ADMIN || user.getRole() == Role.MASTER_ADMIN) {
                         return farmRepository.findByUserId(user.getId()).stream()
                                         .findFirst()
                                         .map(Farm::getId)

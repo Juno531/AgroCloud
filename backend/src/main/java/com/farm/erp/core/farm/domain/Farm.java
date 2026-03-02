@@ -46,17 +46,17 @@ public class Farm {
     @Column(name = "attendance_radius")
     private Integer attendanceRadius; // in meters (radius for geo-fencing)
 
-    @Column(name = "attendance_wifi_ssid", length = 100)
-    private String attendanceWifiSsid;
+    @Column(name = "attendance_start_time")
+    private LocalTime attendanceStartTime;
 
-    @Column(name = "attendance_wifi_bssid", length = 50)
-    private String attendanceWifiBssid;
+    @Column(name = "attendance_end_time")
+    private LocalTime attendanceEndTime;
 
-    @Column(name = "work_start_time")
-    private LocalTime workStartTime;
+    @Column(name = "regular_employee_start_time")
+    private LocalTime regularEmployeeStartTime;
 
-    @Column(name = "work_end_time")
-    private LocalTime workEndTime;
+    @Column(name = "part_time_employee_start_time")
+    private LocalTime partTimeEmployeeStartTime;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -93,8 +93,9 @@ public class Farm {
      */
     public void update(String name, String location, BigDecimal area, String description,
             String ownerName, String contactNumber, BigDecimal latitude, BigDecimal longitude,
-            Integer attendanceRadius, String attendanceWifiSsid, String attendanceWifiBssid,
-            LocalTime workStartTime, LocalTime workEndTime) {
+            Integer attendanceRadius,
+            LocalTime attendanceStartTime, LocalTime attendanceEndTime,
+            LocalTime regularEmployeeStartTime, LocalTime partTimeEmployeeStartTime) {
         if (name != null)
             this.name = name;
         if (location != null)
@@ -114,11 +115,10 @@ public class Farm {
 
         // Settings that can be cleared (nullable)
         this.attendanceRadius = attendanceRadius;
-        this.attendanceWifiSsid = attendanceWifiSsid;
-        this.attendanceWifiBssid = attendanceWifiBssid;
-        this.attendanceWifiBssid = attendanceWifiBssid;
-        this.workStartTime = workStartTime;
-        this.workEndTime = workEndTime;
+        this.attendanceStartTime = attendanceStartTime;
+        this.attendanceEndTime = attendanceEndTime;
+        this.regularEmployeeStartTime = regularEmployeeStartTime;
+        this.partTimeEmployeeStartTime = partTimeEmployeeStartTime;
     }
 
     /**

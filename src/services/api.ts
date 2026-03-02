@@ -162,12 +162,13 @@ export const EmployeeService = {
 };
 
 export const AttendanceService = {
-    recordAttendance: (data: { type: 'CLOCK_IN' | 'CLOCK_OUT'; farmId?: number; companyCode?: string; latitude?: number; longitude?: number }) =>
+    recordAttendance: (data: { type: 'CLOCK_IN' | 'CLOCK_OUT'; farmId?: number; companyCode?: string; latitude?: number; longitude?: number; reason?: string; remarks?: string; isForceOutside?: boolean }) =>
         api.post('/attendance', data),
+    updateStatus: (id: number, status: string) => api.patch(`/attendance/${id}/status`, { status }),
     getMyAttendance: () => api.get('/attendance/me'),
     getFarmAttendance: (farmId: number, start?: string, end?: string) => api.get(`/attendance/farm/${farmId}`, { params: { startDate: start, endDate: end } }),
     getCompanyAttendance: (companyCode: string, start?: string, end?: string) => api.get(`/attendance/company/${companyCode}`, { params: { startDate: start, endDate: end } }),
-    getUserStatus: () => api.get('/attendance/status'),
+    getUserStatus: () => api.get<any>('/attendance/status'),
     getMonthlySummary: (year: number, month: number) => api.get('/attendance/summary', { params: { year, month } }),
     filterAttendance: (data: any) => api.post('/attendance/filter', data),
     exportAttendance: (data: any) => api.post('/attendance/export', data, { responseType: 'blob' }),

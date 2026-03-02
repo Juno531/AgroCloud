@@ -92,10 +92,11 @@ public class FarmService {
                 .longitude(request.getLongitude())
                 .attendanceRadius(request.getAttendanceRadius() != null ? request.getAttendanceRadius() : 300) // Default
                                                                                                                // 300m
-                .attendanceWifiSsid(request.getAttendanceWifiSsid())
-                .attendanceWifiBssid(request.getAttendanceWifiBssid())
-                .workStartTime(request.getWorkStartTime() != null ? LocalTime.parse(request.getWorkStartTime()) : null)
-                .workEndTime(request.getWorkEndTime() != null ? LocalTime.parse(request.getWorkEndTime()) : null)
+                .attendanceStartTime(
+                        request.getAttendanceStartTime() != null ? LocalTime.parse(request.getAttendanceStartTime())
+                                : null)
+                .attendanceEndTime(
+                        request.getAttendanceEndTime() != null ? LocalTime.parse(request.getAttendanceEndTime()) : null)
                 .status(FarmStatus.ACTIVE)
                 .userId(userId) // 현재 사용자 ID 설정
                 .build();
@@ -142,11 +143,12 @@ public class FarmService {
         User currentUser = getCurrentUser();
         List<Farm> farms;
 
-        if (currentUser.getRole() == User.Role.USER || currentUser.getRole() == User.Role.ADMIN) {
-            // ADMIN, USER 모두 소속 회사의 전체 농장 조회
+        if (currentUser.getRole() == User.Role.USER || currentUser.getRole() == User.Role.ADMIN
+                || currentUser.getRole() == User.Role.MASTER_ADMIN) {
+            // ADMIN, MASTER_ADMIN, USER 모두 소속 회사의 전체 농장 조회
             if (currentUser.getCompany() == null) {
                 log.warn("User {} ({}) has no assigned company code", currentUser.getEmail(), currentUser.getRole());
-                // company 없는 ADMIN은 자신이 생성한 농장만 fallback
+                // company 없는 사용자는 자신이 생성한 농장만 fallback
                 farms = farmRepository.findByUserIdAndStatus(currentUser.getId(), FarmStatus.ACTIVE);
             } else {
                 String companyCode = currentUser.getCompany().getCode();
@@ -202,10 +204,12 @@ public class FarmService {
                 request.getLatitude(),
                 request.getLongitude(),
                 request.getAttendanceRadius(),
-                request.getAttendanceWifiSsid(),
-                request.getAttendanceWifiBssid(),
-                request.getWorkStartTime() != null ? LocalTime.parse(request.getWorkStartTime()) : null,
-                request.getWorkEndTime() != null ? LocalTime.parse(request.getWorkEndTime()) : null);
+                request.getAttendanceStartTime() != null ? LocalTime.parse(request.getAttendanceStartTime()) : null,
+                request.getAttendanceEndTime() != null ? LocalTime.parse(request.getAttendanceEndTime()) : null,
+                request.getRegularEmployeeStartTime() != null ? LocalTime.parse(request.getRegularEmployeeStartTime())
+                        : null,
+                request.getPartTimeEmployeeStartTime() != null ? LocalTime.parse(request.getPartTimeEmployeeStartTime())
+                        : null);
 
         log.info("Updated farm: {} for user: {}", id, userId);
 

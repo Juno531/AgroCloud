@@ -27,6 +27,7 @@ public class EmployeeService {
         @Transactional(readOnly = true)
         public List<EmployeeProfileResponse> getAllEmployees() {
                 return employeeProfileRepository.findAll().stream()
+                                .filter(profile -> profile.getUser().getRole() != User.Role.MASTER_ADMIN)
                                 .map(this::toResponse)
                                 .collect(Collectors.toList());
         }
@@ -34,6 +35,7 @@ public class EmployeeService {
         @Transactional(readOnly = true)
         public List<EmployeeProfileResponse> getEmployeesByFarm(Long farmId) {
                 return employeeProfileRepository.findByFarmId(farmId).stream()
+                                .filter(profile -> profile.getUser().getRole() != User.Role.MASTER_ADMIN)
                                 .map(this::toResponse)
                                 .collect(Collectors.toList());
         }
@@ -41,6 +43,7 @@ public class EmployeeService {
         @Transactional(readOnly = true)
         public List<EmployeeProfileResponse> getEmployeesByCompanyCode(String companyCode) {
                 return employeeProfileRepository.findByUserCompanyCode(companyCode).stream()
+                                .filter(profile -> profile.getUser().getRole() != User.Role.MASTER_ADMIN)
                                 .map(this::toResponse)
                                 .collect(Collectors.toList());
         }

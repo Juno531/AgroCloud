@@ -208,7 +208,7 @@ const EmployeeDetail = () => {
                                 width: '120px',
                                 height: '120px',
                                 borderRadius: 'var(--radius-lg)',
-                                backgroundColor: employee.role === 'ADMIN' ? 'var(--color-warning)' : 'var(--color-primary)',
+                                backgroundColor: (employee.role === 'ADMIN' || employee.role === 'MASTER_ADMIN') ? 'var(--color-warning)' : 'var(--color-primary)',
                                 color: 'white',
                                 display: 'flex',
                                 alignItems: 'center',
@@ -234,7 +234,7 @@ const EmployeeDetail = () => {
                                     </span>
                                 </div>
                                 <p style={{ color: 'var(--color-text-secondary)', fontSize: '1.125rem', margin: 0 }}>
-                                    {employee.role === 'ADMIN' ? '팜 관리자(ADMIN)' : '현장 작업자(USER)'}
+                                    {(employee.role === 'ADMIN' || employee.role === 'MASTER_ADMIN') ? '팜 관리자(ADMIN)' : '현장 작업자(USER)'}
                                 </p>
                             </div>
                         </div>
@@ -252,7 +252,7 @@ const EmployeeDetail = () => {
                                 <InfoItem label="이메일" value={employee.email} icon={<Mail size={16} />} />
                                 <InfoItem label="연락처" value={employee.phone} icon={<Phone size={16} />} />
                                 <InfoItem label="입사일" value={formatDate(employee.hireDate)} icon={<Calendar size={16} />} />
-                                <InfoItem label="직급" value={employee.role === 'ADMIN' ? '관리자' : '일반'} icon={<Briefcase size={16} />} />
+                                <InfoItem label="직급" value={(employee.role === 'ADMIN' || employee.role === 'MASTER_ADMIN') ? '관리자' : '일반'} icon={<Briefcase size={16} />} />
                                 <InfoItem label="거주지" value={employee.address || '미등록'} icon={<MapPin size={16} />} />
                             </div>
                         </div>
@@ -266,8 +266,8 @@ const EmployeeDetail = () => {
                             <div className="info-grid">
                                 <InfoItem
                                     label="역할"
-                                    value={employee.role === 'ADMIN' ? '관리자 (Admin)' : '직원 (User)'}
-                                    highlight={employee.role === 'ADMIN' ? 'warning' : 'success'}
+                                    value={(employee.role === 'ADMIN' || employee.role === 'MASTER_ADMIN') ? '관리자 (Admin)' : '직원 (User)'}
+                                    highlight={(employee.role === 'ADMIN' || employee.role === 'MASTER_ADMIN') ? 'warning' : 'success'}
                                     icon={<Shield size={16} />}
                                 />
                                 <InfoItem

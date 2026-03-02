@@ -116,7 +116,7 @@ const EmployeeList = () => {
     }
 
     return (
-        <div>
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
             {/* Header */}
             <div style={{
                 display: 'flex',
@@ -127,22 +127,24 @@ const EmployeeList = () => {
                 <h3 style={{ fontSize: isMobile ? '1.125rem' : '1.25rem', fontWeight: 600, margin: 0 }}>
                     직원 목록 ({employees.length}명)
                 </h3>
-                <button
-                    onClick={() => {
-                        setIsFormOpen(true);
-                    }}
-                    className="btn btn-primary"
-                    style={{
-                        padding: '0.5rem 1rem',
-                        fontSize: '0.875rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem'
-                    }}
-                >
-                    <User size={16} />
-                    <span>직원 등록</span>
-                </button>
+                {user?.role === 'MASTER_ADMIN' && (
+                    <button
+                        onClick={() => {
+                            setIsFormOpen(true);
+                        }}
+                        className="btn btn-primary"
+                        style={{
+                            padding: '0.5rem 1rem',
+                            fontSize: '0.875rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem'
+                        }}
+                    >
+                        <User size={16} />
+                        <span>직원 등록</span>
+                    </button>
+                )}
             </div>
 
             {/* Search and Filter Bar */}
@@ -246,7 +248,7 @@ const EmployeeList = () => {
                 </div>
             ) : isMobile ? (
                 // Mobile Card Layout
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem', paddingBottom: '1rem' }}>
                     {filteredEmployees.map((employee: EmployeeProfile) => (
                         <div
                             key={employee.id}
@@ -272,7 +274,7 @@ const EmployeeList = () => {
                                         width: '40px',
                                         height: '40px',
                                         borderRadius: '50%',
-                                        backgroundColor: employee.role === 'ADMIN' ? 'var(--color-warning)' : 'var(--color-primary)',
+                                        backgroundColor: (employee.role === 'ADMIN' || employee.role === 'MASTER_ADMIN') ? 'var(--color-warning)' : 'var(--color-primary)',
                                         color: 'white',
                                         display: 'flex',
                                         alignItems: 'center',
@@ -299,10 +301,10 @@ const EmployeeList = () => {
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.25rem', flexWrap: 'wrap' }}>
                                             <span style={{
                                                 fontSize: '0.75rem',
-                                                color: employee.role === 'ADMIN' ? 'var(--color-warning)' : 'var(--color-text-secondary)',
-                                                fontWeight: employee.role === 'ADMIN' ? 600 : 400
+                                                color: (employee.role === 'ADMIN' || employee.role === 'MASTER_ADMIN') ? 'var(--color-warning)' : 'var(--color-text-secondary)',
+                                                fontWeight: (employee.role === 'ADMIN' || employee.role === 'MASTER_ADMIN') ? 600 : 400
                                             }}>
-                                                {employee.role === 'ADMIN' ? '관리자' : '직원'}
+                                                {(employee.role === 'ADMIN' || employee.role === 'MASTER_ADMIN') ? '관리자' : '직원'}
                                             </span>
                                             {employee.role !== 'ADMIN' && (
                                                 <span style={{
@@ -356,12 +358,16 @@ const EmployeeList = () => {
             ) : (
                 // Desktop Table Layout
                 <div style={{
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    minHeight: 0,
                     backgroundColor: 'var(--color-surface)',
                     borderRadius: 'var(--radius-lg)',
                     overflow: 'hidden',
                     boxShadow: 'var(--shadow-sm)'
                 }}>
-                    <div style={{ overflowX: 'auto' }}>
+                    <div style={{ flex: 1, overflow: 'auto' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                             <thead>
                                 <tr style={{ backgroundColor: 'var(--color-background)', borderBottom: '2px solid var(--color-border)' }}>
@@ -388,7 +394,7 @@ const EmployeeList = () => {
                                                     width: '32px',
                                                     height: '32px',
                                                     borderRadius: '50%',
-                                                    backgroundColor: employee.role === 'ADMIN' ? 'var(--color-warning)' : 'var(--color-primary)',
+                                                    backgroundColor: (employee.role === 'ADMIN' || employee.role === 'MASTER_ADMIN') ? 'var(--color-warning)' : 'var(--color-primary)',
                                                     color: 'white',
                                                     display: 'flex',
                                                     alignItems: 'center',
@@ -416,12 +422,12 @@ const EmployeeList = () => {
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.2rem', }}>
                                                         <span style={{
                                                             fontSize: '0.75rem',
-                                                            color: employee.role === 'ADMIN' ? 'var(--color-warning)' : 'var(--color-text-secondary)',
-                                                            fontWeight: employee.role === 'ADMIN' ? 600 : 400,
+                                                            color: (employee.role === 'ADMIN' || employee.role === 'MASTER_ADMIN') ? 'var(--color-warning)' : 'var(--color-text-secondary)',
+                                                            fontWeight: (employee.role === 'ADMIN' || employee.role === 'MASTER_ADMIN') ? 600 : 400,
                                                             whiteSpace: 'nowrap',
                                                             flexShrink: 0
                                                         }}>
-                                                            {employee.role === 'ADMIN' ? '관리자' : '직원'}
+                                                            {(employee.role === 'ADMIN' || employee.role === 'MASTER_ADMIN') ? '관리자' : '직원'}
                                                         </span>
                                                         {employee.role !== 'ADMIN' && (
                                                             <span style={{

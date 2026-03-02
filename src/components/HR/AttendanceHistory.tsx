@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { Calendar, Search, Clock, LogIn, LogOut, MapPin } from 'lucide-react';
 import { EmployeeService, AttendanceService } from '../../services/api';
 import { useFarm } from '../../context/FarmContext';
+import { format } from 'date-fns';
+import { ko } from 'date-fns/locale';
 
 interface AttendanceRecord {
     id: number;
@@ -10,6 +12,7 @@ interface AttendanceRecord {
     type: 'CLOCK_IN' | 'CLOCK_OUT';
     timestamp: string;
     farmId: number;
+    reason?: string | null;
 }
 
 const AttendanceHistory = () => {
@@ -60,11 +63,9 @@ const AttendanceHistory = () => {
 
         setLoading(true);
         try {
-            // Convert date strings to ISO datetime format (yyyy-MM-ddT00:00:00)
             const startDateTime = `${startDate}T00:00:00`;
             const endDateTime = `${endDate}T23:59:59`;
 
-            // Fetch all farm attendance and filter by user
             const response = await AttendanceService.getFarmAttendance(Number(selectedFarmId), startDateTime, endDateTime);
             const filteredRecords = response.data.filter(
                 (record: AttendanceRecord) => record.userId === selectedUserId
@@ -72,10 +73,6 @@ const AttendanceHistory = () => {
             setRecords(filteredRecords);
         } catch (error: any) {
             console.error('Failed to fetch attendance records:', error);
-            if (error.response) {
-                console.error('Error response data:', error.response.data);
-                console.error('Error response status:', error.response.status);
-            }
         } finally {
             setLoading(false);
         }
@@ -104,282 +101,186 @@ const AttendanceHistory = () => {
     const groupedRecords = groupRecordsByDate();
 
     return (
-        <div>
-            {/* Filters */}
-            <div style={{
-                backgroundColor: 'var(--color-surface)',
-                padding: 'var(--spacing-lg)',
-                borderRadius: 'var(--radius-lg)',
-                marginBottom: 'var(--spacing-lg)',
-                boxShadow: 'var(--shadow-sm)'
-            }}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-
+        <div className="space-y-4 md:space-y-6">
+            {/* Sticky Header with Filters */}
+            <div className="sticky top-0 z-40 -mx-3 sm:-mx-6 px-3 sm:px-6 py-4 bg-slate-50/80 dark:bg-zinc-950/80 backdrop-blur-xl border-b border-slate-200 dark:border-zinc-800 transition-all duration-300">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 bg-white/70 dark:bg-zinc-900/70 p-4 rounded-2xl shadow-sm border border-white dark:border-zinc-800/50">
                     {/* Farm Select */}
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>
-                            <MapPin size={16} style={{ display: 'inline', marginRight: '0.5rem' }} />
+                    <div className="space-y-1.5">
+                        <label className="flex items-center gap-2 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                            <MapPin size={14} />
                             농장 선택
                         </label>
                         <select
                             value={selectedFarmId}
                             onChange={(e) => setSelectedFarmId(Number(e.target.value))}
-                            style={{
-                                width: '100%',
-                                padding: '0.75rem',
-                                borderRadius: 'var(--radius-md)',
-                                border: '1px solid var(--color-border)',
-                                fontSize: '1rem',
-                                backgroundColor: 'white'
-                            }}
+                            className="w-full px-3 py-2 bg-slate-50 dark:bg-zinc-800 border-none rounded-lg text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer transition-all"
                         >
                             {farms && farms.map(farm => (
-                                <option key={farm.id} value={farm.id}>
-                                    {farm.name}
-                                </option>
+                                <option key={farm.id} value={farm.id}>{farm.name}</option>
                             ))}
                         </select>
                     </div>
 
                     {/* Employee Select */}
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>
-                            <Search size={16} style={{ display: 'inline', marginRight: '0.5rem' }} />
+                    <div className="space-y-1.5">
+                        <label className="flex items-center gap-2 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                            <Search size={14} />
                             직원 선택
                         </label>
                         <select
                             value={selectedUserId || ''}
                             onChange={(e) => setSelectedUserId(Number(e.target.value))}
-                            style={{
-                                width: '100%',
-                                padding: '0.75rem',
-                                borderRadius: 'var(--radius-md)',
-                                border: '1px solid var(--color-border)',
-                                fontSize: '1rem',
-                                backgroundColor: 'white'
-                            }}
+                            className="w-full px-3 py-2 bg-slate-50 dark:bg-zinc-800 border-none rounded-lg text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer transition-all"
                         >
                             {employees.map(emp => (
-                                <option key={emp.id} value={emp.userId}>
-                                    {emp.name}
-                                </option>
+                                <option key={emp.id} value={emp.userId}>{emp.name}</option>
                             ))}
                         </select>
                     </div>
 
                     {/* Start Date */}
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>
-                            <Calendar size={16} style={{ display: 'inline', marginRight: '0.5rem' }} />
+                    <div className="space-y-1.5">
+                        <label className="flex items-center gap-2 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                            <Calendar size={14} />
                             시작일
                         </label>
                         <input
                             type="date"
                             value={startDate}
                             onChange={(e) => setStartDate(e.target.value)}
-                            style={{
-                                width: '100%',
-                                padding: '0.75rem',
-                                borderRadius: 'var(--radius-md)',
-                                border: '1px solid var(--color-border)',
-                                fontSize: '1rem'
-                            }}
+                            className="w-full px-3 py-2 bg-slate-50 dark:bg-zinc-800 border-none rounded-lg text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer transition-all"
                         />
                     </div>
 
                     {/* End Date */}
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>
-                            <Calendar size={16} style={{ display: 'inline', marginRight: '0.5rem' }} />
+                    <div className="space-y-1.5">
+                        <label className="flex items-center gap-2 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                            <Calendar size={14} />
                             종료일
                         </label>
                         <input
                             type="date"
                             value={endDate}
                             onChange={(e) => setEndDate(e.target.value)}
-                            style={{
-                                width: '100%',
-                                padding: '0.75rem',
-                                borderRadius: 'var(--radius-md)',
-                                border: '1px solid var(--color-border)',
-                                fontSize: '1rem'
-                            }}
+                            className="w-full px-3 py-2 bg-slate-50 dark:bg-zinc-800 border-none rounded-lg text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer transition-all"
                         />
                     </div>
                 </div>
             </div>
 
-            {/* Employee Info Card */}
-            {selectedEmployee && (
-                <div style={{
-                    backgroundColor: 'rgba(16, 185, 129, 0.05)',
-                    padding: 'var(--spacing-lg)',
-                    borderRadius: 'var(--radius-lg)',
-                    marginBottom: 'var(--spacing-lg)',
-                    border: '1px solid var(--color-primary)'
-                }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <div style={{
-                            width: '64px',
-                            height: '64px',
-                            borderRadius: '50%',
-                            backgroundColor: 'var(--color-primary)',
-                            color: 'white',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '1.5rem',
-                            fontWeight: 700
-                        }}>
-                            {(selectedEmployee.name || '?').charAt(0)}
-                        </div>
-                        <div>
-                            <h3 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.25rem' }}>
-                                {selectedEmployee.name || '미등록'}
-                            </h3>
-                            <p style={{ color: 'var(--color-text-secondary)' }}>
-                                {selectedEmployee.phone || '-'} | 시급: {(selectedEmployee.hourlyWage || 0).toLocaleString()}원
-                            </p>
+            {/* Content Area */}
+            <div className="mt-2 space-y-6">
+                {/* Employee Info Card */}
+                {selectedEmployee && (
+                    <div className="bg-emerald-50/50 dark:bg-emerald-500/5 p-6 rounded-2xl border border-emerald-100 dark:border-emerald-500/20 transition-all duration-300">
+                        <div className="flex items-center gap-4">
+                            <div className="w-16 h-16 rounded-2xl bg-emerald-500 text-white flex items-center justify-center text-2xl font-bold shadow-lg shadow-emerald-500/20">
+                                {(selectedEmployee.name || '?').charAt(0)}
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-1">
+                                    {selectedEmployee.name || '미등록'}
+                                </h3>
+                                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                                    {selectedEmployee.phone || '-'} <span className="mx-2 opacity-30">|</span> 시급: <span className="text-emerald-600 dark:text-emerald-400 font-bold">{(selectedEmployee.hourlyWage || 0).toLocaleString()}원</span>
+                                </p>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )}
 
-            {/* Records */}
-            {loading ? (
-                <div style={{
-                    textAlign: 'center',
-                    padding: '3rem',
-                    backgroundColor: 'var(--color-surface)',
-                    borderRadius: 'var(--radius-lg)',
-                    color: 'var(--color-text-secondary)'
-                }}>
-                    로딩 중...
-                </div>
-            ) : Object.keys(groupedRecords).length === 0 ? (
-                <div style={{
-                    textAlign: 'center',
-                    padding: '3rem',
-                    backgroundColor: 'var(--color-surface)',
-                    borderRadius: 'var(--radius-lg)',
-                    color: 'var(--color-text-secondary)'
-                }}>
-                    <Clock size={48} style={{ margin: '0 auto 1rem', opacity: 0.5 }} />
-                    <p>선택한 기간에 출퇴근 기록이 없습니다</p>
-                </div>
-            ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    {Object.entries(groupedRecords).map(([date, dayRecords]) => {
-                        const sortedRecords = dayRecords.sort((a, b) =>
-                            new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-                        );
+                {/* Records List */}
+                {loading ? (
+                    <div className="p-12 text-center text-slate-500 bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800">
+                        데이터를 불러오는 중...
+                    </div>
+                ) : Object.keys(groupedRecords).length === 0 ? (
+                    <div className="p-12 text-center text-slate-500 bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800">
+                        <Clock size={48} className="mx-auto mb-4 opacity-20" />
+                        <p className="font-medium text-slate-400">선택한 기간에 출퇴근 기록이 없습니다</p>
+                    </div>
+                ) : (
+                    <div className="space-y-6">
+                        {Object.entries(groupedRecords).map(([date, dayRecords]) => {
+                            const sortedRecords = dayRecords.sort((a, b) =>
+                                new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+                            );
 
-                        // Calculate work duration for the day
-                        const clockInRecord = sortedRecords.find(r => r.type === 'CLOCK_IN');
-                        const clockOutRecord = sortedRecords.find(r => r.type === 'CLOCK_OUT');
-                        const workDuration = clockInRecord && clockOutRecord
-                            ? calculateWorkDuration(
-                                new Date(clockInRecord.timestamp),
-                                new Date(clockOutRecord.timestamp)
-                            )
-                            : null;
+                            const clockInRecord = sortedRecords.find(r => r.type === 'CLOCK_IN');
+                            const clockOutRecord = sortedRecords.find(r => r.type === 'CLOCK_OUT');
+                            const workDuration = clockInRecord && clockOutRecord
+                                ? calculateWorkDuration(
+                                    new Date(clockInRecord.timestamp),
+                                    new Date(clockOutRecord.timestamp)
+                                )
+                                : null;
 
-                        return (
-                            <div
-                                key={date}
-                                style={{
-                                    backgroundColor: 'var(--color-surface)',
-                                    padding: 'var(--spacing-lg)',
-                                    borderRadius: 'var(--radius-lg)',
-                                    boxShadow: 'var(--shadow-sm)'
-                                }}
-                            >
-                                <div style={{
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                    marginBottom: '1rem',
-                                    paddingBottom: '0.75rem',
-                                    borderBottom: '2px solid var(--color-border)'
-                                }}>
-                                    <h4 style={{ fontSize: '1.125rem', fontWeight: 600 }}>
-                                        {date}
-                                    </h4>
-                                    {workDuration && (
-                                        <div style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '0.5rem',
-                                            color: 'var(--color-primary)',
-                                            fontWeight: 600
-                                        }}>
-                                            <Clock size={16} />
-                                            근무시간: {workDuration}
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                                    {sortedRecords.map(record => {
-                                        const time = new Date(record.timestamp);
-                                        const isClockIn = record.type === 'CLOCK_IN';
-
-                                        return (
-                                            <div
-                                                key={record.id}
-                                                style={{
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '1rem',
-                                                    padding: '1rem',
-                                                    backgroundColor: 'var(--color-background)',
-                                                    borderRadius: 'var(--radius-md)',
-                                                    borderLeft: `4px solid ${isClockIn ? '#10b981' : '#ef4444'}`
-                                                }}
-                                            >
-                                                <div style={{
-                                                    width: '40px',
-                                                    height: '40px',
-                                                    borderRadius: '50%',
-                                                    backgroundColor: isClockIn ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    color: isClockIn ? '#10b981' : '#ef4444'
-                                                }}>
-                                                    {isClockIn ? <LogIn size={20} /> : <LogOut size={20} />}
-                                                </div>
-                                                <div style={{ flex: 1 }}>
-                                                    <div style={{ fontWeight: 600, marginBottom: '0.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                                        <span>{isClockIn ? '출근' : '퇴근'}</span>
-                                                        <span style={{
-                                                            fontSize: '0.75rem',
-                                                            fontWeight: 500,
-                                                            color: 'var(--color-text-secondary)',
-                                                            backgroundColor: 'rgba(0,0,0,0.05)',
-                                                            padding: '0.125rem 0.375rem',
-                                                            borderRadius: '1rem',
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            gap: '0.25rem'
-                                                        }}>
-                                                            <MapPin size={10} />
-                                                            {farms?.find(f => f.id === record.farmId)?.name || '근무지 미상'}
-                                                        </span>
-                                                    </div>
-                                                    <div style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem' }}>
-                                                        {time.toLocaleTimeString('ko-KR')}
-                                                    </div>
-                                                </div>
+                            return (
+                                <div key={date} className="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-slate-100 dark:border-zinc-800/50 overflow-hidden transition-all duration-300 hover:shadow-md hover:border-slate-200 dark:hover:border-zinc-700">
+                                    <div className="px-6 py-4 bg-slate-50/50 dark:bg-zinc-800/30 flex justify-between items-center border-b border-slate-100 dark:border-zinc-800">
+                                        <h4 className="font-bold text-slate-900 dark:text-white">{date}</h4>
+                                        {workDuration && (
+                                            <div className="flex items-center gap-2 text-primary font-bold text-sm bg-primary/10 px-3 py-1 rounded-full">
+                                                <Clock size={14} />
+                                                근무시간: {workDuration}
                                             </div>
-                                        );
-                                    })}
+                                        )}
+                                    </div>
+
+                                    <div className="p-4 space-y-3">
+                                        {sortedRecords.map(record => {
+                                            const time = new Date(record.timestamp);
+                                            const isClockIn = record.type === 'CLOCK_IN';
+
+                                            return (
+                                                <div
+                                                    key={record.id}
+                                                    className={`group p-4 rounded-xl border transition-all duration-200 ${isClockIn
+                                                        ? 'bg-emerald-50/20 dark:bg-emerald-500/5 border-emerald-100/50 dark:border-emerald-500/10'
+                                                        : 'bg-rose-50/20 dark:bg-rose-500/5 border-rose-100/50 dark:border-rose-500/10'
+                                                        }`}
+                                                >
+                                                    <div className="flex items-center gap-4">
+                                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 ${isClockIn
+                                                            ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400'
+                                                            : 'bg-rose-100 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400'
+                                                            }`}>
+                                                            {isClockIn ? <LogIn size={20} /> : <LogOut size={20} />}
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex items-center justify-between mb-1">
+                                                                <span className="font-bold text-slate-900 dark:text-white">
+                                                                    {isClockIn ? '출근' : '퇴근'}
+                                                                </span>
+                                                                <span className="flex items-center gap-1.5 px-2 py-0.5 bg-slate-100 dark:bg-zinc-800 text-[10px] font-bold text-slate-500 dark:text-slate-400 rounded-md">
+                                                                    <MapPin size={10} />
+                                                                    {farms?.find(f => f.id === record.farmId)?.name || '근무지 미상'}
+                                                                </span>
+                                                            </div>
+                                                            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                                                                {format(time, 'aa hh:mm:ss', { locale: ko })}
+                                                            </p>
+                                                            {record.reason && (
+                                                                <div className="mt-3 p-3 bg-white/50 dark:bg-black/20 rounded-lg border border-slate-100 dark:border-white/5">
+                                                                    <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">사유</p>
+                                                                    <p className="text-xs font-medium text-slate-700 dark:text-slate-300 leading-relaxed">
+                                                                        {record.reason}
+                                                                    </p>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
                                 </div>
-                            </div>
-                        );
-                    })}
-                </div>
-            )}
+                            );
+                        })}
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

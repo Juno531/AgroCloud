@@ -2,7 +2,7 @@ export interface User {
     id: number;
     email: string;
     name: string;
-    role: 'USER' | 'ADMIN' | 'SUPER_ADMIN';
+    role: 'USER' | 'ADMIN' | 'MASTER_ADMIN' | 'SUPER_ADMIN';
     farmId: number;
     companyId?: number; // Added companyId
     companyCode?: string; // Added companyCode
@@ -29,7 +29,7 @@ export interface RegistrationCode {
     id: number;
     companyName: string;
     code: string;
-    type: 'ADMIN' | 'EMPLOYEE';
+    type: 'ADMIN' | 'MASTER_ADMIN' | 'EMPLOYEE';
     status: 'ACTIVE' | 'USED' | 'EXPIRED';
     expiresAt?: string;
     createdAt: string;
@@ -65,7 +65,7 @@ export interface EmployeeProfile {
     bankAccount: string;
     accountHolder: string;
     paymentDate: number;
-    role: 'USER' | 'ADMIN';
+    role: 'USER' | 'ADMIN' | 'MASTER_ADMIN';
     employmentType?: 'FULL_TIME' | 'PART_TIME'; // 정규직/비정규직(알바)
     address?: string;
     isEmailVerified?: boolean;
@@ -143,7 +143,7 @@ export interface CompanyUpdateRequest {
 
 export interface CodeGenerateRequest {
     companyId: number;
-    type: 'ADMIN' | 'EMPLOYEE';
+    type: 'ADMIN' | 'MASTER_ADMIN' | 'EMPLOYEE';
     expiresAt?: string;
 }
 

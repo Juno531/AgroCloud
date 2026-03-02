@@ -4,6 +4,7 @@ import com.farm.erp.api.v1.dto.AttendanceFilterRequest;
 import com.farm.erp.api.v1.dto.AttendanceRequest;
 import com.farm.erp.api.v1.dto.AttendanceResponse;
 import com.farm.erp.api.v1.dto.AttendanceSummaryResponse;
+import com.farm.erp.api.v1.dto.AttendanceStatusUpdateRequest;
 import com.farm.erp.core.attendance.domain.AttendanceRecord;
 import com.farm.erp.core.attendance.service.AttendanceExcelService;
 import com.farm.erp.core.attendance.service.AttendanceService;
@@ -49,9 +50,21 @@ public class AttendanceController {
         String companyCode = user.getCompany() != null ? user.getCompany().getCode() : request.getCompanyCode();
 
         AttendanceRecord record = attendanceService.recordAttendance(user.getId(), type, request.getFarmId(),
-                companyCode, request.getLatitude(), request.getLongitude());
+                companyCode, request.getLatitude(), request.getLongitude(), request.getReason(), request.getRemarks(),
+                request.getIsForceOutside());
 
         return ResponseEntity.ok(AttendanceResponse.from(record));
+    }
+
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<AttendanceResponse> updateAttendanceStatus(
+            @PathVariable("id") Long id,
+            @Valid @RequestBody AttendanceStatusUpdateRequest request) {
+
+        AttendanceRecord.RecordStatus status = AttendanceRecord.RecordStatus.valueOf(request.getStatus());
+        AttendanceRecord updatedRecord = attendanceService.updateAttendanceStatus(id, status);
+
+        return ResponseEntity.ok(AttendanceResponse.from(updatedRecord));
     }
 
     @GetMapping("/me")
@@ -112,17 +125,17 @@ public class AttendanceController {
     }
 
     @GetMapping("/status")
-    public ResponseEntity<String> getUserStatus(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<AttendanceResponse> getUserStatus(@AuthenticationPrincipal UserDetails userDetails) {
         User user = userRepository.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        AttendanceRecord.AttendanceType status = attendanceService.getUserStatus(user.getId());
+        AttendanceRecord record = attendanceService.getUserStatus(user.getId());
 
-        if (status == null) {
-            return ResponseEntity.ok("NONE");
+        if (record == null) {
+            return ResponseEntity.ok(null);
         }
 
-        return ResponseEntity.ok(status.toString());
+        return ResponseEntity.ok(AttendanceResponse.from(record));
     }
 
     @GetMapping("/summary")
@@ -153,7 +166,7 @@ public class AttendanceController {
     @PostMapping("/export")
     public ResponseEntity<byte[]> exportAttendance(@RequestBody AttendanceFilterRequest request) throws IOException {
         List<AttendanceRecord> records = attendanceExcelService.filterAttendance(request);
-        byte[] excelContent = attendanceExcelService.generateAttendanceExcel(records);
+        byte[] excelContent = attendanceExcelService.generateAttendanceExcel(records, request);
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=attendance_export.xlsx")

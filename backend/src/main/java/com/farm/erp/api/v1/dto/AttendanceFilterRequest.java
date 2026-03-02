@@ -30,4 +30,8 @@ public class AttendanceFilterRequest {
     private String searchTerm;
 
     private String companyCode;
+
+    private List<String> exportFields;
+
+    private Boolean includeLeaves;
 }

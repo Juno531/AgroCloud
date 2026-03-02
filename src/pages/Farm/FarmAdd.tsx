@@ -63,6 +63,14 @@ const FarmAdd: React.FC = () => {
         let fullAddress = data.address;
         let extraAddress = '';
 
+        // The provided snippet for role check was syntactically incorrect and out of context for this function.
+        // Assuming the intent was to add a role check *somewhere* and the snippet was a placeholder or error.
+        // As there's no 'user' context here, and the instruction was to "update role check ... if present",
+        // and no such check is present, I cannot faithfully apply the malformed snippet.
+        // If a role check is needed, it should be implemented with proper context (e.g., from an auth hook)
+        // and correct syntax.
+        // For now, I will proceed with the original logic of the function.
+
         if (data.addressType === 'R') {
             if (data.bname !== '') extraAddress += data.bname;
             if (data.buildingName !== '') extraAddress += (extraAddress !== '' ? `, ${data.buildingName}` : data.buildingName);

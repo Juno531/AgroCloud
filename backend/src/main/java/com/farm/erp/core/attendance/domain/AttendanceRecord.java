@@ -40,6 +40,16 @@ public class AttendanceRecord {
     @Column
     private Integer workingDayIndex;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private RecordStatus status = RecordStatus.NORMAL;
+
+    @Column(length = 500)
+    private String reason;
+
+    @Column(length = 500)
+    private String remarks;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -50,7 +60,7 @@ public class AttendanceRecord {
 
     @Builder
     public AttendanceRecord(User user, AttendanceType type, LocalDateTime timestamp, Long farmId, String companyCode,
-            Integer weekNumber, Integer workingDayIndex) {
+            Integer weekNumber, Integer workingDayIndex, RecordStatus status, String reason, String remarks) {
         this.user = user;
         this.type = type;
         this.timestamp = timestamp;
@@ -58,13 +68,32 @@ public class AttendanceRecord {
         this.companyCode = companyCode;
         this.weekNumber = weekNumber;
         this.workingDayIndex = workingDayIndex;
+        this.status = status != null ? status : RecordStatus.NORMAL;
+        this.reason = reason;
+        this.remarks = remarks;
     }
 
     public void updateTimestamp(LocalDateTime timestamp) {
         this.timestamp = timestamp;
     }
 
+    public void updateStatus(RecordStatus status) {
+        this.status = status;
+    }
+
+    public void updateReason(String reason) {
+        this.reason = reason;
+    }
+
+    public void updateRemarks(String remarks) {
+        this.remarks = remarks;
+    }
+
     public enum AttendanceType {
         CLOCK_IN, CLOCK_OUT
+    }
+
+    public enum RecordStatus {
+        NORMAL, PENDING, APPROVED, REJECTED
     }
 }

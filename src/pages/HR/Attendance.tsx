@@ -21,11 +21,18 @@ const Attendance = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
     const [currentStatus, setCurrentStatus] = useState<'CLOCK_IN' | 'CLOCK_OUT' | null>(null);
+    const [recordStatus, setRecordStatus] = useState<string | null>(null);
     const [locationName, setLocationName] = useState<string>('위치 확인 중...');
     const [currentCoordinates, setCurrentCoordinates] = useState<{ lat: number; lon: number; accuracy: number } | null>(null);
     const [currentIp, setCurrentIp] = useState<string | null>(null);
     const [isLocating, setIsLocating] = useState(true);
     const watchIdRef = useRef<number | null>(null);
+    const pressTimer = useRef<NodeJS.Timeout | null>(null);
+    const [isPressing, setIsPressing] = useState(false);
+    const [isReasonModalOpen, setIsReasonModalOpen] = useState(false);
+    const [reasonText, setReasonText] = useState('');
+    const [selectedReason, setSelectedReason] = useState('외근');
+    const [actionType, setActionType] = useState<'CLOCK_IN' | 'CLOCK_OUT' | null>(null);
 
     useEffect(() => {
         setTitle('출퇴근 기록');
@@ -177,10 +184,12 @@ const Attendance = () => {
     const fetchUserStatus = async () => {
         try {
             const response = await AttendanceService.getUserStatus();
-            if (response.data && response.data !== 'NONE') {
-                setCurrentStatus(response.data as 'CLOCK_IN' | 'CLOCK_OUT');
+            if (response.data) {
+                setCurrentStatus(response.data.type as 'CLOCK_IN' | 'CLOCK_OUT');
+                setRecordStatus(response.data.status);
             } else {
-                setCurrentStatus('CLOCK_OUT'); // Default if no record, assume clocked out
+                setCurrentStatus('CLOCK_OUT');
+                setRecordStatus(null);
             }
         } catch (error) {
             console.error("Failed to fetch status:", error);
@@ -227,7 +236,7 @@ const Attendance = () => {
 
     const distanceInfo = getDistanceText();
 
-    const handleAttendance = async (type: 'CLOCK_IN' | 'CLOCK_OUT') => {
+    const handleAttendance = async (type: 'CLOCK_IN' | 'CLOCK_OUT', reason?: string, remarks?: string, isForceOutside = false) => {
         if (!selectedFarmId) {
             setStatusMessage({ type: 'error', text: '농장을 선택해주세요.' });
             return;
@@ -235,6 +244,11 @@ const Attendance = () => {
 
         if (isLocating || !currentCoordinates) {
             setStatusMessage({ type: 'error', text: '정확한 위치 정보를 가져오는 중입니다. 잠시 후 ↻ 버튼을 눌러 다시 시도해주세요.' });
+            return;
+        }
+
+        if (!distanceInfo?.isWithinRadius && !isForceOutside) {
+            setStatusMessage({ type: 'error', text: '반경 밖입니다. 외근 등의 사유가 있다면 버튼을 길게 눌러주세요.' });
             return;
         }
 
@@ -248,14 +262,22 @@ const Attendance = () => {
                 type,
                 farmId: Number(selectedFarmId),
                 latitude,
-                longitude
+                longitude,
+                reason,
+                remarks,
+                isForceOutside
             });
 
             const actionName = type === 'CLOCK_IN' ? '출근' : '퇴근';
             const timeStr = new Date(response.data.timestamp).toLocaleTimeString();
 
-            setStatusMessage({ type: 'success', text: `✅ ${actionName} 처리가 완료되었습니다. (${timeStr})` });
+            if (response.data.status === 'PENDING') {
+                setStatusMessage({ type: 'info', text: `⏳ ${actionName} 승인 대기 중입니다. 관리자 승인 시 완료됩니다. (${timeStr})` });
+            } else {
+                setStatusMessage({ type: 'success', text: `✅ ${actionName} 처리가 완료되었습니다. (${timeStr})` });
+            }
             setCurrentStatus(type);
+            setRecordStatus(response.data.status);
 
         } catch (error: any) {
             console.error('Attendance recording failed:', error);
@@ -277,61 +299,99 @@ const Attendance = () => {
         }
     };
 
-    return (
-        <div className="attendance-container">
-            <div className="attendance-content">
-                <div className="flex flex-col items-center justify-center bg-slate-800 dark:bg-zinc-900 text-white p-8 rounded-3xl shadow-xl w-full max-w-[430px] mb-2 relative overflow-hidden">
+    const handlePressStart = () => {
+        if (isLoading || isLocating) return;
+        setIsPressing(true);
+        pressTimer.current = setTimeout(() => {
+            setIsPressing(false);
+            pressTimer.current = null;
+            // 길게 누르면 무조건 사유 입력 모달이 뜨도록 설정 (테스트 및 예외 처리 용이)
+            setActionType(currentStatus === 'CLOCK_IN' ? 'CLOCK_OUT' : 'CLOCK_IN');
+            setIsReasonModalOpen(true);
+        }, 800); // 0.8초 누르면 작동
+    };
 
-                    <div className="flex items-center gap-2 text-slate-300 mb-2 z-10">
-                        <Clock size={18} className="text-primary-400" />
-                        <span className="font-bold tracking-wider text-sm">{currentTime.toLocaleDateString('ko-KR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+    const handlePressEnd = () => {
+        setIsPressing(false);
+        if (pressTimer.current) {
+            // 짧게 누른경우
+            clearTimeout(pressTimer.current);
+            pressTimer.current = null;
+            handleAttendance(currentStatus === 'CLOCK_IN' ? 'CLOCK_OUT' : 'CLOCK_IN');
+        }
+    };
+
+    const handleReasonSubmit = () => {
+        if (!selectedReason) {
+            setStatusMessage({ type: 'error', text: '사유를 선택해주세요.' });
+            return;
+        }
+        setIsReasonModalOpen(false);
+        if (actionType) {
+            handleAttendance(actionType, selectedReason, reasonText, true);
+        }
+        setReasonText('');
+        setSelectedReason('외근');
+        setActionType(null);
+    };
+
+    return (
+        <div className="flex flex-col items-center w-full min-h-[calc(100vh-80px)] bg-slate-50 dark:bg-zinc-950 p-4 sm:p-6 font-sans">
+            <div className="w-full max-w-[430px] flex flex-col gap-4">
+
+                {/* ── 1. 현재 시간 (Refined Organic Light) ── */}
+                <div className="w-full bg-white dark:bg-zinc-900 rounded-3xl p-8 shadow-sm border border-slate-100 dark:border-zinc-800 flex flex-col items-center relative overflow-hidden">
+                    <div className="absolute top-0 w-full h-1.5 bg-gradient-to-r from-emerald-400 to-teal-500"></div>
+                    <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 mb-2 z-10">
+                        <Clock size={18} />
+                        <span className="font-bold tracking-wider text-sm">
+                            {currentTime.toLocaleDateString('ko-KR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                        </span>
                     </div>
-                    <h2 className="text-5xl sm:text-6xl font-black tracking-tighter z-10 font-mono" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                    <h2 className="text-5xl sm:text-6xl font-black tracking-tighter text-slate-800 dark:text-white z-10 font-mono" style={{ fontVariantNumeric: 'tabular-nums' }}>
                         {currentTime.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                     </h2>
                 </div>
 
-                <div className="w-full max-w-[430px] bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-2xl flex items-center gap-4 mb-3 border border-indigo-100 dark:border-indigo-800/30 shadow-sm relative overflow-hidden">
-                    {/* Ripple animation layer when actively scanning GPS */}
+                {/* ── 2. 내 위치 정보 ── */}
+                <div className="w-full bg-white dark:bg-zinc-900 p-4 rounded-2xl flex items-center gap-4 border border-slate-100 dark:border-zinc-800 shadow-sm relative overflow-hidden">
                     {isLocating && (
-                        <div className="absolute inset-0 bg-indigo-500/5 animate-pulse -z-0"></div>
+                        <div className="absolute inset-0 bg-emerald-500/5 animate-pulse -z-0"></div>
                     )}
 
-                    <div className="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-800/50 flex items-center justify-center flex-shrink-0 shadow-inner z-10 relative">
+                    <div className="w-12 h-12 rounded-full bg-slate-50 dark:bg-zinc-800 flex items-center justify-center flex-shrink-0 border border-slate-100 dark:border-zinc-700 z-10 relative">
                         {isLocating ? (
-                            <Crosshair size={24} className="text-indigo-600 dark:text-indigo-400 animate-[spin_3s_linear_infinite]" />
+                            <Crosshair size={24} className="text-emerald-500 animate-[spin_3s_linear_infinite]" />
                         ) : (
-                            <MapPin size={24} className="text-indigo-600 dark:text-indigo-400" />
+                            <MapPin size={24} className="text-emerald-600 dark:text-emerald-400" />
                         )}
 
-                        {/* Status dot */}
-                        <span className={`absolute top-0 right-0 w-3 h-3 rounded-full border-2 border-indigo-50 dark:border-[#1E1B4B] shadow-sm
+                        <span className={`absolute top-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-zinc-900 shadow-sm
                             ${isLocating ? 'bg-amber-400' : (currentCoordinates?.accuracy && currentCoordinates.accuracy <= 50) ? 'bg-emerald-500' : 'bg-rose-500'}
                         `}></span>
                     </div>
                     <div className="flex-1 min-w-0 z-10">
                         <div className="flex items-center justify-between mb-1">
-                            <p className="text-[11px] font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-widest flex items-center gap-1">
+                            <p className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1">
                                 현재 내 위치
-                                {isLocating && <span className="inline-flex h-1.5 w-1.5 rounded-full bg-indigo-500 animate-ping ml-1"></span>}
+                                {isLocating && <span className="inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping ml-1"></span>}
                             </p>
                             {currentCoordinates && !isLocating && (
                                 <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md 
-                                    ${currentCoordinates.accuracy <= 50 ? 'text-emerald-700 bg-emerald-100' : 'text-rose-700 bg-rose-100'}
+                                    ${currentCoordinates.accuracy <= 50 ? 'text-emerald-700 bg-emerald-50 dark:bg-emerald-500/10' : 'text-rose-700 bg-rose-50 dark:bg-rose-500/10'}
                                 `}>
                                     오차 ±{Math.round(currentCoordinates.accuracy)}m
                                 </span>
                             )}
                         </div>
                         <p className={`text-sm font-bold truncate transition-colors duration-300
-                            ${isLocating ? 'text-indigo-400 dark:text-indigo-300' : 'text-slate-700 dark:text-slate-300'}
+                            ${isLocating ? 'text-slate-400 dark:text-slate-500' : 'text-slate-800 dark:text-slate-200'}
                         `}>
                             {locationName}
                         </p>
-                        {/* Show IP Address below location */}
-                        <div className="mt-1.5 flex items-center gap-1 text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                        <div className="mt-1.5 flex items-center gap-1 text-[11px] font-mono text-slate-400 dark:text-slate-500">
                             <Globe size={10} />
-                            IP: {currentIp || '불러오는 중...'}
+                            IP: {currentIp || '확인 중...'}
                         </div>
                     </div>
                     <button
@@ -339,41 +399,38 @@ const Attendance = () => {
                         disabled={isLocating}
                         className={`p-3 rounded-xl transition-all active:scale-95 z-10
                             ${isLocating
-                                ? 'text-indigo-300 bg-transparent cursor-not-allowed'
-                                : 'text-indigo-500 hover:text-indigo-600 hover:bg-indigo-100 dark:hover:bg-indigo-800/50 bg-white/50 dark:bg-black/20'}
+                                ? 'text-slate-300 bg-transparent cursor-not-allowed'
+                                : 'text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 dark:hover:text-emerald-400'}
                         `}
                         title="GPS 재탐색"
                     >
                         <RefreshCw size={20} className={isLocating ? "animate-spin" : ""} />
                     </button>
 
-                    {/* Accuracy warning overlay */}
                     {!isLocating && currentCoordinates && currentCoordinates.accuracy > 100 && (
                         <div className="absolute font-bold items-center gap-1.5 bottom-0 left-0 right-0 bg-rose-500/90 text-white text-[10px] py-1 px-3 flex justify-center z-20 backdrop-blur-sm">
                             <AlertTriangle size={12} />
-                            오차가 매우 큽니다. Wi-Fi를 켜주세요.
+                            오차가 큽니다. Wi-Fi를 켜주세요.
                         </div>
                     )}
                 </div>
 
-                {/* ── 근무 농장 선택 ── dark glass card */}
-                <div className="w-full max-w-[430px] rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-zinc-900 p-5 shadow-lg mb-3 relative overflow-hidden">
-                    {/* 배경 글로우 (다크모드에서만 미세하게) */}
-                    <div className="absolute -top-6 -right-6 w-28 h-28 rounded-full bg-violet-600/5 dark:bg-violet-600/20 blur-2xl pointer-events-none" />
+                {/* ── 3. 근무 농장 선택 ── */}
+                <div className="w-full bg-white dark:bg-zinc-900 rounded-2xl p-5 shadow-sm border border-slate-100 dark:border-zinc-800 relative overflow-hidden">
+                    <div className="absolute -top-6 -right-6 w-28 h-28 rounded-full bg-teal-500/5 blur-2xl pointer-events-none" />
 
-                    {/* 헤더 */}
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-lg bg-violet-100 dark:bg-violet-500/20 flex items-center justify-center">
-                                <MapPin size={16} className="text-violet-600 dark:text-violet-400" />
+                            <div className="w-8 h-8 rounded-lg bg-teal-50 dark:bg-teal-500/20 flex items-center justify-center">
+                                <MapPin size={16} className="text-teal-600 dark:text-teal-400" />
                             </div>
                             <span className="text-sm font-bold text-slate-800 dark:text-white tracking-wide">근무 농장 선택</span>
                         </div>
 
                         {distanceInfo && (
                             <span className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full transition-all ${distanceInfo.isWithinRadius
-                                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                                : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                                ? 'bg-emerald-50 text-emerald-600 border border-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20'
+                                : 'bg-rose-50 text-rose-600 border border-rose-100 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20'
                                 }`}>
                                 {distanceInfo.isWithinRadius
                                     ? <CheckCircle size={13} />
@@ -385,22 +442,21 @@ const Attendance = () => {
                         )}
                     </div>
 
-                    {/* 드롭다운 */}
                     <div className="relative">
                         <select
                             value={selectedFarmId}
                             onChange={(e) => setSelectedFarmId(Number(e.target.value))}
                             disabled={farms.length === 0}
                             className={`w-full px-4 py-3 sm:py-3.5 pr-10 rounded-xl text-xs sm:text-sm font-medium
-                                bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10
-                                text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-white/40
+                                bg-slate-50 dark:bg-zinc-800/50 border border-slate-200 dark:border-zinc-700
+                                text-slate-800 dark:text-white placeholder-slate-400
                                 appearance-none outline-none
                                 transition-all duration-200
-                                focus:border-violet-500/60 focus:bg-white dark:focus:bg-white/10 focus:ring-1 focus:ring-violet-500/40
-                                ${farms.length === 0 ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-100 dark:hover:bg-white/10'}
+                                focus:border-teal-500/60 focus:bg-white dark:focus:bg-zinc-800 focus:ring-2 focus:ring-teal-500/20
+                                ${farms.length === 0 ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-slate-300'}
                             `}
                             style={{
-                                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%237c3aed' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E")`,
+                                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%230f766e' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E")`,
                                 backgroundRepeat: 'no-repeat',
                                 backgroundPosition: 'right 14px center',
                                 backgroundSize: '16px',
@@ -410,7 +466,7 @@ const Attendance = () => {
                                 <option value="">배정된 농장이 없습니다</option>
                             ) : (
                                 farms.map(farm => (
-                                    <option key={farm.id} value={farm.id} className="bg-white dark:bg-[#1e1b2e] text-slate-800 dark:text-white">
+                                    <option key={farm.id} value={farm.id} className="text-slate-800 dark:text-zinc-200">
                                         {farm.name} {farm.location ? `(${farm.location})` : ''}
                                     </option>
                                 ))
@@ -418,84 +474,150 @@ const Attendance = () => {
                         </select>
                     </div>
 
-                    {/* 반경 초과 경고 */}
                     {distanceInfo && !distanceInfo.isWithinRadius && (
-                        <div className="mt-2 sm:mt-3 flex items-center gap-2 px-3 py-2 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[10px] sm:text-xs font-semibold">
+                        <div className="mt-3 flex items-center gap-2 px-3 py-2 rounded-lg bg-rose-50 border border-rose-100 dark:bg-rose-500/10 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-semibold">
                             <AlertTriangle size={12} />
                             허용 반경({distanceInfo.radius}m)을 벗어났습니다.
                         </div>
                     )}
                 </div>
 
+                {/* 상태 메시지 알람 */}
                 {statusMessage && (
-                    <div className={`status-message ${statusMessage.type}`} style={{
-                        padding: '1rem',
-                        borderRadius: '8px',
-                        marginBottom: '1rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        backgroundColor: statusMessage.type === 'error' ? '#fee2e2' : statusMessage.type === 'success' ? '#d1fae5' : '#e0f2fe',
-                        color: statusMessage.type === 'error' ? '#b91c1c' : statusMessage.type === 'success' ? '#047857' : '#0369a1'
-                    }}>
-                        {statusMessage.type === 'error' ? <XCircle /> : statusMessage.type === 'success' ? <CheckCircle /> : <AlertTriangle />}
+                    <div className={`p-4 rounded-2xl mb-2 flex items-center gap-3 text-sm font-bold border shadow-sm
+                        ${statusMessage.type === 'error' ? 'bg-rose-50 text-rose-700 border-rose-100 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20' :
+                            statusMessage.type === 'success' ? 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20' :
+                                'bg-sky-50 text-sky-700 border-sky-100 dark:bg-sky-500/10 dark:text-sky-400 dark:border-sky-500/20'}
+                    `}>
+                        {statusMessage.type === 'error' ? <XCircle size={20} /> : statusMessage.type === 'success' ? <CheckCircle size={20} /> : <AlertTriangle size={20} />}
                         <span>{statusMessage.text}</span>
                     </div>
                 )}
 
-                <div className="action-buttons" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', width: '100%', maxWidth: '400px' }}>
-                    <button
-                        className={`attendance-btn check-in ${currentStatus === 'CLOCK_IN' ? 'disabled' : ''}`}
-                        onClick={() => handleAttendance('CLOCK_IN')}
-                        disabled={isLoading || currentStatus === 'CLOCK_IN'}
-                        style={{
-                            padding: '20px',
-                            borderRadius: '12px',
-                            border: 'none',
-                            backgroundColor: currentStatus === 'CLOCK_IN' ? '#e5e7eb' : '#10b981',
-                            color: currentStatus === 'CLOCK_IN' ? '#9ca3af' : 'white',
-                            fontSize: '18px',
-                            fontWeight: 'bold',
-                            cursor: currentStatus === 'CLOCK_IN' ? 'not-allowed' : 'pointer',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            gap: '10px'
-                        }}
-                    >
-                        <MapPin size={32} />
-                        출근하기
-                    </button>
+                {/* ── 4. 가로형 상태 바 & 출퇴근 버튼 ── */}
+                <div className="w-full mt-4 mb-6">
+                    <div className="bg-white dark:bg-zinc-900 rounded-3xl p-1.5 shadow-xl border border-slate-100 dark:border-zinc-800 flex items-stretch gap-2 min-h-[100px] overflow-hidden relative">
+                        {/* Glass Layer */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-white/10 dark:from-zinc-900/40 dark:to-zinc-900/10 backdrop-blur-sm -z-0"></div>
 
-                    <button
-                        className={`attendance-btn check-out ${currentStatus === 'CLOCK_OUT' ? 'disabled' : ''}`}
-                        onClick={() => handleAttendance('CLOCK_OUT')}
-                        disabled={isLoading || currentStatus === 'CLOCK_OUT'}
-                        style={{
-                            padding: '20px',
-                            borderRadius: '12px',
-                            border: 'none',
-                            backgroundColor: currentStatus === 'CLOCK_OUT' ? '#e5e7eb' : '#ef4444',
-                            color: currentStatus === 'CLOCK_OUT' ? '#9ca3af' : 'white',
-                            fontSize: '18px',
-                            fontWeight: 'bold',
-                            cursor: currentStatus === 'CLOCK_OUT' ? 'not-allowed' : 'pointer',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            gap: '10px'
-                        }}
-                    >
-                        <MapPin size={32} />
-                        퇴근하기
-                    </button>
+                        {/* Current Status Section */}
+                        <div className="flex-1 flex flex-col justify-center items-center p-4 rounded-2xl bg-slate-50/50 dark:bg-zinc-800/50 border border-slate-100/50 dark:border-zinc-700/50 z-10">
+                            <span className="text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-[0.2em] mb-2">현재 상태</span>
+                            <div className="flex items-center gap-2">
+                                {recordStatus === 'PENDING' ? (
+                                    <>
+                                        <div className="w-2.5 h-2.5 rounded-full bg-orange-400 animate-pulse"></div>
+                                        <span className="text-lg font-black text-orange-600 dark:text-orange-400">승인 대기</span>
+                                    </>
+                                ) : currentStatus === 'CLOCK_IN' ? (
+                                    <>
+                                        <div className="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
+                                        <span className="text-lg font-black text-emerald-600 dark:text-emerald-400">근무 중</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="w-2.5 h-2.5 rounded-full bg-slate-300 dark:bg-zinc-600"></div>
+                                        <span className="text-lg font-black text-slate-600 dark:text-zinc-400">퇴근 상태</span>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Action Button Section */}
+                        <button
+                            onMouseDown={handlePressStart}
+                            onMouseUp={handlePressEnd}
+                            onMouseLeave={handlePressEnd}
+                            onTouchStart={handlePressStart}
+                            onTouchEnd={handlePressEnd}
+                            disabled={isLoading || isLocating || recordStatus === 'PENDING'}
+                            className={`
+                                flex-[1.2] flex flex-col items-center justify-center p-4 rounded-2xl z-10
+                                transition-all duration-300 active:scale-[0.98] 
+                                ${recordStatus === 'PENDING'
+                                    ? 'bg-zinc-200 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-600 cursor-not-allowed opacity-50'
+                                    : currentStatus === 'CLOCK_IN'
+                                        ? 'bg-rose-500 hover:bg-rose-600 text-white shadow-lg shadow-rose-500/20'
+                                        : 'bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20'}
+                            `}
+                        >
+                            <div className="flex items-center gap-2">
+                                {currentStatus === 'CLOCK_IN' ? <Clock size={20} /> : <CheckCircle size={20} />}
+                                <span className="text-xl font-black">{currentStatus === 'CLOCK_IN' ? '퇴근하기' : '출근하기'}</span>
+                            </div>
+                            <span className={`text-[10px] font-bold mt-1 opacity-80 ${isPressing ? 'animate-bounce' : ''}`}>
+                                {recordStatus === 'PENDING' ? '처리 대기 중' : '길게 누르면 사유 입력'}
+                            </span>
+
+                            {/* Inner Progress for Long Press */}
+                            {isPressing && (
+                                <div className="absolute bottom-0 left-0 h-1 bg-white/40 animate-[progress_0.8s_linear]" style={{ width: '100%' }}></div>
+                            )}
+                        </button>
+                    </div>
                 </div>
 
-                <div className="info-text mb-2 flex flex-col items-center justify-center w-full" style={{ color: '#6b7280', fontSize: '14px', textAlign: 'center' }}>
-                    <p>📍 현재 위치를 기반으로 출퇴근을 기록합니다.</p>
-                    <p>브라우저의 위치 정보 권한을 허용해주세요.</p>
+                <div className="flex flex-col items-center justify-center w-full text-slate-400 dark:text-slate-500 text-[13px] font-medium text-center pb-8 gap-1">
+                    <p>📍 현재 위치를 기반으로 행동이 기록됩니다.</p>
+                    <p>정확성을 위해 Wi-Fi를 켜두는 것을 권장합니다.</p>
                 </div>
+
             </div>
+
+            {/* 사유 입력 모달 */}
+            {isReasonModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+                    <div className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-3xl p-6 shadow-2xl border border-slate-100 dark:border-zinc-800">
+                        <div className="flex items-center gap-3 text-emerald-600 dark:text-emerald-400 mb-4">
+                            <Clock size={24} />
+                            <h3 className="text-lg font-bold text-slate-800 dark:text-white mt-1">
+                                {actionType === 'CLOCK_IN' ? '출근' : '퇴근'} 사유 입력 (외근 등)
+                            </h3>
+                        </div>
+                        <p className="text-sm text-slate-500 mb-4">
+                            근무지 반경을 벗어났습니다. 외근 등의 사유를 선택하여 승인을 요청해주세요.
+                        </p>
+                        <select
+                            value={selectedReason}
+                            onChange={(e) => setSelectedReason(e.target.value)}
+                            className="w-full p-4 rounded-xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-200 dark:border-zinc-700 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/40 mb-4 dark:text-white"
+                        >
+                            <option value="휴가">휴가</option>
+                            <option value="반휴">반휴</option>
+                            <option value="대휴">대휴</option>
+                            <option value="외근">외근</option>
+                            <option value="지각">지각</option>
+                            <option value="조퇴">조퇴</option>
+                            <option value="휴일근무">휴일근무</option>
+                            <option value="결근">결근</option>
+                        </select>
+                        <textarea
+                            value={reasonText}
+                            onChange={(e) => setReasonText(e.target.value)}
+                            className="w-full h-32 p-4 rounded-xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-200 dark:border-zinc-700 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/40 resize-none mb-6 dark:text-white"
+                            placeholder="사유를 상세히 입력해주세요. (선택사항, 예: 거래처 미팅으로 인한 직출)"
+                        ></textarea>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => {
+                                    setIsReasonModalOpen(false);
+                                    setReasonText('');
+                                    setActionType(null);
+                                }}
+                                className="flex-1 py-3 px-4 rounded-xl font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-zinc-800 dark:text-slate-400 dark:hover:bg-zinc-700 transition-colors"
+                            >
+                                취소
+                            </button>
+                            <button
+                                onClick={handleReasonSubmit}
+                                className="flex-1 py-3 px-4 rounded-xl font-bold bg-emerald-500 text-white hover:bg-emerald-600 transition-colors shadow-lg shadow-emerald-500/20"
+                            >
+                                승인 요청
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

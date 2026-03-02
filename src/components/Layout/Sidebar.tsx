@@ -71,9 +71,9 @@ const Sidebar = () => {
                     children: [
                         { to: '/hr/employees', label: '직원 관리' },
                         { to: '/hr/attendance-log', label: '출퇴근 기록' },
+                        { to: '/hr/attendance-status', label: '근태 현황' },
+                        { to: '/hr/attendance-management', label: '출퇴근 관리' },
                         { to: '/hr/attendance-settings', label: '출퇴근 설정' },
-                        { to: '/hr/attendance-management', label: '근태 관리' },
-                        { to: '/hr/attendance-export', label: '기록 내보내기' },
                     ]
                 },
                 {

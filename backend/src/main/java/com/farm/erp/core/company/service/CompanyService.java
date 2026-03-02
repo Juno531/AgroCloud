@@ -23,6 +23,7 @@ public class CompanyService {
     private final com.farm.erp.core.hr.repository.EmployeeProfileRepository employeeProfileRepository;
     private final com.farm.erp.core.company.repository.RegistrationCodeRepository registrationCodeRepository;
     private final PasswordEncoder passwordEncoder;
+    private final com.farm.erp.core.auth.repository.RefreshTokenRepository refreshTokenRepository;
 
     @Transactional
     public CompanyDto.Response createCompany(CompanyCreationRequest request) {
@@ -47,12 +48,12 @@ public class CompanyService {
 
         Company savedCompany = companyRepository.save(company);
 
-        // Create Admin User
+        // Create Master Admin User
         User adminUser = User.builder()
                 .email(request.getAdminEmail())
                 .password(passwordEncoder.encode(request.getAdminPassword()))
                 .name(request.getAdminName())
-                .role(User.Role.ADMIN)
+                .role(User.Role.MASTER_ADMIN)
                 .company(savedCompany)
                 .build();
 
@@ -96,6 +97,9 @@ public class CompanyService {
         for (User user : users) {
             employeeProfileRepository.findByUserId(user.getId())
                     .ifPresent(employeeProfileRepository::delete);
+
+            refreshTokenRepository.findByUser(user)
+                    .ifPresent(refreshTokenRepository::delete);
 
             userRepository.delete(user);
         }

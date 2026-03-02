@@ -71,6 +71,7 @@ public class User {
     public enum Role {
         USER, // 일반 작업자
         ADMIN, // 농장 관리자
+        MASTER_ADMIN, // 마스터 어드민 (회사 생성 시 최초 발급)
         SUPER_ADMIN // 시스템 전체 관리자
     }
 }

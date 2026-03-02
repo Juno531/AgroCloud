@@ -18,6 +18,9 @@ public class AttendanceResponse {
     private String companyCode;
     private Integer weekNumber;
     private Integer workingDayIndex;
+    private String status;
+    private String reason;
+    private String remarks;
 
     public static AttendanceResponse from(AttendanceRecord record) {
         return AttendanceResponse.builder()
@@ -30,6 +33,9 @@ public class AttendanceResponse {
                 .companyCode(record.getCompanyCode())
                 .weekNumber(record.getWeekNumber())
                 .workingDayIndex(record.getWorkingDayIndex())
+                .status(record.getStatus().name())
+                .reason(record.getReason())
+                .remarks(record.getRemarks())
                 .build();
     }
 }
