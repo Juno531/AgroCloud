@@ -52,7 +52,7 @@ const AttendanceStatus = () => {
     const fetchSummary = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await AttendanceService.getMonthlySummary(year, month);
+            const res = await AttendanceService.getMonthlySummary({ year, month });
             const data: DaySummary[] = res.data;
             const map = new Map<string, DaySummary>();
             data.forEach(d => map.set(d.date, d));
