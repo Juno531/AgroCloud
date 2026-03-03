@@ -18,6 +18,7 @@ public class DatabaseConstraintInitializer implements CommandLineRunner {
     private final JdbcTemplate jdbcTemplate;
 
     @Override
+    @org.springframework.scheduling.annotation.Async
     public void run(String... args) {
         try {
             log.info("Checking and updating database constraints...");

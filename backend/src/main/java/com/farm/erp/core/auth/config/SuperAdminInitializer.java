@@ -27,6 +27,8 @@ public class SuperAdminInitializer implements CommandLineRunner {
     private String superAdminName;
 
     @Override
+    @org.springframework.scheduling.annotation.Async
+    @org.springframework.transaction.annotation.Transactional
     public void run(String... args) {
         if (superAdminEmail == null || superAdminEmail.trim().isEmpty()) {
             log.warn("⚠️ Super admin email is not configured. Skipping initialization.");
