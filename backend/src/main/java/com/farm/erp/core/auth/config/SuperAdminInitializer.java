@@ -44,47 +44,50 @@ public class SuperAdminInitializer implements CommandLineRunner {
             isRandomPassword = false;
         }
 
-        userRepository.findByEmail(superAdminEmail).ifPresentOrElse(
-                existingAdmin -> {
-                    // 이미 계정이 존재하면 비밀번호만 업데이트 (랜덤 비밀번호인 경우 혹은 변경을 원할 경우)
-                    // 기존 사용자이고 랜덤 비밀번호가 생성된 경우에만 업데이트하여 로그 출력
-                    if (isRandomPassword) {
-                        existingAdmin.updatePassword(passwordEncoder.encode(actualPassword));
-                        userRepository.save(existingAdmin);
-                        log.info("✅ Super admin password has been reset with a generated password.");
-                        log.warn("🚨 ======================================================= 🚨");
-                        log.warn("🚨 1회성 Super Admin 비밀번호가 생성되었습니다: [{}] 🚨", actualPassword);
-                        log.warn("🚨 ======================================================= 🚨");
-                    } else {
-                        log.info("Super admin already exists: {}", superAdminEmail);
-                    }
-                },
-                () -> {
-                    // Check if any super admin exists globally
-                    if (userRepository.existsByRole(User.Role.SUPER_ADMIN)) {
-                        log.info("A super admin account already exists in the system");
-                        return;
-                    }
+        try {
+            userRepository.findByEmail(superAdminEmail).ifPresentOrElse(
+                    existingAdmin -> {
+                        // 이미 계정이 존재하면 비밀번호만 업데이트 (랜덤 비밀번호인 경우 혹은 변경을 원할 경우)
+                        if (isRandomPassword) {
+                            existingAdmin.updatePassword(passwordEncoder.encode(actualPassword));
+                            userRepository.save(existingAdmin);
+                            log.info("✅ Super admin password has been reset with a generated password.");
+                            log.warn("🚨 ======================================================= 🚨");
+                            log.warn("🚨 1회성 Super Admin 비밀번호가 생성되었습니다: [{}] 🚨", actualPassword);
+                            log.warn("🚨 ======================================================= 🚨");
+                        } else {
+                            log.info("Super admin already exists: {}", superAdminEmail);
+                        }
+                    },
+                    () -> {
+                        // Check if any super admin exists globally
+                        if (userRepository.existsByRole(User.Role.SUPER_ADMIN)) {
+                            log.info("A super admin account already exists in the system with a different email.");
+                            return;
+                        }
 
-                    // Create super admin
-                    User superAdmin = User.builder()
-                            .email(superAdminEmail)
-                            .password(passwordEncoder.encode(actualPassword))
-                            .name(superAdminName)
-                            .role(User.Role.SUPER_ADMIN)
-                            .build();
+                        // Create super admin
+                        User superAdmin = User.builder()
+                                .email(superAdminEmail)
+                                .password(passwordEncoder.encode(actualPassword))
+                                .name(superAdminName)
+                                .role(User.Role.SUPER_ADMIN)
+                                .build();
 
-                    userRepository.save(superAdmin);
-                    log.info("✅ Super admin created successfully: {}", superAdminEmail);
+                        userRepository.save(superAdmin);
+                        log.info("✅ Super admin created successfully: {}", superAdminEmail);
 
-                    if (isRandomPassword) {
-                        log.warn("🚨 ======================================================= 🚨");
-                        log.warn("🚨 1회성 Super Admin 비밀번호가 생성되었습니다: [{}] 🚨", actualPassword);
-                        log.warn("🚨 ======================================================= 🚨");
-                    } else {
-                        log.warn("⚠️ IMPORTANT: Please change the super admin password immediately!");
-                    }
-                });
+                        if (isRandomPassword) {
+                            log.warn("🚨 ======================================================= 🚨");
+                            log.warn("🚨 1회성 Super Admin 비밀번호가 생성되었습니다: [{}] 🚨", actualPassword);
+                            log.warn("🚨 ======================================================= 🚨");
+                        } else {
+                            log.warn("⚠️ IMPORTANT: Please change the super admin password immediately!");
+                        }
+                    });
+        } catch (Exception e) {
+            log.error("❌ Failed to initialize super admin: {}", e.getMessage());
+        }
     }
 
     private String generateRandomPassword() {

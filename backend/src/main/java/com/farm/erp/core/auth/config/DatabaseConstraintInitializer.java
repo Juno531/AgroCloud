@@ -24,15 +24,22 @@ public class DatabaseConstraintInitializer implements CommandLineRunner {
 
             // 기존 제약 조건 삭제 후 MASTER_ADMIN이 포함된 새로운 제약 조건 추가
             // PostgreSQL 네이티브 SQL 사용
-            jdbcTemplate.execute("ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check");
-            jdbcTemplate.execute(
-                    "ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('USER', 'ADMIN', 'MASTER_ADMIN', 'SUPER_ADMIN'))");
+            log.info("Updating 'users_role_check' constraint to include MASTER_ADMIN...");
 
-            log.info("Database constraints updated successfully.");
+            try {
+                jdbcTemplate.execute("ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check");
+                jdbcTemplate.execute(
+                        "ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('USER', 'ADMIN', 'MASTER_ADMIN', 'SUPER_ADMIN'))");
+                log.info("Successfully updated 'users_role_check' constraint.");
+            } catch (Exception e) {
+                log.warn(
+                        "Could not update constraint using ALTER TABLE. This is expected if the constraint doesn't exist or isn't PostgreSQL: {}",
+                        e.getMessage());
+            }
+
+            log.info("Database constraints check completed.");
         } catch (Exception e) {
-            log.error("Failed to update database constraints: {}", e.getMessage());
-            // 제약 조건 업데이트 실패 시에도 애플리케이션은 계속 실행될 수 있도록 예외를 삼킵니다.
-            // (예: H2 인메모리 DB 사용 시 등)
+            log.error("Unexpected error during database constraints initialization: {}", e.getMessage(), e);
         }
     }
 }
