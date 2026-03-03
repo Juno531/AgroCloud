@@ -1,0 +1,22 @@
+- generic [ref=e6]:
+  - generic [ref=e7]:
+    - generic [ref=e9]: filter_drama
+    - heading "AgroCloud" [level=1] [ref=e10]
+    - paragraph [ref=e11]: 농장 관리 시스템
+  - generic [ref=e12]:
+    - generic [ref=e13]:
+      - generic [ref=e14]: 이메일
+      - generic [ref=e15]:
+        - img [ref=e16]
+        - textbox "name@example.com" [ref=e19]
+    - generic [ref=e20]:
+      - generic [ref=e21]: 비밀번호
+      - generic [ref=e22]:
+        - img [ref=e23]
+        - textbox "••••••••" [ref=e26]
+    - generic [ref=e28] [cursor=pointer]:
+      - checkbox "로그인 상태 유지" [ref=e29]
+      - text: 로그인 상태 유지
+    - button "로그인" [ref=e30] [cursor=pointer]:
+      - text: 로그인
+      - img [ref=e31]
