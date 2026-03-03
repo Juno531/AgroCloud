@@ -22,6 +22,10 @@ export const AuthService = {
     register: (data: any) => api.post('/auth/register', data),
     getMe: () => api.get('/auth/me'),
     updateStatus: (userId: number, status: string) => api.patch(`/auth/users/${userId}/status`, null, { params: { status } }),
+    verifyPassword: (password: string) => api.post('/auth/verify-password', { password }),
+    changePassword: (data: any) => api.post('/auth/change-password', data),
+    sendEmailVerification: () => api.post('/auth/email/send-verification'),
+    verifyEmail: (code: string) => api.post('/auth/email/verify', { code }),
 };
 
 export const CompanyService = {
