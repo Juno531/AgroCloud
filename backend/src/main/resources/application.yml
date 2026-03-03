@@ -4,6 +4,15 @@ spring:
   application:
     name: agrocloud-backend
 
+server:
+  port: ${PORT:8080}
+  servlet:
+    context-path: /
+  tomcat:
+    connection-timeout: 20000
+    threads:
+      max: 200
+
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/agrocloud}
     username: ${SPRING_DATASOURCE_USERNAME:postgres}
