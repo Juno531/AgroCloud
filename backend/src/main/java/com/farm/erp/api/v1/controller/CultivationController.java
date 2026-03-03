@@ -1,5 +1,6 @@
 package com.farm.erp.api.v1.controller;
 
+import com.farm.erp.core.production.domain.WorkRecord;
 import com.farm.erp.core.production.dto.*;
 import com.farm.erp.core.production.service.CultivationService;
 import com.farm.erp.core.production.service.NutrientService;
@@ -139,6 +140,14 @@ public class CultivationController {
     public ResponseEntity<List<WorkRecordResponse>> getWorkRecordsByFarm(
             @PathVariable Long farmId) {
         return ResponseEntity.ok(cultivationService.getWorkRecordsByFarm(farmId));
+    }
+
+    @Operation(summary = "Update work record status", description = "작업 기록 상태 업데이트")
+    @PatchMapping("/work-records/{id}/status")
+    public ResponseEntity<WorkRecordResponse> updateWorkRecordStatus(
+            @PathVariable Long id,
+            @RequestParam WorkRecord.CompletionStatus status) {
+        return ResponseEntity.ok(cultivationService.updateWorkRecordStatus(id, status));
     }
 
     @Operation(summary = "Delete work record", description = "작업 기록 삭제")
