@@ -43,6 +43,10 @@ const MyLeave = () => {
                 // Delete leave
                 await LeaveService.deleteLeave(dateStr);
                 setLeaves(prev => prev.filter(l => !isSameDay(parseISO(l.leaveDate), date)));
+            } else {
+                // Add default leave
+                const response = await LeaveService.saveLeave({ leaveDate: dateStr, reason: '[휴무]' });
+                setLeaves(prev => [...prev, response.data]);
             }
         } catch (error) {
             console.error('Failed to update leave:', error);
