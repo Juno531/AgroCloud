@@ -4,15 +4,6 @@ spring:
   application:
     name: agrocloud-backend
 
-server:
-  port: ${PORT:8080}
-  servlet:
-    context-path: /
-  tomcat:
-    connection-timeout: 20000
-    threads:
-      max: 200
-
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/agrocloud}
     username: ${SPRING_DATASOURCE_USERNAME:postgres}
@@ -91,13 +82,17 @@ server:
 
 server:
   port: ${PORT:8080}
-  address: 0.0.0.0  # Bind to all network interfaces (allows mobile access)
+  address: 0.0.0.0
   servlet:
     context-path: /
     encoding:
       charset: UTF-8
       enabled: true
       force: true
+  tomcat:
+    connection-timeout: 20000
+    threads:
+      max: 200
   error:
     include-message: always
     include-binding-errors: always
