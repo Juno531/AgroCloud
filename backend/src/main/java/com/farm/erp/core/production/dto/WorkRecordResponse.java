@@ -16,6 +16,8 @@ import java.time.LocalDateTime;
 public class WorkRecordResponse {
 
     private Long id;
+    private Long farmId;
+    private String farmName;
     private Long bedId;
     private String bedName;
     private Integer bedNumber;
@@ -33,12 +35,10 @@ public class WorkRecordResponse {
     private LocalDateTime createdAt;
 
     public static WorkRecordResponse from(WorkRecord record) {
-        return WorkRecordResponse.builder()
+        WorkRecordResponseBuilder builder = WorkRecordResponse.builder()
                 .id(record.getId())
-                .bedId(record.getBed().getId())
-                .bedName(record.getBed().getName())
-                .bedNumber(record.getBed().getBedNumber())
-                .lineName(record.getBed().getLine().getName())
+                .farmId(record.getFarm().getId())
+                .farmName(record.getFarm().getName())
                 .workDate(record.getWorkDate())
                 .workType(record.getWorkType())
                 .workTypeKorean(record.getWorkType().getKoreanName())
@@ -47,7 +47,15 @@ public class WorkRecordResponse {
                 .workerCount(record.getWorkerCount())
                 .durationMinutes(record.getDurationMinutes())
                 .notes(record.getNotes())
-                .createdAt(record.getCreatedAt())
-                .build();
+                .createdAt(record.getCreatedAt());
+
+        if (record.getBed() != null) {
+            builder.bedId(record.getBed().getId())
+                    .bedName(record.getBed().getName())
+                    .bedNumber(record.getBed().getBedNumber())
+                    .lineName(record.getBed().getLine().getName());
+        }
+
+        return builder.build();
     }
 }

@@ -15,7 +15,9 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class WorkRecordRequest {
 
-    @NotNull(message = "Bed ID is required")
+    @NotNull(message = "Farm ID is required")
+    private Long farmId;
+
     private Long bedId;
 
     @NotNull(message = "Work date is required")

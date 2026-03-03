@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Bell, User, Sun, Moon, LogOut, ChevronDown } from 'lucide-react';
+import { User, Sun, Moon, LogOut, ChevronDown } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useLayout } from '../../context/LayoutContext';
+import NotificationBell from './NotificationBell';
 
 const Header: React.FC = () => {
     const { theme, toggleTheme } = useTheme();
@@ -47,9 +48,7 @@ const Header: React.FC = () => {
                 >
                     {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
                 </button>
-                <button className="icon-btn" style={{ color: 'var(--color-text)' }}>
-                    <Bell size={20} />
-                </button>
+                <NotificationBell />
                 <div className="user-profile-wrapper" ref={dropdownRef}>
                     <button
                         className="user-profile"

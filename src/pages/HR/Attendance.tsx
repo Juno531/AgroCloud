@@ -31,7 +31,6 @@ const Attendance = () => {
     const [isPressing, setIsPressing] = useState(false);
     const [isReasonModalOpen, setIsReasonModalOpen] = useState(false);
     const [reasonText, setReasonText] = useState('');
-    const [selectedReason, setSelectedReason] = useState('외근');
     const [actionType, setActionType] = useState<'CLOCK_IN' | 'CLOCK_OUT' | null>(null);
 
     useEffect(() => {
@@ -322,16 +321,15 @@ const Attendance = () => {
     };
 
     const handleReasonSubmit = () => {
-        if (!selectedReason) {
-            setStatusMessage({ type: 'error', text: '사유를 선택해주세요.' });
+        if (!reasonText.trim()) {
+            setStatusMessage({ type: 'error', text: '사유를 입력해주세요.' });
             return;
         }
         setIsReasonModalOpen(false);
         if (actionType) {
-            handleAttendance(actionType, selectedReason, reasonText, true);
+            handleAttendance(actionType, reasonText, undefined, true);
         }
         setReasonText('');
-        setSelectedReason('외근');
         setActionType(null);
     };
 
@@ -577,25 +575,11 @@ const Attendance = () => {
                         <p className="text-sm text-slate-500 mb-4">
                             근무지 반경을 벗어났습니다. 외근 등의 사유를 선택하여 승인을 요청해주세요.
                         </p>
-                        <select
-                            value={selectedReason}
-                            onChange={(e) => setSelectedReason(e.target.value)}
-                            className="w-full p-4 rounded-xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-200 dark:border-zinc-700 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/40 mb-4 dark:text-white"
-                        >
-                            <option value="휴가">휴가</option>
-                            <option value="반휴">반휴</option>
-                            <option value="대휴">대휴</option>
-                            <option value="외근">외근</option>
-                            <option value="지각">지각</option>
-                            <option value="조퇴">조퇴</option>
-                            <option value="휴일근무">휴일근무</option>
-                            <option value="결근">결근</option>
-                        </select>
                         <textarea
                             value={reasonText}
                             onChange={(e) => setReasonText(e.target.value)}
-                            className="w-full h-32 p-4 rounded-xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-200 dark:border-zinc-700 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/40 resize-none mb-6 dark:text-white"
-                            placeholder="사유를 상세히 입력해주세요. (선택사항, 예: 거래처 미팅으로 인한 직출)"
+                            className="w-full h-40 p-4 rounded-xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-200 dark:border-zinc-700 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/40 resize-none mb-6 dark:text-white"
+                            placeholder="사유를 입력해주세요."
                         ></textarea>
                         <div className="flex gap-3">
                             <button

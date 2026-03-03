@@ -1,5 +1,7 @@
 package com.farm.erp.core.production.service;
 
+import com.farm.erp.core.farm.domain.Farm;
+import com.farm.erp.core.farm.repository.FarmRepository;
 import com.farm.erp.common.exception.BusinessException;
 import com.farm.erp.common.exception.ErrorCode;
 import com.farm.erp.core.production.domain.*;
@@ -32,6 +34,7 @@ public class CultivationService {
         private final WorkRecordRepository workRecordRepository;
         private final PlantingRepository plantingRepository;
         private final BedRepository bedRepository;
+        private final FarmRepository farmRepository;
 
         // ========== Growth Records ==========
 
@@ -145,11 +148,19 @@ public class CultivationService {
 
         @Transactional
         public WorkRecordResponse createWorkRecord(WorkRecordRequest request) {
-                Bed bed = bedRepository.findById(request.getBedId())
+                Farm farm = farmRepository.findById(request.getFarmId())
                                 .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND,
-                                                "Bed not found"));
+                                                "Farm not found"));
+
+                Bed bed = null;
+                if (request.getBedId() != null) {
+                        bed = bedRepository.findById(request.getBedId())
+                                        .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND,
+                                                        "Bed not found"));
+                }
 
                 WorkRecord record = WorkRecord.builder()
+                                .farm(farm)
                                 .bed(bed)
                                 .workDate(request.getWorkDate())
                                 .workType(request.getWorkType())
@@ -161,7 +172,7 @@ public class CultivationService {
                                 .build();
 
                 WorkRecord saved = workRecordRepository.save(record);
-                log.info("Created work record for bed {}: {}", request.getBedId(), request.getWorkType());
+                log.info("Created work record for farm {}: {}", request.getFarmId(), request.getWorkType());
                 return WorkRecordResponse.from(saved);
         }
 
@@ -172,20 +183,20 @@ public class CultivationService {
         }
 
         public List<WorkRecordResponse> getWorkRecordsByDate(LocalDate workDate) {
-                return workRecordRepository.findByWorkDateOrderByBedLineLineNumberAscAndBedBedNumberAsc(workDate)
+                return workRecordRepository.findByWorkDateOrderByFarmIdAndIdDesc(workDate)
                                 .stream()
                                 .map(WorkRecordResponse::from)
                                 .collect(Collectors.toList());
         }
 
         public List<WorkRecordResponse> getWorkRecordsByFarmAndDate(Long farmId, LocalDate workDate) {
-                return workRecordRepository.findByFarmIdAndWorkDate(farmId, workDate).stream()
+                return workRecordRepository.findByFarmIdAndWorkDateOrderByIdDesc(farmId, workDate).stream()
                                 .map(WorkRecordResponse::from)
                                 .collect(Collectors.toList());
         }
 
         public List<WorkRecordResponse> getWorkRecordsByFarm(Long farmId) {
-                return workRecordRepository.findByBed_Line_House_FarmId(farmId).stream()
+                return workRecordRepository.findByFarmIdOrderByIdDesc(farmId).stream()
                                 .map(WorkRecordResponse::from)
                                 .collect(Collectors.toList());
         }
@@ -196,9 +207,7 @@ public class CultivationService {
                                 .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND,
                                                 "Work record not found"));
 
-                // Note: WorkRecord is immutable, so we need to create a new one or add a setter
-                // For now, we'll return the existing record
-                // TODO: Add status update logic if needed
+                record.updateStatus(status);
                 log.info("Updated work record {} status to {}", id, status);
                 return WorkRecordResponse.from(record);
         }

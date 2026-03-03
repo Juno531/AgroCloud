@@ -12,6 +12,7 @@ const FarmSetting = lazy(() => import('../pages/Farm/FarmSetting'));
 const MySecurity = lazy(() => import('../pages/MyPage/MySecurity'));
 const HRManagement = lazy(() => import('../pages/HR/HRManagement'));
 const EmployeeDetail = lazy(() => import('../pages/HR/EmployeeDetail'));
+const WorkManagement = lazy(() => import('../pages/Farm/WorkManagement'));
 const Attendance = lazy(() => import('../pages/HR/Attendance'));
 const SuperAdmin = lazy(() => import('../pages/SuperAdmin/SuperAdmin'));
 const Login = lazy(() => import('../pages/Auth/Login'));
@@ -77,6 +78,7 @@ export const router = createBrowserRouter([
                         element: <Layout />,
                         children: [
                             { path: '/farm/cultivation', element: <SuspenseWrapper><CultivationManagement /></SuspenseWrapper> },
+                            { path: '/farm/work-management', element: <SuspenseWrapper><WorkManagement /></SuspenseWrapper> },
                             { path: '/farm/setting', element: <SuspenseWrapper><FarmSetting /></SuspenseWrapper> },
                         ]
                     }

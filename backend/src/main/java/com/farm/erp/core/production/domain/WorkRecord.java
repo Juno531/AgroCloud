@@ -1,5 +1,6 @@
 package com.farm.erp.core.production.domain;
 
+import com.farm.erp.core.farm.domain.Farm;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -10,11 +11,12 @@ import java.time.LocalDateTime;
 
 /**
  * Work Record (작업 기록) Entity
- * Records farming work activities for each bed
+ * Records farming work activities for each farm or bed
  */
 @Entity
 @Table(name = "work_records")
 @Getter
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
@@ -26,7 +28,11 @@ public class WorkRecord {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "bed_id", nullable = false)
+    @JoinColumn(name = "farm_id", nullable = false)
+    private Farm farm;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "bed_id", nullable = true)
     private Bed bed;
 
     @Column(name = "work_date", nullable = false)
@@ -49,6 +55,10 @@ public class WorkRecord {
 
     @Column(columnDefinition = "TEXT")
     private String notes;
+
+    public void updateStatus(CompletionStatus completionStatus) {
+        this.completionStatus = completionStatus;
+    }
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)

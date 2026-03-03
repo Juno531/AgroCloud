@@ -15,7 +15,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
-public interface AttendanceRepository extends JpaRepository<AttendanceRecord, Long>, QuerydslPredicateExecutor<AttendanceRecord> {
+public interface AttendanceRepository
+                extends JpaRepository<AttendanceRecord, Long>, QuerydslPredicateExecutor<AttendanceRecord> {
 
         @EntityGraph(attributePaths = { "user" })
         List<AttendanceRecord> findByUserIdOrderByTimestampDesc(Long userId);
@@ -39,4 +40,15 @@ public interface AttendanceRepository extends JpaRepository<AttendanceRecord, Lo
                         String companyCode, LocalDateTime start, LocalDateTime end);
 
         void deleteByFarmId(Long farmId);
+
+        // 오늘 특정 companyCode의 CLOCK_IN 레코드 조회 (출근 현황용)
+        @EntityGraph(attributePaths = { "user" })
+        List<AttendanceRecord> findByCompanyCodeAndTypeAndTimestampBetweenOrderByTimestampDesc(
+                        String companyCode, AttendanceRecord.AttendanceType type,
+                        LocalDateTime start, LocalDateTime end);
+
+        // PENDING 상태 출근 목록 조회 (승인 대기용)
+        @EntityGraph(attributePaths = { "user" })
+        List<AttendanceRecord> findByCompanyCodeAndStatusOrderByTimestampDesc(
+                        String companyCode, AttendanceRecord.RecordStatus status);
 }

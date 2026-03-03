@@ -17,15 +17,15 @@ public interface WorkRecordRepository extends JpaRepository<WorkRecord, Long> {
 
     List<WorkRecord> findByBedIdAndWorkDate(Long bedId, LocalDate workDate);
 
-    @Query("SELECT w FROM WorkRecord w WHERE w.workDate = :workDate ORDER BY w.bed.line.lineNumber ASC, w.bed.bedNumber ASC")
-    List<WorkRecord> findByWorkDateOrderByBedLineLineNumberAscAndBedBedNumberAsc(LocalDate workDate);
+    @Query("SELECT w FROM WorkRecord w WHERE w.workDate = :workDate ORDER BY w.farm.id, w.id DESC")
+    List<WorkRecord> findByWorkDateOrderByFarmIdAndIdDesc(LocalDate workDate);
 
-    List<WorkRecord> findByBed_Line_HouseId(Long houseId);
+    List<WorkRecord> findByFarmIdOrderByIdDesc(Long farmId);
 
-    List<WorkRecord> findByBed_Line_House_FarmId(Long farmId);
+    List<WorkRecord> findByFarmIdAndWorkDateOrderByIdDesc(Long farmId, LocalDate workDate);
 
-    @Query("SELECT w FROM WorkRecord w WHERE w.bed.line.house.farm.id = :farmId AND w.workDate = :workDate ORDER BY w.bed.line.lineNumber, w.bed.bedNumber")
-    List<WorkRecord> findByFarmIdAndWorkDate(Long farmId, LocalDate workDate);
+    @Query("SELECT w FROM WorkRecord w WHERE w.farm.id = :farmId AND w.workDate = :workDate ORDER BY w.bed.line.lineNumber, w.bed.bedNumber")
+    List<WorkRecord> findByFarmIdAndWorkDateOrderByLocation(Long farmId, LocalDate workDate);
 
     List<WorkRecord> findByWorkType(WorkRecord.WorkType workType);
 }

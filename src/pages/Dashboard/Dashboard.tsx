@@ -1,11 +1,15 @@
 import React from 'react';
 import { useLayout } from '../../context/LayoutContext';
 import { useAuth } from '../../context/AuthContext';
+import TodayAttendanceWidget from '../../components/HR/TodayAttendanceWidget';
+import PendingApprovalsWidget from '../../components/HR/PendingApprovalsWidget';
 
 const Dashboard = () => {
     const { setTitle } = useLayout();
     const { user } = useAuth();
     const isPartTime = user?.employmentType === 'PART_TIME';
+    // ADMIN / MASTER_ADMIN에게만 대시보드 관리 위젯 표시
+    const isAdmin = user?.role === 'ADMIN' || user?.role === 'MASTER_ADMIN';
     const today = new Date();
     const formattedDate = today.toLocaleDateString('ko-KR', {
         year: 'numeric',
@@ -87,7 +91,15 @@ const Dashboard = () => {
 
                 </div> */}
 
-                <div className={`grid grid-cols-1 ${isPartTime ? 'lg:grid-cols-1' : 'lg:grid-cols-3'} gap-6 w-full items-start`}>
+                {/* 관리자 전용: 오늘 출근 현황 + 대기 중인 승인 */}
+                {isAdmin && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 w-full">
+                        <TodayAttendanceWidget />
+                        <PendingApprovalsWidget />
+                    </div>
+                )}
+
+                {/* <div className={`grid grid-cols-1 ${isPartTime ? 'lg:grid-cols-1' : 'lg:grid-cols-3'} gap-6 w-full items-start`}>
 
                     <div className={`${isPartTime ? 'lg:col-span-1' : 'lg:col-span-2'} bg-white dark:bg-zinc-900 rounded-3xl p-6 sm:p-8 shadow-xl shadow-slate-200/50 dark:shadow-none border border-primary/10 w-full overflow-hidden`}>
                         <div className="flex justify-between items-center mb-8">
@@ -141,7 +153,7 @@ const Dashboard = () => {
                             </div>
                         </div>
                     </div>
-                </div>
+                </div> */}
             </div>
         </div >
     );
