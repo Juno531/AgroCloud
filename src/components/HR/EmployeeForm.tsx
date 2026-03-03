@@ -97,7 +97,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onClose, onSucces
                     companyCode: user?.companyCode
                 };
 
-                await EmployeeService.registerEmployee(registrationData);
+                await EmployeeService.createEmployee(registrationData);
             }
             onSuccess();
         } catch (err: any) {
