@@ -118,7 +118,7 @@ app:
     password: ${SUPER_ADMIN_PASSWORD:1234}
     name: ${SUPER_ADMIN_NAME:Super Administrator}
   cors:
-    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:*,http://127.0.0.1:*,http://192.168.*.*:*,http://10.*.*.*:*,http://172.*.*.*:*,https://localhost:*,https://127.0.0.1:*,https://192.168.*.*:*,https://10.*.*.*:*,https://172.*.*.*:*,https://192.168.45.117:5173}
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:*,http://127.0.0.1:*,http://192.168.*.*:*,http://10.*.*.*:*,http://172.*.*.*:*,https://localhost:*,https://127.0.0.1:*,https://192.168.*.*:*,https://10.*.*.*:*,https://172.*.*.*:*,https://*.up.railway.app,https://192.168.45.117:5173}
 
 # Logging Configuration
 logging:

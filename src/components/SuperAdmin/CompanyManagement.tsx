@@ -20,6 +20,7 @@ const CompanyManagement = () => {
     });
 
     const [editingId, setEditingId] = useState<number | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         fetchCompanies();
@@ -92,7 +93,10 @@ const CompanyManagement = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (isSubmitting) return;
+
         try {
+            setIsSubmitting(true);
             if (editingId) {
                 // Update
                 await CompanyService.updateCompany(editingId, {
@@ -105,6 +109,7 @@ const CompanyManagement = () => {
                 alert('회사 정보가 수정되었습니다.');
             } else {
                 // Create
+                console.log('Creating company with:', newCompany);
                 await CompanyService.createCompany(newCompany);
                 alert('회사와 관리자 계정이 성공적으로 등록되었습니다.');
             }
@@ -112,8 +117,10 @@ const CompanyManagement = () => {
             fetchCompanies();
         } catch (error: any) {
             console.error('Failed to save company:', error);
-            const msg = error.response?.data?.message || '저장에 실패했습니다.';
-            alert(msg);
+            const msg = error.response?.data?.message || error.message || '저장에 실패했습니다.';
+            alert(`오류 발생: ${msg}`);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -337,9 +344,11 @@ const CompanyManagement = () => {
                                 </button>
                                 <button
                                     type="submit"
-                                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/30 font-medium"
+                                    disabled={isSubmitting}
+                                    className={`px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/30 font-medium flex items-center gap-2 ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
                                 >
-                                    {editingId ? '수정 완료' : '등록 완료'}
+                                    {isSubmitting && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>}
+                                    {isSubmitting ? '처리 중...' : (editingId ? '수정 완료' : '등록 완료')}
                                 </button>
                             </div>
                         </form>
