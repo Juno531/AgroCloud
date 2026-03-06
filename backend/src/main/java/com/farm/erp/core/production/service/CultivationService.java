@@ -35,6 +35,7 @@ public class CultivationService {
         private final PlantingRepository plantingRepository;
         private final BedRepository bedRepository;
         private final FarmRepository farmRepository;
+        private final WorkKeywordRepository workKeywordRepository;
 
         // ========== Growth Records ==========
 
@@ -159,20 +160,28 @@ public class CultivationService {
                                                         "Bed not found"));
                 }
 
+                WorkKeyword keyword = workKeywordRepository.findById(request.getKeywordId())
+                                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND,
+                                                "Work keyword not found"));
+
                 WorkRecord record = WorkRecord.builder()
                                 .farm(farm)
                                 .bed(bed)
                                 .workDate(request.getWorkDate())
-                                .workType(request.getWorkType())
+                                .workKeyword(keyword)
                                 .completionStatus(request.getCompletionStatus() != null ? request.getCompletionStatus()
                                                 : WorkRecord.CompletionStatus.COMPLETED)
-                                .workerCount(request.getWorkerCount())
+                                .regularWorkerCount(request.getRegularWorkerCount())
+                                .dailyWorkerCount(request.getDailyWorkerCount())
+                                .startTime(request.getStartTime())
+                                .endTime(request.getEndTime())
                                 .durationMinutes(request.getDurationMinutes())
+                                .manager(request.getManager())
                                 .notes(request.getNotes())
                                 .build();
 
                 WorkRecord saved = workRecordRepository.save(record);
-                log.info("Created work record for farm {}: {}", request.getFarmId(), request.getWorkType());
+                log.info("Created work record for farm {}: keyword {}", request.getFarmId(), request.getKeywordId());
                 return WorkRecordResponse.from(saved);
         }
 
@@ -219,5 +228,97 @@ public class CultivationService {
                                                 "Work record not found"));
                 workRecordRepository.delete(record);
                 log.info("Deleted work record {}", id);
+        }
+
+        // ========== Work Keywords ==========
+
+        @Transactional
+        public WorkKeywordResponse createWorkKeyword(WorkKeywordRequest request) {
+                Farm farm = farmRepository.findById(request.getFarmId())
+                                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND,
+                                                "Farm not found"));
+
+                WorkKeyword keyword = WorkKeyword.builder()
+                                .farm(farm)
+                                .name(request.getName())
+                                .colorCode(request.getColorCode())
+                                .build();
+
+                return WorkKeywordResponse.from(workKeywordRepository.save(keyword));
+        }
+
+        public List<WorkKeywordResponse> getWorkKeywords(Long farmId) {
+                return workKeywordRepository.findByFarmId(farmId).stream()
+                                .map(WorkKeywordResponse::from)
+                                .collect(Collectors.toList());
+        }
+
+        @Transactional
+        public WorkKeywordResponse updateWorkKeyword(Long keywordId, WorkKeywordRequest request) {
+                WorkKeyword keyword = workKeywordRepository.findById(keywordId)
+                                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND,
+                                                "Work keyword not found"));
+                keyword.setName(request.getName());
+                keyword.setColorCode(request.getColorCode());
+                return WorkKeywordResponse.from(keyword);
+        }
+
+        @Transactional
+        public void deleteWorkKeyword(Long keywordId) {
+                WorkKeyword keyword = workKeywordRepository.findById(keywordId)
+                                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND,
+                                                "Work keyword not found"));
+                workKeywordRepository.delete(keyword);
+                log.info("Deleted work keyword {}", keywordId);
+        }
+
+        // ========== Work Statistics ==========
+
+        public WorkStatsResponse getWorkStats(Long farmId, LocalDate startDate, LocalDate endDate) {
+                List<WorkRecord> records = workRecordRepository.findByFarmIdOrderByIdDesc(farmId).stream()
+                                .filter(r -> (startDate == null || !r.getWorkDate().isBefore(startDate)) &&
+                                                (endDate == null || !r.getWorkDate().isAfter(endDate)))
+                                .collect(Collectors.toList());
+
+                long totalTasks = records.size();
+                long completedTasks = records.stream()
+                                .filter(r -> r.getCompletionStatus() == WorkRecord.CompletionStatus.COMPLETED)
+                                .count();
+                double completionRate = totalTasks > 0 ? (double) completedTasks / totalTasks * 100 : 0;
+
+                long totalManHours = records.stream()
+                                .mapToLong(r -> {
+                                        int regular = r.getRegularWorkerCount() != null ? r.getRegularWorkerCount() : 0;
+                                        int daily = r.getDailyWorkerCount() != null ? r.getDailyWorkerCount() : 0;
+                                        int duration = r.getDurationMinutes() != null ? r.getDurationMinutes() : 0;
+                                        return (long) (regular + daily) * duration / 60;
+                                })
+                                .sum();
+
+                java.util.Map<String, List<WorkRecord>> groupedByKeyword = records.stream()
+                                .filter(r -> r.getWorkKeyword() != null)
+                                .collect(Collectors.groupingBy(r -> r.getWorkKeyword().getName()));
+
+                List<WorkStatsResponse.KeywordStat> keywordStats = groupedByKeyword.entrySet().stream()
+                                .map(entry -> {
+                                        WorkKeyword keyword = entry.getValue().get(0).getWorkKeyword();
+                                        long count = entry.getValue().size();
+                                        return WorkStatsResponse.KeywordStat.builder()
+                                                        .keywordName(keyword.getName())
+                                                        .colorCode(keyword.getColorCode())
+                                                        .count(count)
+                                                        .percentage(totalTasks > 0 ? (double) count / totalTasks * 100
+                                                                        : 0)
+                                                        .build();
+                                })
+                                .collect(Collectors.toList());
+
+                return WorkStatsResponse.builder()
+                                .totalTasks(totalTasks)
+                                .completedTasks(completedTasks)
+                                .completionRate(completionRate)
+                                .totalManHours(totalManHours)
+                                .keywordStats(keywordStats)
+                                .build();
         }
 }

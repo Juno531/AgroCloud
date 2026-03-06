@@ -65,17 +65,23 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
         
         @media (max-width: 767px) {
           .modal-content {
-            max-width: calc(100% - 2rem) !important;
-            margin: 1rem !important;
-            max-height: calc(100vh - 2rem) !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            max-height: 100vh !important;
+            height: 100vh !important;
+            border-radius: 0 !important;
+            display: flex;
+            flex-direction: column;
           }
           
           .modal-header {
-            padding: var(--spacing-md) !important;
+            padding: 1.5rem 1rem !important;
           }
           
           .modal-body {
-            padding: var(--spacing-md) !important;
+            padding: 1rem !important;
+            flex: 1;
+            overflow-y: auto;
           }
         }
       `}</style>

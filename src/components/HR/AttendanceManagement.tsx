@@ -43,6 +43,19 @@ const AttendanceManagement = () => {
         timestamp: string | null;
     } | null>(null);
 
+    const [editModal, setEditModal] = useState<{
+        userId: number;
+        userName: string;
+        date: string;
+        clockInRecordId: number | null;
+        clockOutRecordId: number | null;
+        checkInTime: string;
+        checkOutTime: string;
+        status: string;
+        reason: string;
+    } | null>(null);
+
+    // Filter states
     useEffect(() => {
         if (user?.farmId || user?.companyCode) {
             fetchData();
@@ -128,6 +141,64 @@ const AttendanceManagement = () => {
         }
     };
 
+    const handleSaveEdit = async () => {
+        if (!editModal) return;
+
+        if (!window.confirm('저장하시겠습니까?')) {
+            return;
+        }
+
+        try {
+            const dateStr = editModal.date;
+
+            // Update Clock In
+            if (editModal.clockInRecordId) {
+                const ts = editModal.checkInTime.length === 5 ? `${dateStr}T${editModal.checkInTime}:00` : (editModal.checkInTime ? `${dateStr}T${editModal.checkInTime}` : undefined);
+                await AttendanceService.updateRecord(editModal.clockInRecordId, {
+                    timestamp: ts,
+                    status: editModal.status,
+                    reason: editModal.reason
+                });
+            } else if (editModal.checkInTime) {
+                const ts = editModal.checkInTime.length === 5 ? `${dateStr}T${editModal.checkInTime}:00` : `${dateStr}T${editModal.checkInTime}`;
+                await AttendanceService.createAdminRecord({
+                    userId: editModal.userId,
+                    type: 'CLOCK_IN',
+                    timestamp: ts,
+                    status: editModal.status,
+                    reason: editModal.reason
+                });
+            }
+
+            // Update Clock Out
+            if (editModal.clockOutRecordId) {
+                const ts = editModal.checkOutTime.length === 5 ? `${dateStr}T${editModal.checkOutTime}:00` : (editModal.checkOutTime ? `${dateStr}T${editModal.checkOutTime}` : undefined);
+                await AttendanceService.updateRecord(editModal.clockOutRecordId, {
+                    timestamp: ts,
+                    status: editModal.clockInRecordId ? undefined : editModal.status,
+                    reason: editModal.clockInRecordId ? undefined : editModal.reason
+                });
+            } else if (editModal.checkOutTime) {
+                const ts = editModal.checkOutTime.length === 5 ? `${dateStr}T${editModal.checkOutTime}:00` : `${dateStr}T${editModal.checkOutTime}`;
+                await AttendanceService.createAdminRecord({
+                    userId: editModal.userId,
+                    type: 'CLOCK_OUT',
+                    timestamp: ts,
+                    status: editModal.status,
+                    reason: editModal.clockInRecordId ? undefined : editModal.reason
+                });
+            }
+
+            alert('출퇴근 기록이 수정/저장되었습니다.');
+            setEditModal(null);
+            fetchData();
+        } catch (error: any) {
+            console.error('Failed to update attendance record:', error);
+            alert(`출퇴근 기록 저장에 실패했습니다: ${error?.response?.data?.message || '알 수 없는 오류'}`);
+        }
+    };
+
+    // Calculate start & end dates based on viewMode
     const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setCurrentDate(new Date(e.target.value));
     };
@@ -215,6 +286,8 @@ const AttendanceManagement = () => {
                         weekInfo,
                         checkInTime: clockIn ? format(new Date(clockIn.timestamp), 'HH:mm:ss') : null,
                         checkOutTime: clockOut ? format(new Date(clockOut.timestamp), 'HH:mm:ss') : null,
+                        clockInRecordId: clockIn ? clockIn.id : null,
+                        clockOutRecordId: clockOut ? clockOut.id : null,
                         status: recordStatus,
                         reason: actionReason,
                         recordId: approvalRecordId,
@@ -240,6 +313,8 @@ const AttendanceManagement = () => {
                     weekInfo: absentWeekInfo,
                     checkInTime: null,
                     checkOutTime: null,
+                    clockInRecordId: null,
+                    clockOutRecordId: null,
                     status: 'ABSENT' as const,
                     reason: null,
                     recordId: null,
@@ -273,6 +348,8 @@ const AttendanceManagement = () => {
                         weekInfo,
                         checkInTime: r.type === 'CLOCK_IN' ? format(d, 'HH:mm:ss') : null,
                         checkOutTime: r.type === 'CLOCK_OUT' ? format(d, 'HH:mm:ss') : null,
+                        clockInRecordId: r.type === 'CLOCK_IN' ? r.id : null,
+                        clockOutRecordId: r.type === 'CLOCK_OUT' ? r.id : null,
                         status: r.status === 'PENDING' ? 'PENDING' : r.status === 'REJECTED' ? 'REJECTED' : (r.status === 'APPROVED' ? (r.type === 'CLOCK_IN' ? 'APPROVED_CLOCK_IN' : 'APPROVED_CLOCK_OUT') : ((r.type === 'CLOCK_IN' ? 'PRESENT' : 'CLOCK_OUT') as any)),
                         reason: (r.status === 'PENDING' || r.status === 'REJECTED') ? r.reason : null,
                         recordId: r.id,
@@ -289,12 +366,14 @@ const AttendanceManagement = () => {
             const matchStatus = statusFilters.length === 0 || statusFilters.includes(r.status);
             return matchClockIn && matchClockOut && matchStatus;
         });
-    }, [records, employees, viewMode, currentDate, searchTerm, fields, clockInFilters, clockOutFilters, statusFilters]);
+    }, [records, employees, viewMode, currentDate, searchTerm, fields, clockInFilters, clockOutFilters, statusFilters, employmentTypeFilters]);
 
     const stats = useMemo(() => {
-        const filteredEmployeesCount = employees.filter(emp =>
-            emp.name.toLowerCase().includes(searchTerm.toLowerCase())
-        ).length;
+        const filteredEmployeesCount = employees.filter(emp => {
+            const matchSearch = emp.name.toLowerCase().includes(searchTerm.toLowerCase());
+            const matchEmploymentType = employmentTypeFilters.length === 0 || (emp.employmentType && employmentTypeFilters.includes(emp.employmentType));
+            return matchSearch && matchEmploymentType;
+        }).length;
 
         let total = filteredEmployeesCount;
         let present = 0;
@@ -310,7 +389,7 @@ const AttendanceManagement = () => {
         }
 
         return { total, present, leave };
-    }, [employees, processedData, viewMode, searchTerm]);
+    }, [employees, processedData, viewMode, searchTerm, employmentTypeFilters]);
 
 
     const getStatusColor = (status: string) => {
@@ -626,6 +705,33 @@ const AttendanceManagement = () => {
                                                 </button>
                                             )}
                                         </div>
+
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => {
+                                                    const rawStatus = record.status as string;
+                                                    let normalizedStatus = 'NORMAL';
+                                                    if (rawStatus === 'PENDING') normalizedStatus = 'PENDING';
+                                                    else if (rawStatus === 'REJECTED') normalizedStatus = 'REJECTED';
+                                                    else if (rawStatus.startsWith('APPROVED')) normalizedStatus = 'APPROVED';
+
+                                                    setEditModal({
+                                                        userId: record.userId!,
+                                                        userName: record.userName,
+                                                        date: record.date,
+                                                        clockInRecordId: record.clockInRecordId,
+                                                        clockOutRecordId: record.clockOutRecordId,
+                                                        checkInTime: record.checkInTime?.substring(0, 5) || '',
+                                                        checkOutTime: record.checkOutTime?.substring(0, 5) || '',
+                                                        status: normalizedStatus,
+                                                        reason: record.reason || ''
+                                                    });
+                                                }}
+                                                className="w-full py-2 bg-white dark:bg-zinc-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-zinc-700 text-xs font-medium rounded-lg hover:bg-slate-50 dark:hover:bg-zinc-700 transition-colors shadow-sm"
+                                            >
+                                                수정
+                                            </button>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -707,6 +813,30 @@ const AttendanceManagement = () => {
                                                                 승인 대기 중
                                                             </button>
                                                         )}
+                                                        <button
+                                                            onClick={() => {
+                                                                const rawStatus = record.status as string;
+                                                                let normalizedStatus = 'NORMAL';
+                                                                if (rawStatus === 'PENDING') normalizedStatus = 'PENDING';
+                                                                else if (rawStatus === 'REJECTED') normalizedStatus = 'REJECTED';
+                                                                else if (rawStatus.startsWith('APPROVED')) normalizedStatus = 'APPROVED';
+
+                                                                setEditModal({
+                                                                    userId: record.userId!,
+                                                                    userName: record.userName,
+                                                                    date: record.date,
+                                                                    clockInRecordId: record.clockInRecordId,
+                                                                    clockOutRecordId: record.clockOutRecordId,
+                                                                    checkInTime: record.checkInTime?.substring(0, 5) || '',
+                                                                    checkOutTime: record.checkOutTime?.substring(0, 5) || '',
+                                                                    status: normalizedStatus,
+                                                                    reason: record.reason || ''
+                                                                });
+                                                            }}
+                                                            className="ml-2 px-3 py-1.5 bg-white dark:bg-zinc-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-zinc-700 text-[11px] font-medium rounded-lg hover:bg-slate-50 dark:hover:bg-zinc-700 transition-colors shadow-sm"
+                                                        >
+                                                            수정
+                                                        </button>
                                                     </td>
                                                 </tr>
                                             ))}
@@ -785,6 +915,92 @@ const AttendanceManagement = () => {
                                         {actionModal.pendingType === 'CLOCK_IN' ? '출근 승인' : '퇴근 승인'}
                                     </button>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Edit Modal */}
+                {editModal && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                        <div
+                            className="absolute inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm transition-opacity cursor-pointer"
+                            onClick={() => setEditModal(null)}
+                        ></div>
+
+                        <div className="relative w-full max-w-sm bg-white dark:bg-zinc-900 overflow-hidden rounded-2xl shadow-xl transform transition-all border border-slate-200 dark:border-zinc-800">
+                            <div className="px-6 py-5 border-b border-slate-100 dark:border-zinc-800/80 flex justify-between items-center bg-slate-50/50 dark:bg-zinc-800/30">
+                                <div>
+                                    <h3 className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-wider">
+                                        출퇴근 기록 수정
+                                    </h3>
+                                    <p className="text-xs text-slate-500 mt-1">{editModal.userName} - {editModal.date}</p>
+                                </div>
+                                <button
+                                    onClick={() => setEditModal(null)}
+                                    className="p-1 rounded-full text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-colors bg-white dark:bg-zinc-800 shadow-sm border border-slate-200 dark:border-zinc-700"
+                                >
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <div className="px-6 py-5 space-y-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">출근 시간</label>
+                                    <input
+                                        type="time"
+                                        value={editModal.checkInTime}
+                                        onChange={(e) => setEditModal(prev => prev ? { ...prev, checkInTime: e.target.value } : null)}
+                                        className="w-full px-3 py-2 border border-slate-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-colors"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">퇴근 시간</label>
+                                    <input
+                                        type="time"
+                                        value={editModal.checkOutTime}
+                                        onChange={(e) => setEditModal(prev => prev ? { ...prev, checkOutTime: e.target.value } : null)}
+                                        className="w-full px-3 py-2 border border-slate-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-colors"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">출결 상태</label>
+                                    <select
+                                        value={editModal.status.startsWith('APPROVED') ? 'APPROVED' : editModal.status}
+                                        onChange={(e) => setEditModal(prev => prev ? { ...prev, status: e.target.value } : null)}
+                                        className="w-full px-3 py-2 border border-slate-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-colors"
+                                    >
+                                        <option value="NORMAL">일반</option>
+                                        <option value="PENDING">승인 대기</option>
+                                        <option value="APPROVED">승인됨</option>
+                                        <option value="REJECTED">거절됨</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">사유</label>
+                                    <textarea
+                                        value={editModal.reason}
+                                        onChange={(e) => setEditModal(prev => prev ? { ...prev, reason: e.target.value } : null)}
+                                        className="w-full px-3 py-2 border border-slate-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-colors resize-none"
+                                        rows={3}
+                                        placeholder="사유를 입력하세요"
+                                    />
+                                </div>
+                            </div>
+                            <div className="px-6 py-4 border-t border-slate-100 dark:border-zinc-800/80 bg-slate-50/50 dark:bg-zinc-900/50 flex gap-3">
+                                <button
+                                    onClick={() => setEditModal(null)}
+                                    className="flex-1 px-4 py-2 border border-slate-300 dark:border-zinc-700 text-slate-700 dark:text-slate-300 rounded-lg text-sm font-bold bg-white dark:bg-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-700 transition-colors"
+                                >
+                                    취소
+                                </button>
+                                <button
+                                    onClick={handleSaveEdit}
+                                    className="flex-1 px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold shadow-sm hover:bg-primary/90 transition-all border border-transparent shadow-primary/25 hover:shadow-primary/40"
+                                >
+                                    저장
+                                </button>
                             </div>
                         </div>
                     </div>

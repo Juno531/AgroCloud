@@ -34,17 +34,35 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         };
 
         initAuth();
+
+        const handleAuthLogout = () => {
+            logout();
+        };
+        window.addEventListener('auth:logout', handleAuthLogout);
+
+        return () => {
+            window.removeEventListener('auth:logout', handleAuthLogout);
+        };
     }, [token]);
 
     const login = async (data: LoginRequest, rememberMe: boolean = false): Promise<void> => {
         try {
             const response = await AuthService.login(data);
-            const { token: newToken, user: userData } = response.data;
+            const { token: newToken, refreshToken, user: userData } = response.data;
 
             setToken(newToken);
             setUser(userData);
-            localStorage.setItem('token', newToken);
-            localStorage.setItem('user', JSON.stringify(userData));
+
+            if (rememberMe) {
+                localStorage.setItem('token', newToken);
+                localStorage.setItem('user', JSON.stringify(userData));
+                if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
+            } else {
+                sessionStorage.setItem('token', newToken);
+                sessionStorage.setItem('user', JSON.stringify(userData));
+                if (refreshToken) sessionStorage.setItem('refreshToken', refreshToken);
+            }
+
             api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
         } catch (error) {
             console.error("Login failed:", error);
@@ -55,12 +73,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const register = async (data: RegisterRequest): Promise<void> => {
         try {
             const response = await AuthService.register(data);
-            const { token: newToken, user: userData } = response.data;
+            const { token: newToken, refreshToken, user: userData } = response.data;
 
             setToken(newToken);
             setUser(userData);
             localStorage.setItem('token', newToken);
             localStorage.setItem('user', JSON.stringify(userData));
+            if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
             api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
         } catch (error) {
             console.error("Register failed:", error);
@@ -72,8 +91,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setToken(null);
         setUser(null);
         localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
         localStorage.removeItem('user');
         sessionStorage.removeItem('token');
+        sessionStorage.removeItem('refreshToken');
         sessionStorage.removeItem('user');
         delete api.defaults.headers.common['Authorization'];
     };

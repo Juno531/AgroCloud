@@ -27,5 +27,5 @@ public interface WorkRecordRepository extends JpaRepository<WorkRecord, Long> {
     @Query("SELECT w FROM WorkRecord w WHERE w.farm.id = :farmId AND w.workDate = :workDate ORDER BY w.bed.line.lineNumber, w.bed.bedNumber")
     List<WorkRecord> findByFarmIdAndWorkDateOrderByLocation(Long farmId, LocalDate workDate);
 
-    List<WorkRecord> findByWorkType(WorkRecord.WorkType workType);
+    List<WorkRecord> findByWorkKeywordId(Long keywordId);
 }

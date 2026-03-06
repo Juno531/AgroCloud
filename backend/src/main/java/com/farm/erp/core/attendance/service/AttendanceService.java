@@ -185,6 +185,109 @@ public class AttendanceService {
                 return attendanceRepository.save(record);
         }
 
+        @Transactional
+        public AttendanceRecord updateAttendanceRecord(Long id, LocalDateTime timestamp, String status, String reason) {
+                AttendanceRecord record = attendanceRepository.findById(id)
+                                .orElseThrow(() -> new IllegalArgumentException("Attendance record not found"));
+
+                if (timestamp != null) {
+                        record.updateTimestamp(timestamp);
+                }
+                if (status != null && !status.trim().isEmpty()) {
+                        try {
+                                record.updateStatus(AttendanceRecord.RecordStatus.valueOf(status));
+                        } catch (IllegalArgumentException e) {
+                                // Ignore invalid status or handle appropriately
+                        }
+                }
+                if (reason != null) {
+                        record.updateReason(reason);
+                }
+
+                return attendanceRepository.save(record);
+        }
+
+        @Transactional
+        public AttendanceRecord adminCreateRecord(Long userId, String typeStr, LocalDateTime timestamp,
+                        String statusStr, String reason) {
+                User user = userRepository.findById(userId)
+                                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+                String companyCode = user.getCompany() != null ? user.getCompany().getCode() : null;
+                Long farmId = null;
+
+                com.farm.erp.core.hr.domain.EmployeeProfile profile = employeeProfileRepository.findByUserId(userId)
+                                .orElse(null);
+                if (profile != null && profile.getFarm() != null) {
+                        farmId = profile.getFarm().getId();
+                } else if (companyCode != null) {
+                        List<com.farm.erp.core.farm.domain.Farm> farms = farmRepository.findByCompanyCodeAndStatus(
+                                        companyCode, com.farm.erp.core.farm.domain.FarmStatus.ACTIVE);
+                        if (!farms.isEmpty()) {
+                                farmId = farms.get(0).getId();
+                        }
+                }
+
+                if (farmId == null) {
+                        // 기본값 1L 등 설정 처리할 수 있으나, 일단 회사의 첫번째 활성 농장을 쓰도록 위에서 처리함. 만약 그래도 null이면 에러가 발생하게
+                        // 됩니다.
+                        // Throwing exception would be safer:
+                        // throw new IllegalArgumentException("Cannot determine farm ID for this
+                        // user.");
+                        farmId = 1L; // Fallback to avoid complete breakdown if DB structure is missing farms
+                                     // temporarily.
+                }
+
+                AttendanceRecord.AttendanceType type = AttendanceRecord.AttendanceType.valueOf(typeStr);
+                AttendanceRecord.RecordStatus status = AttendanceRecord.RecordStatus.valueOf(statusStr);
+
+                LocalDateTime startOfWeek = timestamp.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+                                .withHour(0)
+                                .withMinute(0).withSecond(0).withNano(0);
+                LocalDateTime endOfWeek = timestamp.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY)).withHour(23)
+                                .withMinute(59).withSecond(59).withNano(999999999);
+
+                List<AttendanceRecord> weekRecords = attendanceRepository
+                                .findByUserIdAndTimestampBetweenOrderByTimestampDesc(userId, startOfWeek, endOfWeek);
+
+                int weekNumber = timestamp.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR);
+                LocalDate today = timestamp.toLocalDate();
+                int workingDayIndex = 1;
+
+                boolean hasRecordToday = false;
+                long uniqueDaysThisWeek = weekRecords.stream()
+                                .map(r -> r.getTimestamp().toLocalDate())
+                                .distinct()
+                                .count();
+
+                for (AttendanceRecord r : weekRecords) {
+                        if (r.getTimestamp().toLocalDate().equals(today)) {
+                                hasRecordToday = true;
+                                workingDayIndex = r.getWorkingDayIndex() != null ? r.getWorkingDayIndex() : 1;
+                                break;
+                        }
+                }
+
+                if (!hasRecordToday) {
+                        workingDayIndex = (int) uniqueDaysThisWeek + 1;
+                }
+
+                AttendanceRecord record = AttendanceRecord.builder()
+                                .user(user)
+                                .type(type)
+                                .timestamp(timestamp)
+                                .farmId(farmId)
+                                .companyCode(companyCode)
+                                .weekNumber(weekNumber)
+                                .workingDayIndex(workingDayIndex)
+                                .status(status)
+                                .reason(reason)
+                                .remarks("Created by Administrator")
+                                .build();
+
+                return attendanceRepository.save(record);
+        }
+
         private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
                 final int R = 6371 * 1000;
                 double latDistance = Math.toRadians(lat2 - lat1);

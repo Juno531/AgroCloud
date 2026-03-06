@@ -250,12 +250,14 @@ const AttendanceLog = () => {
             const matchStatus = statusFilters.length === 0 || statusFilters.includes(r.status);
             return matchClockIn && matchClockOut && matchStatus;
         });
-    }, [records, employees, viewMode, currentDate, searchTerm, fields, clockInFilters, clockOutFilters, statusFilters]);
+    }, [records, employees, viewMode, currentDate, searchTerm, fields, clockInFilters, clockOutFilters, statusFilters, employmentTypeFilters]);
 
     const stats = useMemo(() => {
-        const filteredEmployeesCount = employees.filter(emp =>
-            emp.name.toLowerCase().includes(searchTerm.toLowerCase())
-        ).length;
+        const filteredEmployeesCount = employees.filter(emp => {
+            const matchSearch = emp.name.toLowerCase().includes(searchTerm.toLowerCase());
+            const matchEmploymentType = employmentTypeFilters.length === 0 || (emp.employmentType && employmentTypeFilters.includes(emp.employmentType));
+            return matchSearch && matchEmploymentType;
+        }).length;
 
         let total = filteredEmployeesCount;
         let present = 0;
@@ -271,7 +273,7 @@ const AttendanceLog = () => {
         }
 
         return { total, present, leave };
-    }, [employees, processedData, viewMode, searchTerm]);
+    }, [employees, processedData, viewMode, searchTerm, employmentTypeFilters]);
 
     const getStatusColor = (status: string) => {
         switch (status) {

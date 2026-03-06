@@ -61,7 +61,7 @@ const Sidebar = () => {
                     icon: 'yard',
                     children: [
                         { to: '/farm/setting', label: '농장 설정' },
-                        // { to: '/farm/work-management', label: '작업 관리' },
+                        // { to: '/farm/work-management', label: '작업 관리' },// 잠시 그닝 보류
                         // { to: '/farm/cultivation', label: '재배 관리' }, // 일단 잠시 기능 보류
                     ]
                 },

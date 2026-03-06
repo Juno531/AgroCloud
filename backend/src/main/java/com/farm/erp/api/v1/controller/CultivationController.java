@@ -202,4 +202,46 @@ public class CultivationController {
         nutrientService.deleteNutrientRecord(id);
         return ResponseEntity.noContent().build();
     }
+
+    // ========== Work Keywords ==========
+
+    @Operation(summary = "Create work keyword", description = "작업 키워드 생성")
+    @PostMapping("/work-keywords")
+    public ResponseEntity<WorkKeywordResponse> createWorkKeyword(
+            @Valid @RequestBody WorkKeywordRequest request) {
+        return ResponseEntity.ok(cultivationService.createWorkKeyword(request));
+    }
+
+    @Operation(summary = "Get work keywords by farm", description = "농장 ID로 작업 키워드 목록 조회")
+    @GetMapping("/work-keywords/farm/{farmId}")
+    public ResponseEntity<List<WorkKeywordResponse>> getWorkKeywords(
+            @PathVariable Long farmId) {
+        return ResponseEntity.ok(cultivationService.getWorkKeywords(farmId));
+    }
+
+    @Operation(summary = "Update work keyword", description = "작업 키워드 수정")
+    @PutMapping("/work-keywords/{keywordId}")
+    public ResponseEntity<WorkKeywordResponse> updateWorkKeyword(
+            @PathVariable Long keywordId,
+            @Valid @RequestBody WorkKeywordRequest request) {
+        return ResponseEntity.ok(cultivationService.updateWorkKeyword(keywordId, request));
+    }
+
+    @Operation(summary = "Delete work keyword", description = "작업 키워드 삭제")
+    @DeleteMapping("/work-keywords/{keywordId}")
+    public ResponseEntity<Void> deleteWorkKeyword(@PathVariable Long keywordId) {
+        cultivationService.deleteWorkKeyword(keywordId);
+        return ResponseEntity.noContent().build();
+    }
+
+    // ========== Work Statistics ==========
+
+    @Operation(summary = "Get work statistics", description = "작업 통계 조회")
+    @GetMapping("/work-stats/farm/{farmId}")
+    public ResponseEntity<WorkStatsResponse> getWorkStats(
+            @PathVariable Long farmId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        return ResponseEntity.ok(cultivationService.getWorkStats(farmId, startDate, endDate));
+    }
 }

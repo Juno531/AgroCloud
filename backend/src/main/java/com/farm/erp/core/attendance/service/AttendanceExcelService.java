@@ -357,16 +357,16 @@ public class AttendanceExcelService {
                     break;
                 case "clockIn":
                     if (leave != null) {
-                        cell.setCellValue(leave.getLeaveDate().format(dateFormatter) + " (휴무)");
+                        cell.setCellValue("");
                     } else {
-                        cell.setCellValue(clockIn != null ? clockIn.getTimestamp().format(dateTimeFormatter) : "-");
+                        cell.setCellValue(clockIn != null ? clockIn.getTimestamp().format(dateTimeFormatter) : "");
                     }
                     break;
                 case "clockOut":
                     if (leave != null) {
-                        cell.setCellValue("-");
+                        cell.setCellValue("");
                     } else {
-                        cell.setCellValue(clockOut != null ? clockOut.getTimestamp().format(dateTimeFormatter) : "-");
+                        cell.setCellValue(clockOut != null ? clockOut.getTimestamp().format(dateTimeFormatter) : "");
                     }
                     break;
                 case "workingHours":

@@ -75,6 +75,10 @@ const MySecurity = () => {
             return;
         }
 
+        if (!window.confirm('비밀번호를 변경하시겠습니까?')) {
+            return;
+        }
+
         setLoading(true);
         setMessage({ type: '', text: '' });
         try {

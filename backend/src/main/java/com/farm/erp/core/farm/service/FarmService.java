@@ -183,14 +183,26 @@ public class FarmService {
     @Transactional
     @CacheEvict(value = "farms", allEntries = true)
     public FarmResponse updateFarm(Long id, FarmRequest request) {
-        Long userId = getCurrentUserId();
+        User currentUser = getCurrentUser();
+        Long userId = currentUser.getId();
 
-        Farm farm = farmRepository.findByIdAndUserIdAndStatus(id, userId, FarmStatus.ACTIVE)
-                .orElseThrow(() -> new BusinessException(ErrorCode.FARM_NOT_FOUND));
+        Farm farm;
+        if (currentUser.getRole() == User.Role.SUPER_ADMIN) {
+            farm = farmRepository.findById(id)
+                    .filter(f -> f.getStatus() == FarmStatus.ACTIVE)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.FARM_NOT_FOUND));
+        } else if (currentUser.getCompany() != null) {
+            farm = farmRepository
+                    .findByIdAndCompanyCodeAndStatus(id, currentUser.getCompany().getCode(), FarmStatus.ACTIVE)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.FARM_NOT_FOUND));
+        } else {
+            farm = farmRepository.findByIdAndUserIdAndStatus(id, currentUser.getId(), FarmStatus.ACTIVE)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.FARM_NOT_FOUND));
+        }
 
         // Check name uniqueness if name is changed (같은 사용자 내에서)
         if (!farm.getName().equals(request.getName()) &&
-                farmRepository.existsByNameAndUserId(request.getName(), userId)) {
+                farmRepository.existsByNameAndUserId(request.getName(), currentUser.getId())) {
             throw new BusinessException(ErrorCode.FARM_ALREADY_EXISTS);
         }
 
@@ -225,10 +237,22 @@ public class FarmService {
     @Transactional
     @CacheEvict(value = "farms", key = "#id")
     public void deleteFarm(Long id) {
-        Long userId = getCurrentUserId();
+        User currentUser = getCurrentUser();
+        Long userId = currentUser.getId();
 
-        Farm farm = farmRepository.findByIdAndUserIdAndStatus(id, userId, FarmStatus.ACTIVE)
-                .orElseThrow(() -> new BusinessException(ErrorCode.FARM_NOT_FOUND));
+        Farm farm;
+        if (currentUser.getRole() == User.Role.SUPER_ADMIN) {
+            farm = farmRepository.findById(id)
+                    .filter(f -> f.getStatus() == FarmStatus.ACTIVE)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.FARM_NOT_FOUND));
+        } else if (currentUser.getCompany() != null) {
+            farm = farmRepository
+                    .findByIdAndCompanyCodeAndStatus(id, currentUser.getCompany().getCode(), FarmStatus.ACTIVE)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.FARM_NOT_FOUND));
+        } else {
+            farm = farmRepository.findByIdAndUserIdAndStatus(id, currentUser.getId(), FarmStatus.ACTIVE)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.FARM_NOT_FOUND));
+        }
 
         // 1. Unlink employees
         List<com.farm.erp.core.hr.domain.EmployeeProfile> employees = employeeProfileRepository.findByFarmId(id);

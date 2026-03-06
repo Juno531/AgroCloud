@@ -24,13 +24,18 @@ public class WorkRecordResponse {
     private String lineName;
     private LocalDate workDate;
 
-    private WorkRecord.WorkType workType;
-    private String workTypeKorean;
+    private Long keywordId;
+    private String workTypeKorean; // 프론트 하위 호환성을 위해 이름 유지
+    private String keywordColorCode;
     private WorkRecord.CompletionStatus completionStatus;
     private String completionStatusKorean;
 
-    private Integer workerCount;
+    private Integer regularWorkerCount;
+    private Integer dailyWorkerCount;
+    private java.time.LocalTime startTime;
+    private java.time.LocalTime endTime;
     private Integer durationMinutes;
+    private String manager;
     private String notes;
     private LocalDateTime createdAt;
 
@@ -39,13 +44,24 @@ public class WorkRecordResponse {
                 .id(record.getId())
                 .farmId(record.getFarm().getId())
                 .farmName(record.getFarm().getName())
-                .workDate(record.getWorkDate())
-                .workType(record.getWorkType())
-                .workTypeKorean(record.getWorkType().getKoreanName())
-                .completionStatus(record.getCompletionStatus())
+                .workDate(record.getWorkDate());
+
+        if (record.getWorkKeyword() != null) {
+            builder.keywordId(record.getWorkKeyword().getId())
+                    .workTypeKorean(record.getWorkKeyword().getName())
+                    .keywordColorCode(record.getWorkKeyword().getColorCode());
+        } else {
+            builder.workTypeKorean("미분류");
+        }
+
+        builder.completionStatus(record.getCompletionStatus())
                 .completionStatusKorean(record.getCompletionStatus().getKoreanName())
-                .workerCount(record.getWorkerCount())
+                .regularWorkerCount(record.getRegularWorkerCount())
+                .dailyWorkerCount(record.getDailyWorkerCount())
+                .startTime(record.getStartTime())
+                .endTime(record.getEndTime())
                 .durationMinutes(record.getDurationMinutes())
+                .manager(record.getManager())
                 .notes(record.getNotes())
                 .createdAt(record.getCreatedAt());
 

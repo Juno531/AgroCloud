@@ -17,8 +17,8 @@ const LayoutContent: React.FC<LayoutProps> = ({ children }) => {
             <Sidebar />
             <main className="flex-1 flex flex-col overflow-hidden w-full relative">
                 <Header />
-                <div className="flex-1 overflow-auto pb-20 md:pb-0">
-                    <PageContainer key={location.pathname}>
+                <div className="flex-1 overflow-auto pb-20 md:pb-0 h-full flex flex-col">
+                    <PageContainer key={location.pathname} className="flex-1 flex flex-col">
                         {children ? children : <Outlet />}
                     </PageContainer>
                 </div>

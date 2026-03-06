@@ -23,11 +23,15 @@ public class WorkRecordRequest {
     @NotNull(message = "Work date is required")
     private LocalDate workDate;
 
-    @NotNull(message = "Work type is required")
-    private WorkRecord.WorkType workType;
+    @NotNull(message = "Work keyword ID is required")
+    private Long keywordId;
 
     private WorkRecord.CompletionStatus completionStatus;
-    private Integer workerCount;
+    private Integer regularWorkerCount;
+    private Integer dailyWorkerCount;
+    private java.time.LocalTime startTime;
+    private java.time.LocalTime endTime;
     private Integer durationMinutes;
+    private String manager;
     private String notes;
 }

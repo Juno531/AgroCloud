@@ -38,20 +38,32 @@ public class WorkRecord {
     @Column(name = "work_date", nullable = false)
     private LocalDate workDate;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "work_type", nullable = false, length = 50)
-    private WorkType workType;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "keyword_id", nullable = true)
+    private WorkKeyword workKeyword;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "completion_status", length = 20)
     @Builder.Default
     private CompletionStatus completionStatus = CompletionStatus.COMPLETED;
 
-    @Column(name = "worker_count")
-    private Integer workerCount;
+    @Column(name = "regular_worker_count")
+    private Integer regularWorkerCount; // 정규/내부 직원 수
+
+    @Column(name = "daily_worker_count")
+    private Integer dailyWorkerCount; // 일용직 작업자 수
+
+    @Column(name = "start_time")
+    private java.time.LocalTime startTime; // 작업 시작 시간
+
+    @Column(name = "end_time")
+    private java.time.LocalTime endTime; // 작업 종료 시간
 
     @Column(name = "duration_minutes")
-    private Integer durationMinutes; // 작업 시간 (분)
+    private Integer durationMinutes; // 총 소요 작업 시간 (분)
+
+    @Column(name = "manager", length = 100)
+    private String manager; // 작업 관리자 (문자열 기록)
 
     @Column(columnDefinition = "TEXT")
     private String notes;
@@ -63,29 +75,6 @@ public class WorkRecord {
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
-
-    public enum WorkType {
-        LEAF_REMOVAL("적엽"),
-        FLOWER_THINNING("적화"),
-        FRUIT_THINNING("적과"),
-        RUNNER_REMOVAL("런너 제거"),
-        POLLINATION("수정 작업"),
-        WATERING("관수"),
-        FERTILIZING("시비"),
-        PRUNING("정지 작업"),
-        HARVESTING("수확"),
-        OTHER("기타");
-
-        private final String koreanName;
-
-        WorkType(String koreanName) {
-            this.koreanName = koreanName;
-        }
-
-        public String getKoreanName() {
-            return koreanName;
-        }
-    }
 
     public enum CompletionStatus {
         PLANNED("예정"),

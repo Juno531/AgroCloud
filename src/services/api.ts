@@ -8,12 +8,83 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
 });
+
+let isRefreshing = false;
+let failedQueue: any[] = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+    failedQueue.forEach(prom => {
+        if (error) {
+            prom.reject(error);
+        } else {
+            prom.resolve(token);
+        }
+    });
+
+    failedQueue = [];
+};
+
+api.interceptors.response.use(
+    (response) => {
+        return response;
+    },
+    async (error) => {
+        const originalRequest = error.config;
+
+        if (error.response?.status === 401 && !originalRequest._retry) {
+            if (isRefreshing) {
+                return new Promise(function (resolve, reject) {
+                    failedQueue.push({ resolve, reject });
+                }).then(token => {
+                    originalRequest.headers['Authorization'] = 'Bearer ' + token;
+                    return api(originalRequest);
+                }).catch(err => {
+                    return Promise.reject(err);
+                });
+            }
+
+            originalRequest._retry = true;
+            isRefreshing = true;
+
+            const rToken = localStorage.getItem('refreshToken') || sessionStorage.getItem('refreshToken');
+
+            if (!rToken) {
+                isRefreshing = false;
+                // You can emit an event here to trigger a logout in AuthContext
+                window.dispatchEvent(new Event('auth:logout'));
+                return Promise.reject(error);
+            }
+
+            try {
+                const response = await axios.post('/api/v1/auth/refresh', { refreshToken: rToken });
+                const { token } = response.data;
+
+                localStorage.setItem('token', token);
+                api.defaults.headers.common['Authorization'] = 'Bearer ' + token;
+
+                processQueue(null, token);
+
+                originalRequest.headers['Authorization'] = 'Bearer ' + token;
+                return api(originalRequest);
+            } catch (refreshError) {
+                processQueue(refreshError, null);
+                // Dispatch event so that AuthContext can listen and clear states
+                window.dispatchEvent(new Event('auth:logout'));
+                return Promise.reject(refreshError);
+            } finally {
+                isRefreshing = false;
+            }
+        }
+
+        return Promise.reject(error);
+    }
+);
 
 export default api;
 
@@ -26,6 +97,7 @@ export const AuthService = {
     changePassword: (data: any) => api.post('/auth/change-password', data),
     sendEmailVerification: () => api.post('/auth/email/send-verification'),
     verifyEmail: (code: string) => api.post('/auth/email/verify', { code }),
+    refreshToken: (refreshToken: string) => axios.post('/api/v1/auth/refresh', { refreshToken }),
 };
 
 export const CompanyService = {
@@ -59,6 +131,8 @@ export const AttendanceService = {
     getMyAttendance: () => api.get('/attendance/me'),
     exportAttendance: (params: any) => api.post('/attendance/export', params, { responseType: 'blob' }),
     updateStatus: (id: number, status: string, reason?: string) => api.patch(`/attendance/${id}/status`, { status, reason }),
+    updateRecord: (id: number, data: { timestamp?: string; status?: string; reason?: string }) => api.put(`/attendance/${id}`, data),
+    createAdminRecord: (data: { userId: number; type: string; timestamp: string; status: string; reason?: string }) => api.post('/attendance/admin/record', data),
 };
 
 export const LeaveService = {
@@ -142,10 +216,19 @@ export const CultivationService = {
     createWorkRecord: (data: any) => api.post('/cultivation/work-records', data),
     getWorkRecordsByBed: (bedId: number) => api.get(`/cultivation/work-records/bed/${bedId}`),
     getWorkRecordsByDate: (workDate: string) => api.get(`/cultivation/work-records/date/${workDate}`),
-    getWorkRecordsByFarm: (farmId: number) => api.get(`/cultivation/farms/${farmId}/work-records`),
-    getWorkRecordsByFarmAndDate: (farmId: number, workDate: string) => api.get(`/cultivation/farms/${farmId}/work-records/date/${workDate}`),
+    getWorkRecordsByFarm: (farmId: number) => api.get(`/cultivation/work-records/farm/${farmId}`),
+    getWorkRecordsByFarmAndDate: (farmId: number, workDate: string) => api.get(`/cultivation/work-records/farm/${farmId}/date/${workDate}`),
     updateWorkRecordStatus: (id: number, status: string) => api.patch(`/cultivation/work-records/${id}/status`, null, { params: { status } }),
     deleteWorkRecord: (id: number) => api.delete(`/cultivation/work-records/${id}`),
+
+    // Work Keywords
+    getWorkKeywords: (farmId: number) => api.get(`/cultivation/work-keywords/farm/${farmId}`),
+    createWorkKeyword: (farmId: number, data: any) => api.post(`/cultivation/work-keywords`, { ...data, farmId }),
+    updateWorkKeyword: (farmId: number, id: number, data: any) => api.put(`/cultivation/work-keywords/${id}`, { ...data, farmId }),
+    deleteWorkKeyword: (_farmId: number, id: number) => api.delete(`/cultivation/work-keywords/${id}`),
+
+    // Work Stats
+    getWorkStats: (farmId: number, startDate: string, endDate: string) => api.get(`/cultivation/work-stats/farm/${farmId}`, { params: { startDate, endDate } }),
 
     // Nutrient Records
     createNutrientRecord: (data: any) => api.post('/cultivation/nutrient-records', data),

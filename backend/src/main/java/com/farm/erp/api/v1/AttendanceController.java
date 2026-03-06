@@ -5,6 +5,8 @@ import com.farm.erp.api.v1.dto.AttendanceRequest;
 import com.farm.erp.api.v1.dto.AttendanceResponse;
 import com.farm.erp.api.v1.dto.AttendanceSummaryResponse;
 import com.farm.erp.api.v1.dto.AttendanceStatusUpdateRequest;
+import com.farm.erp.api.v1.dto.AttendanceUpdateRequest;
+import com.farm.erp.api.v1.dto.AdminAttendanceCreateRequest;
 import com.farm.erp.core.attendance.domain.AttendanceRecord;
 import com.farm.erp.core.attendance.service.AttendanceExcelService;
 import com.farm.erp.core.attendance.service.AttendanceService;
@@ -65,6 +67,34 @@ public class AttendanceController {
         AttendanceRecord updatedRecord = attendanceService.updateAttendanceStatus(id, status);
 
         return ResponseEntity.ok(AttendanceResponse.from(updatedRecord));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<AttendanceResponse> updateAttendanceRecord(
+            @PathVariable("id") Long id,
+            @Valid @RequestBody AttendanceUpdateRequest request) {
+
+        AttendanceRecord updatedRecord = attendanceService.updateAttendanceRecord(
+                id,
+                request.getTimestamp(),
+                request.getStatus(),
+                request.getReason());
+
+        return ResponseEntity.ok(AttendanceResponse.from(updatedRecord));
+    }
+
+    @PostMapping("/admin/record")
+    public ResponseEntity<AttendanceResponse> createAdminRecord(
+            @Valid @RequestBody AdminAttendanceCreateRequest request) {
+
+        AttendanceRecord createdRecord = attendanceService.adminCreateRecord(
+                request.getUserId(),
+                request.getType(),
+                request.getTimestamp(),
+                request.getStatus(),
+                request.getReason());
+
+        return ResponseEntity.ok(AttendanceResponse.from(createdRecord));
     }
 
     @GetMapping("/me")
