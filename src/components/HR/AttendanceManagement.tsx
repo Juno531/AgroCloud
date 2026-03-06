@@ -727,9 +727,10 @@ const AttendanceManagement = () => {
                                                         reason: record.reason || ''
                                                     });
                                                 }}
+                                                translate="no"
                                                 className="w-full py-2 bg-white dark:bg-zinc-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-zinc-700 text-xs font-medium rounded-lg hover:bg-slate-50 dark:hover:bg-zinc-700 transition-colors shadow-sm"
                                             >
-                                                수정
+                                                {record.status === 'ABSENT' ? '기록 생성' : '수정'}
                                             </button>
                                         </div>
                                     </div>
@@ -833,6 +834,7 @@ const AttendanceManagement = () => {
                                                                     reason: record.reason || ''
                                                                 });
                                                             }}
+                                                            translate="no"
                                                             className="ml-2 px-3 py-1.5 bg-white dark:bg-zinc-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-zinc-700 text-[11px] font-medium rounded-lg hover:bg-slate-50 dark:hover:bg-zinc-700 transition-colors shadow-sm"
                                                         >
                                                             수정
