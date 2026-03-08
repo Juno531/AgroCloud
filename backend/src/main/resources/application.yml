@@ -57,6 +57,12 @@ spring:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false  # LocalDateTime을 ISO 문자열로 직렬화
+    deserialization:
+      fail-on-unknown-properties: false
+
   cache:
     type: redis
     redis:
