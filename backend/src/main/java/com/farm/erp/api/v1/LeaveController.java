@@ -52,4 +52,33 @@ public class LeaveController {
 
                 return ResponseEntity.ok(responses);
         }
+
+        @GetMapping("/farm/{farmId}")
+        public ResponseEntity<List<LeaveResponse>> getLeavesByFarm(
+                        @PathVariable("farmId") Long farmId,
+                        @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+                        @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+
+                List<LeaveResponse> responses = leaveService.getUserLeavesByFarmInRange(farmId, startDate, endDate)
+                                .stream()
+                                .map(LeaveResponse::from)
+                                .collect(Collectors.toList());
+
+                return ResponseEntity.ok(responses);
+        }
+
+        @GetMapping("/company/{companyCode}")
+        public ResponseEntity<List<LeaveResponse>> getLeavesByCompany(
+                        @PathVariable("companyCode") String companyCode,
+                        @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+                        @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+
+                List<LeaveResponse> responses = leaveService
+                                .getUserLeavesByCompanyInRange(companyCode, startDate, endDate)
+                                .stream()
+                                .map(LeaveResponse::from)
+                                .collect(Collectors.toList());
+
+                return ResponseEntity.ok(responses);
+        }
 }

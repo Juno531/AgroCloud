@@ -35,9 +35,9 @@ const WorkAddModal: React.FC<Props> = ({ isOpen, onClose, farmId }) => {
             EmployeeService.getEmployeesByFarm(farmId)
                 .then(res => {
                     const data = res.data.success ? res.data.data : (Array.isArray(res.data) ? res.data : []);
-                    // REGULAR 고용 유형만 필터링
+                    // FULL_TIME 고용 유형만 필터링
                     const regular = data.filter((e: any) =>
-                        !e.employmentType || e.employmentType === 'REGULAR'
+                        !e.employmentType || e.employmentType === 'FULL_TIME'
                     );
                     setEmployees(regular);
                 })

@@ -41,6 +41,10 @@ public interface AttendanceRepository
 
         void deleteByFarmId(Long farmId);
 
+        @org.springframework.data.jpa.repository.Modifying
+        @org.springframework.transaction.annotation.Transactional
+        void deleteByUserId(Long userId);
+
         // 오늘 특정 companyCode의 CLOCK_IN 레코드 조회 (출근 현황용)
         @EntityGraph(attributePaths = { "user" })
         List<AttendanceRecord> findByCompanyCodeAndTypeAndTimestampBetweenOrderByTimestampDesc(

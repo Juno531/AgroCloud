@@ -22,7 +22,7 @@ public class AdminAttendanceCreateRequest {
     private LocalDateTime timestamp;
 
     @NotBlank(message = "Status is required")
-    private String status; // NORMAL, PENDING, APPROVED, REJECTED
+    private String status; // NORMAL, PENDING, APPROVED, REJECTED, PRESENT, LATE, ABSENT, LEAVE, CLOCK_OUT
 
     private String reason;
 }

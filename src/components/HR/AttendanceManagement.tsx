@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { format, startOfMonth, endOfMonth, getISOWeek, startOfISOWeek, endOfISOWeek, startOfYear, endOfYear } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { Search, Calendar, Filter, MapPin, CalendarDays, Check, Users, UserCheck, UserX } from 'lucide-react';
-import { AttendanceService, EmployeeService } from '../../services/api';
+import { AttendanceService, EmployeeService, LeaveService } from '../../services/api';
 import { useFarm } from '../../context/FarmContext';
 import { useAuth } from '../../context/AuthContext';
 import { EmployeeProfile } from '../../types';
@@ -21,6 +21,14 @@ interface AttendanceResponse {
     reason?: string;
 }
 
+interface LeaveRecordResponse {
+    id: number;
+    userId: number;
+    userName: string;
+    leaveDate: string;
+    reason: string;
+}
+
 const AttendanceManagement = () => {
     const { user } = useAuth();
     const { fields } = useFarm();
@@ -32,6 +40,7 @@ const AttendanceManagement = () => {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [records, setRecords] = useState<AttendanceResponse[]>([]);
     const [employees, setEmployees] = useState<EmployeeProfile[]>([]);
+    const [leaves, setLeaves] = useState<LeaveRecordResponse[]>([]);
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [viewMode, setViewMode] = useState<'daily' | 'weekly' | 'monthly' | 'yearly'>('daily');
@@ -99,21 +108,27 @@ const AttendanceManagement = () => {
             let attendancePromise;
             let employeesPromise;
 
+            let leavesPromise;
+
             if (companyCodeToUse) {
-                attendancePromise = AttendanceService.getCompanyAttendance(companyCodeToUse, startDateStr, endDateStr);
-                employeesPromise = EmployeeService.getEmployeesByCompany(companyCodeToUse);
+                attendancePromise = AttendanceService.getCompanyAttendance(companyCodeToUse as string, startDateStr, endDateStr);
+                employeesPromise = EmployeeService.getEmployeesByCompany(companyCodeToUse as string);
+                leavesPromise = LeaveService.getLeavesByCompany(companyCodeToUse as string, startDateStr.split('T')[0]!, endDateStr.split('T')[0]!);
             } else {
                 attendancePromise = AttendanceService.getFarmAttendance(farmToUse!, startDateStr, endDateStr);
                 employeesPromise = EmployeeService.getEmployeesByFarm(farmToUse!);
+                leavesPromise = LeaveService.getLeavesByFarm(farmToUse!, startDateStr.split('T')[0]!, endDateStr.split('T')[0]!);
             }
 
-            const [attendanceRes, employeesRes] = await Promise.all([
+            const [attendanceRes, employeesRes, leavesRes] = await Promise.all([
                 attendancePromise,
-                employeesPromise
+                employeesPromise,
+                leavesPromise
             ]);
 
             setRecords(Array.isArray(attendanceRes.data) ? attendanceRes.data : []);
             setEmployees(Array.isArray(employeesRes.data) ? employeesRes.data : []);
+            setLeaves(Array.isArray(leavesRes.data) ? leavesRes.data : []);
 
         } catch (error: any) {
             console.error("Failed to fetch attendance data:", error);
@@ -198,6 +213,24 @@ const AttendanceManagement = () => {
         }
     };
 
+    const handleCancelClockOut = async () => {
+        if (!editModal || !editModal.clockOutRecordId) return;
+
+        if (!window.confirm('퇴근 기록을 삭제하시겠습니까? (출근 상태로 변경됩니다)')) {
+            return;
+        }
+
+        try {
+            await AttendanceService.deleteRecord(editModal.clockOutRecordId);
+            alert('퇴근 기록이 삭제되었습니다.');
+            setEditModal(null);
+            fetchData();
+        } catch (error) {
+            console.error("Failed to delete clock out record:", error);
+            alert('퇴근 기록 삭제 중 오류가 발생했습니다.');
+        }
+    };
+
     // Calculate start & end dates based on viewMode
     const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setCurrentDate(new Date(e.target.value));
@@ -223,18 +256,25 @@ const AttendanceManagement = () => {
                     return r.userId === emp.userId && recordDate === dateStr;
                 });
 
+                const userDayLeaves = leaves.filter(l => {
+                    return l.userId === emp.userId && l.leaveDate === dateStr;
+                });
+
                 const d = new Date(dateStr);
+                let clockIn = null;
+                let clockOut = null;
+                let status: 'PRESENT' | 'LATE' | 'ABSENT' | 'LEAVE' | 'CLOCK_OUT' | 'PENDING' | 'REJECTED' | 'APPROVED_CLOCK_IN' | 'APPROVED_CLOCK_OUT' = 'ABSENT';
+                let latestRecord: any = null;
+                let sortedRecords: any[] = [];
+                let weekInfo = `${getISOWeek(d)}주차 (${format(d, 'E', { locale: ko })})`;
+
                 if (userDayRecords.length > 0) {
-                    const sortedRecords = [...userDayRecords].sort(
+                    sortedRecords = [...userDayRecords].sort(
                         (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
                     );
 
-                    const latestRecord = sortedRecords[0]!;
-                    const weekInfo = `${latestRecord.weekNumber || getISOWeek(d)}주차 ${latestRecord.workingDayIndex || 1}일차 (${format(d, 'E', { locale: ko })})`;
-
-                    let clockIn = null;
-                    let clockOut = null;
-                    let status: 'PRESENT' | 'LATE' | 'ABSENT' | 'LEAVE' | 'CLOCK_OUT' = 'ABSENT';
+                    latestRecord = sortedRecords[0]!;
+                    weekInfo = `${latestRecord.weekNumber || getISOWeek(d)}주차 ${latestRecord.workingDayIndex || 1}일차 (${format(d, 'E', { locale: ko })})`;
 
                     if (latestRecord.type === 'CLOCK_IN') {
                         clockIn = latestRecord;
@@ -246,81 +286,55 @@ const AttendanceManagement = () => {
                         status = 'CLOCK_OUT';
                     }
 
-                    // PENDING 처리: 출근 또는 퇴근 중 하나라도 PENDING이면 PENDING 상태로 표시, REJECTED면 REJECTED 표시
+                    // PENDING 처리
                     const isPending = sortedRecords.some(r => r.status === 'PENDING');
                     const isRejected = sortedRecords.some(r => r.status === 'REJECTED');
                     const approvedRecord = sortedRecords.find(r => r.status === 'APPROVED');
 
-                    let recordStatus = status;
-                    if (isPending) recordStatus = 'PENDING' as any;
+                    if (isPending) status = 'PENDING';
                     else if (approvedRecord) {
-                        recordStatus = approvedRecord.type === 'CLOCK_IN' ? ('APPROVED_CLOCK_IN' as any) : ('APPROVED_CLOCK_OUT' as any);
+                        status = approvedRecord.type === 'CLOCK_IN' ? 'APPROVED_CLOCK_IN' : 'APPROVED_CLOCK_OUT';
                     } else if (isRejected) {
-                        recordStatus = 'REJECTED' as any;
+                        status = 'REJECTED';
                     }
-
-                    // 최신 PENDING/REJECTED 레코드의 id를 승인/거절 조작용으로 사용
-                    const pendingOrRejectedRecord = sortedRecords.find(r => r.status === 'PENDING' || r.status === 'REJECTED');
-                    const approvalRecordId = pendingOrRejectedRecord ? pendingOrRejectedRecord.id : latestRecord.id;
-
-                    // 사유 추출: PENDING/REJECTED 레코드의 사유를 우선순위로 표시
-                    // 승인된 기록은 사유를 표시하지 않거나(null), PENDING/REJECTED가 있을 때만 해당 사유를 표시
-                    const actionReason = (pendingOrRejectedRecord && pendingOrRejectedRecord.reason)
-                        ? pendingOrRejectedRecord.reason
-                        : (latestRecord.status === 'PENDING' || latestRecord.status === 'REJECTED' ? latestRecord.reason : null);
-
-                    const clockInFarmName = clockIn ? (fields?.find(f => f.id === clockIn.farmId)?.name || '알 수 없음') : '-';
-                    const clockInFarmId = clockIn ? clockIn.farmId : null;
-                    const clockOutFarmName = clockOut ? (fields?.find(f => f.id === clockOut.farmId)?.name || '알 수 없음') : '-';
-                    const clockOutFarmId = clockOut ? clockOut.farmId : null;
-
-                    return {
-                        id: latestRecord.id || 0,
-                        userId: emp.userId,
-                        userName: emp.name,
-                        date: dateStr,
-                        clockInFarmName,
-                        clockInFarmId,
-                        clockOutFarmName,
-                        clockOutFarmId,
-                        weekInfo,
-                        checkInTime: clockIn ? format(new Date(clockIn.timestamp), 'HH:mm:ss') : null,
-                        checkOutTime: clockOut ? format(new Date(clockOut.timestamp), 'HH:mm:ss') : null,
-                        clockInRecordId: clockIn ? clockIn.id : null,
-                        clockOutRecordId: clockOut ? clockOut.id : null,
-                        status: recordStatus,
-                        reason: actionReason,
-                        recordId: approvalRecordId,
-                        pendingType: pendingOrRejectedRecord ? pendingOrRejectedRecord.type : latestRecord.type,
-                        timestamp: pendingOrRejectedRecord ? pendingOrRejectedRecord.timestamp : latestRecord.timestamp,
-                        workDuration: (clockIn && clockOut)
-                            ? Math.floor((new Date(clockOut.timestamp).getTime() - new Date(clockIn.timestamp).getTime()) / 60000)
-                            : null
-                    };
+                } else if (userDayLeaves.length > 0) {
+                    status = 'LEAVE';
                 }
 
-                const absentWeekInfo = `${getISOWeek(d)}주차 (${format(d, 'E', { locale: ko })})`;
+                const pendingOrRejectedRecord = sortedRecords.find(r => r.status === 'PENDING' || r.status === 'REJECTED');
+                const approvalRecordId = pendingOrRejectedRecord ? pendingOrRejectedRecord.id : (latestRecord ? latestRecord.id : null);
+
+                const actionReason = (pendingOrRejectedRecord && pendingOrRejectedRecord.reason)
+                    ? pendingOrRejectedRecord.reason
+                    : (latestRecord && (latestRecord.status === 'PENDING' || latestRecord.status === 'REJECTED') ? latestRecord.reason : (userDayLeaves[0]?.reason || null));
+
+                const clockInFarmName = clockIn ? (fields?.find(f => f.id === clockIn.farmId)?.name || '알 수 없음') : '-';
+                const clockInFarmId = clockIn ? clockIn.farmId : null;
+                const clockOutFarmName = clockOut ? (fields?.find(f => f.id === clockOut.farmId)?.name || '알 수 없음') : '-';
+                const clockOutFarmId = clockOut ? clockOut.farmId : null;
 
                 return {
-                    id: -(emp.id! || emp.userId! || Math.random()),
+                    id: (latestRecord && latestRecord.id) || -(emp.id! || emp.userId! || Math.random()),
                     userId: emp.userId,
                     userName: emp.name,
                     date: dateStr,
-                    clockInFarmName: '-',
-                    clockInFarmId: null,
-                    clockOutFarmName: '-',
-                    clockOutFarmId: null,
-                    weekInfo: absentWeekInfo,
-                    checkInTime: null,
-                    checkOutTime: null,
-                    clockInRecordId: null,
-                    clockOutRecordId: null,
-                    status: 'ABSENT' as const,
-                    reason: null,
-                    recordId: null,
-                    pendingType: null,
-                    timestamp: null,
-                    workDuration: null
+                    clockInFarmName,
+                    clockInFarmId,
+                    clockOutFarmName,
+                    clockOutFarmId,
+                    weekInfo,
+                    checkInTime: clockIn ? format(new Date(clockIn.timestamp), 'HH:mm:ss') : null,
+                    checkOutTime: clockOut ? format(new Date(clockOut.timestamp), 'HH:mm:ss') : null,
+                    clockInRecordId: clockIn ? clockIn.id : null,
+                    clockOutRecordId: clockOut ? clockOut.id : null,
+                    status: status as any,
+                    reason: actionReason,
+                    recordId: approvalRecordId,
+                    pendingType: pendingOrRejectedRecord ? pendingOrRejectedRecord.type : (latestRecord ? latestRecord.type : null),
+                    timestamp: pendingOrRejectedRecord ? pendingOrRejectedRecord.timestamp : (latestRecord ? latestRecord.timestamp : null),
+                    workDuration: (clockIn && clockOut)
+                        ? Math.floor((new Date(clockOut.timestamp).getTime() - new Date(clockIn.timestamp).getTime()) / 60000)
+                        : null
                 };
             });
         } else {
@@ -366,7 +380,7 @@ const AttendanceManagement = () => {
             const matchStatus = statusFilters.length === 0 || statusFilters.includes(r.status);
             return matchClockIn && matchClockOut && matchStatus;
         });
-    }, [records, employees, viewMode, currentDate, searchTerm, fields, clockInFilters, clockOutFilters, statusFilters, employmentTypeFilters]);
+    }, [records, employees, leaves, viewMode, currentDate, searchTerm, fields, clockInFilters, clockOutFilters, statusFilters, employmentTypeFilters]);
 
     const stats = useMemo(() => {
         const filteredEmployeesCount = employees.filter(emp => {
@@ -709,11 +723,12 @@ const AttendanceManagement = () => {
                                         <div className="flex gap-2">
                                             <button
                                                 onClick={() => {
-                                                    const rawStatus = record.status as string;
-                                                    let normalizedStatus = 'NORMAL';
-                                                    if (rawStatus === 'PENDING') normalizedStatus = 'PENDING';
-                                                    else if (rawStatus === 'REJECTED') normalizedStatus = 'REJECTED';
-                                                    else if (rawStatus.startsWith('APPROVED')) normalizedStatus = 'APPROVED';
+                                                    let normalizedStatus = record.status as string;
+                                                    if (normalizedStatus.startsWith('APPROVED')) {
+                                                        normalizedStatus = normalizedStatus === 'APPROVED_CLOCK_IN' ? 'PRESENT' : 'CLOCK_OUT';
+                                                    } else if (normalizedStatus === 'NORMAL' || normalizedStatus === 'PENDING' || normalizedStatus === 'REJECTED') {
+                                                        normalizedStatus = 'PRESENT';
+                                                    }
 
                                                     setEditModal({
                                                         userId: record.userId!,
@@ -816,11 +831,12 @@ const AttendanceManagement = () => {
                                                         )}
                                                         <button
                                                             onClick={() => {
-                                                                const rawStatus = record.status as string;
-                                                                let normalizedStatus = 'NORMAL';
-                                                                if (rawStatus === 'PENDING') normalizedStatus = 'PENDING';
-                                                                else if (rawStatus === 'REJECTED') normalizedStatus = 'REJECTED';
-                                                                else if (rawStatus.startsWith('APPROVED')) normalizedStatus = 'APPROVED';
+                                                                let normalizedStatus = record.status as string;
+                                                                if (normalizedStatus.startsWith('APPROVED')) {
+                                                                    normalizedStatus = normalizedStatus === 'APPROVED_CLOCK_IN' ? 'PRESENT' : 'CLOCK_OUT';
+                                                                } else if (normalizedStatus === 'NORMAL' || normalizedStatus === 'PENDING' || normalizedStatus === 'REJECTED') {
+                                                                    normalizedStatus = 'PRESENT';
+                                                                }
 
                                                                 setEditModal({
                                                                     userId: record.userId!,
@@ -850,166 +866,174 @@ const AttendanceManagement = () => {
                     )}
                 </div>
 
-                {/* Action Modal with Glassmorphism */}
-                {actionModal && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                        {/* Backdrop */}
-                        <div
-                            className="absolute inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm transition-opacity cursor-pointer"
-                            onClick={() => setActionModal(null)}
-                        ></div>
-
-                        {/* Modal Content */}
-                        <div className="relative w-full max-w-sm bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md rounded-2xl shadow-2xl border border-white/20 dark:border-white/10 overflow-hidden transform transition-all">
-                            <div className="p-6">
-                                {/* Modal Header */}
-                                <div className="flex justify-between items-start mb-5">
-                                    <div>
-                                        <span className={`inline-block px-2.5 py-1 rounded-md text-[10px] font-bold mb-2 ${actionModal.pendingType === 'CLOCK_IN' ? 'bg-emerald-100 text-emerald-700' : 'bg-indigo-100 text-indigo-700'}`}>
-                                            {actionModal.pendingType === 'CLOCK_IN' ? '출근 요청' : '퇴근 요청'}
-                                        </span>
-                                        <h3 className="text-xl font-bold text-slate-900 dark:text-white">
-                                            {actionModal.userName}
-                                        </h3>
-                                    </div>
-                                    <button
-                                        onClick={() => setActionModal(null)}
-                                        className="p-1 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
-                                    >
-                                        ✕
-                                    </button>
-                                </div>
-
-                                {/* Request Details */}
-                                <div className="bg-slate-50/50 dark:bg-black/20 rounded-xl p-4 mb-6 border border-slate-100 dark:border-white/5">
-                                    <div className="mb-3">
-                                        <span className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">요청 시간</span>
-                                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                            {actionModal.timestamp ? format(new Date(actionModal.timestamp), 'yyyy년 MM월 dd일 HH:mm', { locale: ko }) : '-'}
-                                        </span>
-                                    </div>
-                                    <div>
-                                        <span className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">요청 사유</span>
-                                        <p className="text-sm font-medium text-slate-800 dark:text-slate-200 whitespace-pre-wrap">
-                                            {actionModal.reason || '사유 미작성'}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                {/* Actions */}
-                                <div className="flex gap-3">
-                                    <button
-                                        onClick={() => {
-                                            handleStatusUpdate(actionModal.recordId, 'REJECTED', actionModal.pendingType);
-                                            setActionModal(null);
-                                        }}
-                                        className="flex-1 px-4 py-3 rounded-xl font-bold text-sm bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-500/20 hover:bg-rose-100 dark:hover:bg-rose-500/20 transition-all"
-                                    >
-                                        {actionModal.pendingType === 'CLOCK_IN' ? '출근 거절' : '퇴근 거절'}
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            handleStatusUpdate(actionModal.recordId, 'APPROVED', actionModal.pendingType);
-                                            setActionModal(null);
-                                        }}
-                                        className="flex-1 px-4 py-3 rounded-xl font-bold text-sm bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 hover:bg-emerald-600 transition-all"
-                                    >
-                                        {actionModal.pendingType === 'CLOCK_IN' ? '출근 승인' : '퇴근 승인'}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Edit Modal */}
-                {editModal && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                        <div
-                            className="absolute inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm transition-opacity cursor-pointer"
-                            onClick={() => setEditModal(null)}
-                        ></div>
-
-                        <div className="relative w-full max-w-sm bg-white dark:bg-zinc-900 overflow-hidden rounded-2xl shadow-xl transform transition-all border border-slate-200 dark:border-zinc-800">
-                            <div className="px-6 py-5 border-b border-slate-100 dark:border-zinc-800/80 flex justify-between items-center bg-slate-50/50 dark:bg-zinc-800/30">
-                                <div>
-                                    <h3 className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-wider">
-                                        출퇴근 기록 수정
-                                    </h3>
-                                    <p className="text-xs text-slate-500 mt-1">{editModal.userName} - {editModal.date}</p>
-                                </div>
-                                <button
-                                    onClick={() => setEditModal(null)}
-                                    className="p-1 rounded-full text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-colors bg-white dark:bg-zinc-800 shadow-sm border border-slate-200 dark:border-zinc-700"
-                                >
-                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </button>
-                            </div>
-                            <div className="px-6 py-5 space-y-4">
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">출근 시간</label>
-                                    <input
-                                        type="time"
-                                        value={editModal.checkInTime}
-                                        onChange={(e) => setEditModal(prev => prev ? { ...prev, checkInTime: e.target.value } : null)}
-                                        className="w-full px-3 py-2 border border-slate-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-colors"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">퇴근 시간</label>
-                                    <input
-                                        type="time"
-                                        value={editModal.checkOutTime}
-                                        onChange={(e) => setEditModal(prev => prev ? { ...prev, checkOutTime: e.target.value } : null)}
-                                        className="w-full px-3 py-2 border border-slate-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-colors"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">출결 상태</label>
-                                    <select
-                                        value={editModal.status.startsWith('APPROVED') ? 'APPROVED' : editModal.status}
-                                        onChange={(e) => setEditModal(prev => prev ? { ...prev, status: e.target.value } : null)}
-                                        className="w-full px-3 py-2 border border-slate-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-colors"
-                                    >
-                                        <option value="NORMAL">일반</option>
-                                        <option value="PENDING">승인 대기</option>
-                                        <option value="APPROVED">승인됨</option>
-                                        <option value="REJECTED">거절됨</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">사유</label>
-                                    <textarea
-                                        value={editModal.reason}
-                                        onChange={(e) => setEditModal(prev => prev ? { ...prev, reason: e.target.value } : null)}
-                                        className="w-full px-3 py-2 border border-slate-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-colors resize-none"
-                                        rows={3}
-                                        placeholder="사유를 입력하세요"
-                                    />
-                                </div>
-                            </div>
-                            <div className="px-6 py-4 border-t border-slate-100 dark:border-zinc-800/80 bg-slate-50/50 dark:bg-zinc-900/50 flex gap-3">
-                                <button
-                                    onClick={() => setEditModal(null)}
-                                    className="flex-1 px-4 py-2 border border-slate-300 dark:border-zinc-700 text-slate-700 dark:text-slate-300 rounded-lg text-sm font-bold bg-white dark:bg-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-700 transition-colors"
-                                >
-                                    취소
-                                </button>
-                                <button
-                                    onClick={handleSaveEdit}
-                                    className="flex-1 px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold shadow-sm hover:bg-primary/90 transition-all border border-transparent shadow-primary/25 hover:shadow-primary/40"
-                                >
-                                    저장
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
 
             </div>
-            <div></div>
+            {/* Action Modal with Glassmorphism */}
+            {actionModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    {/* Backdrop */}
+                    <div
+                        className="absolute inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm transition-opacity cursor-pointer"
+                        onClick={() => setActionModal(null)}
+                    ></div>
+
+                    {/* Modal Content */}
+                    <div className="relative w-full max-w-sm bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md rounded-2xl shadow-2xl border border-white/20 dark:border-white/10 overflow-hidden transform transition-all">
+                        <div className="p-6">
+                            {/* Modal Header */}
+                            <div className="flex justify-between items-start mb-5">
+                                <div>
+                                    <span className={`inline-block px-2.5 py-1 rounded-md text-[10px] font-bold mb-2 ${actionModal.pendingType === 'CLOCK_IN' ? 'bg-emerald-100 text-emerald-700' : 'bg-indigo-100 text-indigo-700'}`}>
+                                        {actionModal.pendingType === 'CLOCK_IN' ? '출근 요청' : '퇴근 요청'}
+                                    </span>
+                                    <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                                        {actionModal.userName}
+                                    </h3>
+                                </div>
+                                <button
+                                    onClick={() => setActionModal(null)}
+                                    className="p-1 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                                >
+                                    ✕
+                                </button>
+                            </div>
+
+                            {/* Request Details */}
+                            <div className="bg-slate-50/50 dark:bg-black/20 rounded-xl p-4 mb-6 border border-slate-100 dark:border-white/5">
+                                <div className="mb-3">
+                                    <span className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">요청 시간</span>
+                                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                        {actionModal.timestamp ? format(new Date(actionModal.timestamp), 'yyyy년 MM월 dd일 HH:mm', { locale: ko }) : '-'}
+                                    </span>
+                                </div>
+                                <div>
+                                    <span className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">요청 사유</span>
+                                    <p className="text-sm font-medium text-slate-800 dark:text-slate-200 whitespace-pre-wrap">
+                                        {actionModal.reason || '사유 미작성'}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Actions */}
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => {
+                                        handleStatusUpdate(actionModal.recordId, 'REJECTED', actionModal.pendingType);
+                                        setActionModal(null);
+                                    }}
+                                    className="flex-1 px-4 py-3 rounded-xl font-bold text-sm bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-500/20 hover:bg-rose-100 dark:hover:bg-rose-500/20 transition-all"
+                                >
+                                    {actionModal.pendingType === 'CLOCK_IN' ? '출근 거절' : '퇴근 거절'}
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        handleStatusUpdate(actionModal.recordId, 'APPROVED', actionModal.pendingType);
+                                        setActionModal(null);
+                                    }}
+                                    className="flex-1 px-4 py-3 rounded-xl font-bold text-sm bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 hover:bg-emerald-600 transition-all"
+                                >
+                                    {actionModal.pendingType === 'CLOCK_IN' ? '출근 승인' : '퇴근 승인'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit Modal */}
+            {editModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    <div
+                        className="absolute inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm transition-opacity cursor-pointer"
+                        onClick={() => setEditModal(null)}
+                    ></div>
+
+                    <div className="relative w-full max-w-sm bg-white dark:bg-zinc-900 overflow-hidden rounded-2xl shadow-xl transform transition-all border border-slate-200 dark:border-zinc-800">
+                        <div className="px-6 py-5 border-b border-slate-100 dark:border-zinc-800/80 flex justify-between items-center bg-slate-50/50 dark:bg-zinc-800/30">
+                            <div>
+                                <h3 className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-wider">
+                                    출퇴근 기록 수정
+                                </h3>
+                                <p className="text-xs text-slate-500 mt-1">{editModal.userName} - {editModal.date}</p>
+                            </div>
+                            <button
+                                onClick={() => setEditModal(null)}
+                                className="p-1 rounded-full text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-colors bg-white dark:bg-zinc-800 shadow-sm border border-slate-200 dark:border-zinc-700"
+                            >
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div className="px-6 py-5 space-y-4">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">출근 시간</label>
+                                <input
+                                    type="time"
+                                    value={editModal.checkInTime}
+                                    onChange={(e) => setEditModal(prev => prev ? { ...prev, checkInTime: e.target.value } : null)}
+                                    className="w-full px-3 py-2 border border-slate-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-colors"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">퇴근 시간</label>
+                                <input
+                                    type="time"
+                                    value={editModal.checkOutTime}
+                                    onChange={(e) => setEditModal(prev => prev ? { ...prev, checkOutTime: e.target.value } : null)}
+                                    className="w-full px-3 py-2 border border-slate-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-colors"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">출결 상태</label>
+                                <select
+                                    value={editModal.status}
+                                    onChange={(e) => setEditModal(prev => prev ? { ...prev, status: e.target.value } : null)}
+                                    className="w-full px-3 py-2 border border-slate-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-colors"
+                                >
+                                    <option value="PRESENT">정상 출근</option>
+                                    <option value="LATE">지각</option>
+                                    <option value="ABSENT">결근</option>
+                                    <option value="LEAVE">휴가</option>
+                                    <option value="CLOCK_OUT">퇴근 완료</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">사유</label>
+                                <textarea
+                                    value={editModal.reason}
+                                    onChange={(e) => setEditModal(prev => prev ? { ...prev, reason: e.target.value } : null)}
+                                    className="w-full px-3 py-2 border border-slate-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-colors resize-none"
+                                    rows={3}
+                                    placeholder="사유를 입력하세요"
+                                />
+                            </div>
+                        </div>
+                        <div className="px-6 py-4 border-t border-slate-100 dark:border-zinc-800/80 bg-slate-50/50 dark:bg-zinc-900/50 flex flex-wrap gap-2">
+                            <button
+                                onClick={() => setEditModal(null)}
+                                className="flex-1 min-w-[80px] px-4 py-2 border border-slate-300 dark:border-zinc-700 text-slate-700 dark:text-slate-300 rounded-lg text-sm font-bold bg-white dark:bg-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-700 transition-colors"
+                            >
+                                취소
+                            </button>
+                            {editModal.clockOutRecordId && (
+                                <button
+                                    onClick={handleCancelClockOut}
+                                    className="flex-1 min-w-[100px] px-4 py-2 bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-500/20 rounded-lg text-sm font-bold hover:bg-rose-100 dark:hover:bg-rose-500/20 transition-all"
+                                >
+                                    퇴근 취소
+                                </button>
+                            )}
+                            <button
+                                onClick={handleSaveEdit}
+                                className="flex-1 min-w-[80px] px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold shadow-sm hover:bg-primary/90 transition-all border border-transparent shadow-primary/25 hover:shadow-primary/40"
+                            >
+                                저장
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div >
     );
 };

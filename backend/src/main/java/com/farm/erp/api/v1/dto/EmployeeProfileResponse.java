@@ -17,8 +17,10 @@ public class EmployeeProfileResponse {
     private String phone;
     private LocalDate hireDate;
     private String bankAccount;
+    private String bankName; // 추가: 은행명
     private String accountHolder;
     private Integer paymentDate;
+    private String address; // 추가: 거주지
     private BigDecimal hourlyWage;
     private String employeeCode;
     private String password;

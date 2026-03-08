@@ -40,8 +40,14 @@ public class EmployeeProfile {
     @Column(name = "bank_account", length = 50)
     private String bankAccount;
 
+    @Column(name = "bank_name", length = 50)
+    private String bankName; // 추가: 은행명
+
     @Column(name = "account_holder", length = 50)
     private String accountHolder;
+
+    @Column(name = "address", length = 255)
+    private String address; // 추가: 거주지
 
     @Column(name = "payment_date")
     private Integer paymentDate; // 급여 지급일 (1-31)
@@ -72,26 +78,30 @@ public class EmployeeProfile {
 
     @Builder
     public EmployeeProfile(User user, Farm farm, String phone, LocalDate hireDate,
-            String bankAccount, String accountHolder,
+            String bankAccount, String bankName, String accountHolder, String address,
             Integer paymentDate, BigDecimal hourlyWage, String employeeCode, EmploymentType employmentType) {
         this.user = user;
         this.farm = farm;
         this.phone = phone;
         this.hireDate = hireDate;
         this.bankAccount = bankAccount;
+        this.bankName = bankName;
         this.accountHolder = accountHolder;
+        this.address = address;
         this.paymentDate = paymentDate;
         this.hourlyWage = hourlyWage;
         this.employeeCode = employeeCode;
         this.employmentType = employmentType;
     }
 
-    public void updateProfile(String phone, LocalDate hireDate, String bankAccount,
-            String accountHolder, Integer paymentDate, BigDecimal hourlyWage, EmploymentType employmentType) {
+    public void updateProfile(String phone, LocalDate hireDate, String bankAccount, String bankName,
+            String accountHolder, String address, Integer paymentDate, BigDecimal hourlyWage, EmploymentType employmentType) {
         this.phone = phone;
         this.hireDate = hireDate;
         this.bankAccount = bankAccount;
+        this.bankName = bankName;
         this.accountHolder = accountHolder;
+        this.address = address;
         this.paymentDate = paymentDate;
         this.hourlyWage = hourlyWage;
         this.employmentType = employmentType;

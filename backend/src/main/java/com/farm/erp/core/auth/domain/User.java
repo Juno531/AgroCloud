@@ -25,7 +25,7 @@ public class User {
     @Column(nullable = false)
     private String name;
 
-    @ManyToOne(fetch = FetchType.LAZY) // Changed from EAGER to LAZY
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "company_code", referencedColumnName = "code")
     private Company company;
 

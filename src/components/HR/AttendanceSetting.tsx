@@ -230,7 +230,7 @@ const AttendanceSetting: React.FC = () => {
                                         <div className="p-4 bg-primary/5 dark:bg-primary/10 border border-primary/10 dark:border-primary/20 rounded-2xl">
                                             <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
                                                 <Info size={14} className="inline mr-1.5 mb-0.5 text-primary" />
-                                                우측 지도의 <b>초록색 원형 영역</b> 내에서만 출퇴근 인증이 허용됩니다.
+                                                우측 지도의 <b>파란색 원형 영역</b> 내에서만 출퇴근 인증이 허용됩니다.
                                                 <br />정확한 인증을 위해 농장 건물이나 입구를 중심으로 반경을 넉넉히 설정(최소 100~300m 권장)하는 것이 좋습니다.
                                             </p>
                                         </div>

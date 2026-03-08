@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Clock, CheckCircle, XCircle, MapPin, AlertTriangle, RefreshCw, Crosshair, Globe } from 'lucide-react';
+import { Clock, CheckCircle, XCircle, MapPin, AlertTriangle, RefreshCw, Crosshair, Globe, LogOut } from 'lucide-react';
 import { AttendanceService, FarmService } from '../../services/api';
 import { useLayout } from '../../context/LayoutContext';
 import '../../styles/Attendance.css';
@@ -30,6 +30,7 @@ const Attendance = () => {
     const pressTimer = useRef<NodeJS.Timeout | null>(null);
     const [isPressing, setIsPressing] = useState(false);
     const [isReasonModalOpen, setIsReasonModalOpen] = useState(false);
+    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
     const [reasonText, setReasonText] = useState('');
     const [actionType, setActionType] = useState<'CLOCK_IN' | 'CLOCK_OUT' | null>(null);
 
@@ -316,7 +317,10 @@ const Attendance = () => {
             // 짧게 누른경우
             clearTimeout(pressTimer.current);
             pressTimer.current = null;
-            handleAttendance(currentStatus === 'CLOCK_IN' ? 'CLOCK_OUT' : 'CLOCK_IN');
+            // 즉시 실행 대신 확인 모달 띄우기
+            const nextType = currentStatus === 'CLOCK_IN' ? 'CLOCK_OUT' : 'CLOCK_IN';
+            setActionType(nextType);
+            setIsConfirmModalOpen(true);
         }
     };
 
@@ -597,6 +601,44 @@ const Attendance = () => {
                                 className="flex-1 py-3 px-4 rounded-xl font-bold bg-emerald-500 text-white hover:bg-emerald-600 transition-colors shadow-lg shadow-emerald-500/20"
                             >
                                 승인 요청
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* 출퇴근 확인 모달 */}
+            {isConfirmModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 text-center">
+                    <div className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-3xl p-8 shadow-2xl border border-slate-100 dark:border-zinc-800">
+                        <div className={`w-16 h-16 rounded-full mx-auto mb-6 flex items-center justify-center ${actionType === 'CLOCK_IN' ? 'bg-primary/10 text-primary' : 'bg-rose-100 text-rose-600'}`}>
+                            {actionType === 'CLOCK_IN' ? <CheckCircle size={32} /> : <LogOut size={32} />}
+                        </div>
+                        <h3 className="text-xl font-black text-slate-800 dark:text-white mb-2">
+                            {actionType === 'CLOCK_IN' ? '출근하시겠습니까?' : '퇴근하시겠습니까?'}
+                        </h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mb-8">
+                            현재 시간 {currentTime.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} 기준으로<br />
+                            기록이 생성됩니다.
+                        </p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => {
+                                    setIsConfirmModalOpen(false);
+                                    setActionType(null);
+                                }}
+                                className="flex-1 py-4 px-4 rounded-2xl font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-zinc-800 dark:text-slate-400 dark:hover:bg-zinc-700 transition-all active:scale-95"
+                            >
+                                취소
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setIsConfirmModalOpen(false);
+                                    if (actionType) handleAttendance(actionType);
+                                    setActionType(null);
+                                }}
+                                className={`flex-1 py-4 px-4 rounded-2xl font-bold text-white transition-all active:scale-95 shadow-lg ${actionType === 'CLOCK_IN' ? 'bg-primary hover:bg-primary/90 shadow-primary/20' : 'bg-rose-500 hover:bg-rose-600 shadow-rose-500/20'}`}
+                            >
+                                확인
                             </button>
                         </div>
                     </div>

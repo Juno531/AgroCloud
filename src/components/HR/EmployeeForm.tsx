@@ -26,8 +26,10 @@ interface FormData {
     hireDate: string;
     hourlyWage: number;
     bankAccount: string;
+    bankName: string; // 추가
     accountHolder: string;
     paymentDate: number;
+    address: string; // 추가
 }
 
 const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onClose, onSuccess, isInline = false }) => {
@@ -44,8 +46,10 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onClose, onSucces
         hireDate: employee?.hireDate || new Date().toISOString().split('T')[0],
         hourlyWage: employee?.hourlyWage || 10000,
         bankAccount: employee?.bankAccount || '',
+        bankName: employee?.bankName || '', // 추가
         accountHolder: employee?.accountHolder || '',
-        paymentDate: employee?.paymentDate || 25
+        paymentDate: employee?.paymentDate || 25,
+        address: employee?.address || '' // 추가
     });
 
     const [loading, setLoading] = useState(false);
@@ -72,7 +76,9 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onClose, onSucces
                 await EmployeeService.updateEmployee(employee.id, {
                     ...formData,
                     phone: formData.phone,
-                    employmentType: formData.employmentType
+                    employmentType: formData.employmentType,
+                    address: formData.address,
+                    bankName: formData.bankName
                 });
             } else {
                 // Register new
@@ -91,8 +97,10 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onClose, onSucces
                     hireDate: formData.role === 'USER' ? formData.hireDate : null,
                     hourlyWage: formData.role === 'USER' ? formData.hourlyWage : null,
                     bankAccount: formData.role === 'USER' ? formData.bankAccount : null,
+                    bankName: formData.role === 'USER' ? formData.bankName : null,
                     accountHolder: formData.role === 'USER' ? formData.accountHolder : null,
                     paymentDate: formData.role === 'USER' ? formData.paymentDate : null,
+                    address: formData.address, // 주소는 관리자도 입력 가능하도록 처리 (또는 필요에 따라 조건부)
                     companyId: user?.companyId,
                     companyCode: user?.companyCode
                 };
@@ -179,7 +187,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onClose, onSucces
                     <div style={{
                         flex: 1,
                         overflowY: 'auto',
-                        padding: isMobile ? '1rem' : 'var(--spacing-lg)',
+                        padding: isMobile ? '0.75rem' : 'var(--spacing-lg)',
                         WebkitOverflowScrolling: 'touch'
                     }}>
                         {error && (
@@ -305,7 +313,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onClose, onSucces
                                                 />
                                             </div>
                                         </div>
-                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '1rem' }}>
                                             <div>
                                                 <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>비밀번호 *</label>
                                                 <div style={{ position: 'relative' }}>
@@ -371,9 +379,23 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onClose, onSucces
                                 </div>
                             </div>
 
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>거주지 (거소)</label>
+                                <div style={{ position: 'relative' }}>
+                                    <input
+                                        type="text"
+                                        name="address"
+                                        value={formData.address}
+                                        onChange={handleChange}
+                                        placeholder="서울시 강남구..."
+                                        style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}
+                                    />
+                                </div>
+                            </div>
+
                             {formData.role === 'USER' && (
                                 <>
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '1rem' }}>
                                         <div>
                                             <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>입사일 *</label>
                                             <div style={{ position: 'relative' }}>
@@ -405,7 +427,19 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onClose, onSucces
                                         </div>
                                     </div>
 
-                                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem' }}>
+                                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 2fr 1fr', gap: '1rem' }}>
+                                        <div>
+                                            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>은행명 *</label>
+                                            <input
+                                                type="text"
+                                                name="bankName"
+                                                value={formData.bankName}
+                                                onChange={handleChange}
+                                                required={formData.role === 'USER'}
+                                                placeholder="농협"
+                                                style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}
+                                            />
+                                        </div>
                                         <div>
                                             <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>계좌번호 *</label>
                                             <div style={{ position: 'relative' }}>

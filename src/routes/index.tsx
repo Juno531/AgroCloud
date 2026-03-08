@@ -20,6 +20,10 @@ const MyAttendance = lazy(() => import('../pages/HR/MyAttendance'));
 const MyLeave = lazy(() => import('../pages/HR/MyLeave'));
 const AttendanceExport = lazy(() => import('../components/HR/AttendanceExport'));
 
+const BoardList = lazy(() => import('../pages/Community/Board/BoardList'));
+const BoardDetail = lazy(() => import('../pages/Community/Board/BoardDetail'));
+const BoardForm = lazy(() => import('../pages/Community/Board/BoardForm'));
+
 // Loading fallback component
 const PageLoader = () => (
     <div className="flex items-center justify-center w-full h-full min-h-[50vh]">
@@ -106,6 +110,10 @@ export const router = createBrowserRouter([
                             { path: '/attendance', element: <SuspenseWrapper><Attendance /></SuspenseWrapper> },
                             { path: '/hr/my-attendance', element: <SuspenseWrapper><MyAttendance /></SuspenseWrapper> },
                             { path: '/hr/my-leave', element: <SuspenseWrapper><MyLeave /></SuspenseWrapper> },
+                            { path: '/board', element: <SuspenseWrapper><BoardList /></SuspenseWrapper> },
+                            { path: '/board/write', element: <SuspenseWrapper><BoardForm /></SuspenseWrapper> },
+                            { path: '/board/:id', element: <SuspenseWrapper><BoardDetail /></SuspenseWrapper> },
+                            { path: '/board/:id/edit', element: <SuspenseWrapper><BoardForm /></SuspenseWrapper> },
                         ]
                     }
                 ]

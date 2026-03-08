@@ -88,8 +88,11 @@ public class AttendanceExcelService {
             if (Boolean.TRUE.equals(request.getIncludeLeaves()) && request.getStartDate() != null
                     && request.getEndDate() != null) {
                 if (request.getCompanyCode() != null) {
-                    allLeaves = leaveRepository.findByCompanyCodeAndDateBetween(request.getCompanyCode(),
-                            request.getStartDate().toLocalDate(), request.getEndDate().toLocalDate());
+                    allLeaves = leaveRepository.findByLeaveDateBetween(
+                            request.getStartDate().toLocalDate(), request.getEndDate().toLocalDate()).stream()
+                            .filter(l -> l.getUser().getCompany() != null
+                                    && l.getUser().getCompany().getCode().equals(request.getCompanyCode()))
+                            .collect(Collectors.toList());
                 }
                 if (request.getUserIds() != null && !request.getUserIds().isEmpty()) {
                     List<Long> uids = request.getUserIds();

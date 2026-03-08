@@ -83,6 +83,12 @@ public class AttendanceController {
         return ResponseEntity.ok(AttendanceResponse.from(updatedRecord));
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteAttendanceRecord(@PathVariable("id") Long id) {
+        attendanceService.deleteAttendanceRecord(id);
+        return ResponseEntity.ok().build();
+    }
+
     @PostMapping("/admin/record")
     public ResponseEntity<AttendanceResponse> createAdminRecord(
             @Valid @RequestBody AdminAttendanceCreateRequest request) {

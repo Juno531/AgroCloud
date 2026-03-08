@@ -1,0 +1,1 @@
+{"success":false,"code":"1001","message":"Cannot invoke \"com.farm.erp.core.auth.domain.User.getCompany()\" because \"user\" is null","timestamp":"2026-03-07T14:04:15.853418075"}

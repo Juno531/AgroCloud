@@ -32,8 +32,10 @@ public class EmployeeRegistrationRequest {
     private LocalDate hireDate;
     private Long hourlyWage;
     private String bankAccount;
+    private String bankName; // 추가: 은행명
     private String accountHolder;
     private Integer paymentDate;
+    private String address; // 추가: 거주지
 
     @jakarta.validation.constraints.NotNull(message = "Employment type is required")
     private EmploymentType employmentType; // 정규직/비정규직(알바)

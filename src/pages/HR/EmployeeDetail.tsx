@@ -113,13 +113,15 @@ const EmployeeDetail = () => {
     }
 
     return (
-        <div style={{ maxWidth: '1000px', margin: '0 auto', paddingBottom: '4rem' }}>
+        <div style={{ maxWidth: '1000px', margin: '0', padding: isMobile ? '0 1rem 4rem' : '0 2rem 4rem' }}>
             {/* Navigation Header */}
             <div style={{
                 marginBottom: '2rem',
                 display: 'flex',
+                flexDirection: isMobile ? 'column' : 'row',
                 justifyContent: 'space-between',
-                alignItems: 'center'
+                alignItems: isMobile ? 'flex-start' : 'center',
+                gap: isMobile ? '1rem' : '0'
             }}>
                 <button
                     onClick={() => navigate('/hr/employees')}
@@ -143,15 +145,17 @@ const EmployeeDetail = () => {
                 </button>
 
                 {!isEditMode && (
-                    <div style={{ display: 'flex', gap: '0.75rem' }}>
+                    <div style={{ display: 'flex', gap: '0.75rem', width: isMobile ? '100%' : 'auto' }}>
                         <button
                             onClick={() => setIsEditMode(true)}
                             className="btn btn-outline"
                             style={{
                                 display: 'flex',
                                 alignItems: 'center',
+                                justifyContent: 'center',
                                 gap: '0.5rem',
-                                padding: '0.5rem 1rem'
+                                padding: '0.5rem 1rem',
+                                flex: isMobile ? 1 : 'none'
                             }}
                         >
                             <Edit size={16} />
@@ -163,10 +167,12 @@ const EmployeeDetail = () => {
                             style={{
                                 display: 'flex',
                                 alignItems: 'center',
+                                justifyContent: 'center',
                                 gap: '0.5rem',
                                 padding: '0.5rem 1rem',
                                 color: 'var(--color-danger)',
-                                borderColor: 'var(--color-danger)'
+                                borderColor: 'var(--color-danger)',
+                                flex: isMobile ? 1 : 'none'
                             }}
                         >
                             <Trash2 size={16} />
@@ -195,33 +201,46 @@ const EmployeeDetail = () => {
                     {/* Profile Summary Card */}
                     <div style={{
                         backgroundColor: 'var(--color-surface)',
-                        padding: '2.5rem',
+                        padding: isMobile ? '1.25rem' : '2.5rem',
                         borderRadius: 'var(--radius-xl)',
                         boxShadow: 'var(--shadow-md)',
                         marginBottom: '2rem',
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: '2rem'
+                        gap: isMobile ? '1.25rem' : '2rem'
                     }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '2rem', flexWrap: 'wrap' }}>
+                        <div style={{
+                            display: 'flex',
+                            flexDirection: isMobile ? 'column' : 'row',
+                            alignItems: isMobile ? 'center' : 'center',
+                            textAlign: isMobile ? 'center' : 'left',
+                            gap: isMobile ? '1rem' : '2rem',
+                            flexWrap: 'wrap'
+                        }}>
                             <div style={{
-                                width: '120px',
-                                height: '120px',
+                                width: isMobile ? '100px' : '120px',
+                                height: isMobile ? '100px' : '120px',
                                 borderRadius: 'var(--radius-lg)',
                                 backgroundColor: (employee.role === 'ADMIN' || employee.role === 'MASTER_ADMIN') ? 'var(--color-warning)' : 'var(--color-primary)',
                                 color: 'white',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                fontSize: '3rem',
+                                fontSize: isMobile ? '2.5rem' : '3rem',
                                 fontWeight: 700,
                                 boxShadow: '0 8px 16px -4px rgba(0,0,0,0.1)'
                             }}>
                                 {employee.name ? employee.name.charAt(0) : '?'}
                             </div>
-                            <div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
-                                    <h1 style={{ fontSize: '2.25rem', fontWeight: 700, margin: 0 }}>{employee.name}</h1>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: isMobile ? 'center' : 'flex-start' }}>
+                                <div style={{
+                                    display: 'flex',
+                                    flexDirection: isMobile ? 'column' : 'row',
+                                    alignItems: 'center',
+                                    gap: isMobile ? '0.5rem' : '1rem',
+                                    marginBottom: '0.5rem'
+                                }}>
+                                    <h1 style={{ fontSize: isMobile ? '1.75rem' : '2.25rem', fontWeight: 700, margin: 0 }}>{employee.name}</h1>
                                     <span style={{
                                         padding: '0.25rem 0.75rem',
                                         borderRadius: 'var(--radius-full)',
@@ -230,18 +249,16 @@ const EmployeeDetail = () => {
                                         fontSize: '0.875rem',
                                         fontWeight: 600
                                     }}>
-                                        {employee.employmentType === 'PART_TIME' ? '비정규직(알바)' : '정규직'}
+                                        {employee.employmentType === 'PART_TIME' ? '비정규직' : '정규직'}
                                     </span>
                                 </div>
-                                <p style={{ color: 'var(--color-text-secondary)', fontSize: '1.125rem', margin: 0 }}>
-                                    {(employee.role === 'ADMIN' || employee.role === 'MASTER_ADMIN') ? '팜 관리자(ADMIN)' : '현장 작업자(USER)'}
-                                </p>
+
                             </div>
                         </div>
                     </div>
 
                     {/* Detailed Information Grid */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '2rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(450px, 1fr))', gap: '2rem' }}>
                         {/* Basic Info */}
                         <div className="card">
                             <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem', fontSize: '1.25rem' }}>
@@ -252,7 +269,7 @@ const EmployeeDetail = () => {
                                 <InfoItem label="이메일" value={employee.email} icon={<Mail size={16} />} />
                                 <InfoItem label="연락처" value={employee.phone} icon={<Phone size={16} />} />
                                 <InfoItem label="입사일" value={formatDate(employee.hireDate)} icon={<Calendar size={16} />} />
-                                <InfoItem label="직급" value={(employee.role === 'ADMIN' || employee.role === 'MASTER_ADMIN') ? '관리자' : '일반'} icon={<Briefcase size={16} />} />
+                                <InfoItem label="권한" value={(employee.role === 'ADMIN' || employee.role === 'MASTER_ADMIN') ? '관리자' : '일반'} icon={<Briefcase size={16} />} />
                                 <InfoItem label="거주지" value={employee.address || '미등록'} icon={<MapPin size={16} />} />
                             </div>
                         </div>
@@ -282,7 +299,7 @@ const EmployeeDetail = () => {
                         <div className="card" style={{ gridColumn: isMobile ? 'auto' : '1 / -1' }}>
                             <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem', fontSize: '1.25rem' }}>
                                 <DollarSign size={20} className="text-primary" />
-                                급여 및 결제 정보
+                                급여 정보
                             </h3>
                             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(200px, 1fr))', gap: '2rem' }}>
                                 <div style={{
@@ -304,7 +321,7 @@ const EmployeeDetail = () => {
                                     <p style={{ fontSize: '1.5rem', fontWeight: 700 }}>매월 {employee.paymentDate}일</p>
                                 </div>
                                 <div style={{ flex: 1 }}>
-                                    <div className="info-grid" style={{ height: '100%', justifyContent: 'center' }}>
+                                    <div className="info-grid" style={{ height: '100%', justifyContent: 'center', marginTop: isMobile ? '1rem' : 0 }}>
                                         <InfoItem label="은행" value={employee.bankAccount?.split(' ')[0] || '미등록'} icon={<CreditCard size={16} />} />
                                         <InfoItem label="계좌번호" value={employee.bankAccount || '미등록'} />
                                         <InfoItem label="예금주" value={employee.accountHolder || '미등록'} />
@@ -319,7 +336,7 @@ const EmployeeDetail = () => {
             <style>{`
                 .card {
                     background-color: var(--color-surface);
-                    padding: 2rem;
+                    padding: ${isMobile ? '1.25rem' : '2rem'};
                     borderRadius: var(--radius-lg);
                     box-shadow: var(--shadow-sm);
                     border: 1px solid var(--color-border);

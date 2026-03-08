@@ -24,6 +24,9 @@ public enum ErrorCode {
     FARM_ALREADY_EXISTS("2002", "Farm already exists", HttpStatus.CONFLICT),
     FARM_NAME_REQUIRED("2003", "Farm name is required", HttpStatus.BAD_REQUEST),
     
+    // Board Domain Errors (8xxx)
+    BOARD_NOT_FOUND("8001", "Board post not found", HttpStatus.NOT_FOUND),
+    
     // Inventory Domain Errors (3xxx)
     INVENTORY_NOT_FOUND("3001", "Inventory not found", HttpStatus.NOT_FOUND),
     INSUFFICIENT_STOCK("3002", "Insufficient stock", HttpStatus.BAD_REQUEST),

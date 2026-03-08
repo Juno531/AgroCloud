@@ -13,7 +13,7 @@ const LayoutContent: React.FC<LayoutProps> = ({ children }) => {
     const location = useLocation();
 
     return (
-        <div className="flex h-screen overflow-hidden bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-100 font-display">
+        <div className="flex h-screen h-[100dvh] overflow-hidden bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-100 font-display">
             <Sidebar />
             <main className="flex-1 flex flex-col overflow-hidden w-full relative">
                 <Header />
@@ -22,8 +22,8 @@ const LayoutContent: React.FC<LayoutProps> = ({ children }) => {
                         {children ? children : <Outlet />}
                     </PageContainer>
                 </div>
-                <BottomNav />
             </main>
+            <BottomNav />
         </div>
     );
 };

@@ -208,6 +208,14 @@ public class AttendanceService {
         }
 
         @Transactional
+        public void deleteAttendanceRecord(Long id) {
+                if (!attendanceRepository.existsById(id)) {
+                        throw new IllegalArgumentException("Attendance record not found");
+                }
+                attendanceRepository.deleteById(id);
+        }
+
+        @Transactional
         public AttendanceRecord adminCreateRecord(Long userId, String typeStr, LocalDateTime timestamp,
                         String statusStr, String reason) {
                 User user = userRepository.findById(userId)
@@ -358,7 +366,10 @@ public class AttendanceService {
 
                 // 해당 월 휴무 기록
                 List<com.farm.erp.core.attendance.domain.LeaveRecord> leaveRecords = leaveRepository
-                                .findByCompanyCodeAndDateBetween(companyCode, startDate, endDate);
+                                .findByLeaveDateBetween(startDate, endDate).stream()
+                                .filter(l -> l.getUser().getCompany() != null
+                                                && l.getUser().getCompany().getCode().equals(companyCode))
+                                .collect(Collectors.toList());
 
                 Map<LocalDate, Map<Long, String>> leavesByDate = new LinkedHashMap<>();
                 Map<LocalDate, Map<Long, String>> leaveReasonsByDate = new LinkedHashMap<>();

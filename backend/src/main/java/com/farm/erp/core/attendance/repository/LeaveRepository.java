@@ -26,7 +26,9 @@ public interface LeaveRepository extends JpaRepository<LeaveRecord, Long> {
 
         void deleteByUserIdAndLeaveDate(Long userId, LocalDate leaveDate);
 
-        @Query("SELECT l FROM LeaveRecord l JOIN FETCH l.user u WHERE u.company.code = :companyCode AND l.leaveDate BETWEEN :startDate AND :endDate")
-        List<LeaveRecord> findByCompanyCodeAndDateBetween(@Param("companyCode") String companyCode,
-                        @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+        @org.springframework.data.jpa.repository.Modifying
+        @org.springframework.transaction.annotation.Transactional
+        void deleteByUserId(Long userId);
+
+        List<LeaveRecord> findByLeaveDateBetween(LocalDate startDate, LocalDate endDate);
 }

@@ -94,6 +94,7 @@ public class AttendanceRecord {
     }
 
     public enum RecordStatus {
-        NORMAL, PENDING, APPROVED, REJECTED
+        NORMAL, PENDING, APPROVED, REJECTED,
+        PRESENT, LATE, ABSENT, LEAVE, CLOCK_OUT
     }
 }

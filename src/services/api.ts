@@ -133,6 +133,7 @@ export const AttendanceService = {
     updateStatus: (id: number, status: string, reason?: string) => api.patch(`/attendance/${id}/status`, { status, reason }),
     updateRecord: (id: number, data: { timestamp?: string; status?: string; reason?: string }) => api.put(`/attendance/${id}`, data),
     createAdminRecord: (data: { userId: number; type: string; timestamp: string; status: string; reason?: string }) => api.post('/attendance/admin/record', data),
+    deleteRecord: (id: number) => api.delete(`/attendance/${id}`),
 };
 
 export const LeaveService = {
@@ -143,6 +144,8 @@ export const LeaveService = {
     requestLeave: (data: any) => api.post('/leaves/request', data),
     getLeaveRecords: (userId: number) => api.get(`/leaves/user/${userId}`),
     getPendingLeaves: (farmId: number) => api.get(`/leaves/farm/${farmId}/pending`),
+    getLeavesByFarm: (farmId: number, startDate: string, endDate: string) => api.get(`/leaves/farm/${farmId}`, { params: { startDate, endDate } }),
+    getLeavesByCompany: (companyCode: string, startDate: string, endDate: string) => api.get(`/leaves/company/${companyCode}`, { params: { startDate, endDate } }),
     updateLeaveStatus: (id: number, status: string) => api.patch(`/leaves/${id}/status`, null, { params: { status } }),
 };
 

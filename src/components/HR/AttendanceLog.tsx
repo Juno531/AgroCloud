@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { format, startOfMonth, endOfMonth, getISOWeek, startOfISOWeek, endOfISOWeek, startOfYear, endOfYear } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { Search, Download, Users, UserCheck, UserX, Calendar, Filter, MapPin, CalendarDays, Check } from 'lucide-react';
-import { AttendanceService, EmployeeService } from '../../services/api';
+import { AttendanceService, EmployeeService, LeaveService } from '../../services/api';
 import { useFarm } from '../../context/FarmContext';
 import { useAuth } from '../../context/AuthContext';
 import { EmployeeProfile } from '../../types';
@@ -20,6 +20,14 @@ interface AttendanceResponse {
     workingDayIndex: number;
 }
 
+interface LeaveRecordResponse {
+    id: number;
+    userId: number;
+    userName: string;
+    leaveDate: string;
+    reason: string;
+}
+
 const AttendanceLog = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
@@ -32,6 +40,7 @@ const AttendanceLog = () => {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [records, setRecords] = useState<AttendanceResponse[]>([]);
     const [employees, setEmployees] = useState<EmployeeProfile[]>([]);
+    const [leaves, setLeaves] = useState<LeaveRecordResponse[]>([]);
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [viewMode, setViewMode] = useState<'daily' | 'weekly' | 'monthly' | 'yearly'>('daily');
@@ -87,21 +96,27 @@ const AttendanceLog = () => {
             let attendancePromise;
             let employeesPromise;
 
+            let leavesPromise;
+
             if (companyCodeToUse) {
-                attendancePromise = AttendanceService.getCompanyAttendance(companyCodeToUse, startDateStr, endDateStr);
-                employeesPromise = EmployeeService.getEmployeesByCompany(companyCodeToUse);
+                attendancePromise = AttendanceService.getCompanyAttendance(companyCodeToUse as string, startDateStr, endDateStr);
+                employeesPromise = EmployeeService.getEmployeesByCompany(companyCodeToUse as string);
+                leavesPromise = LeaveService.getLeavesByCompany(companyCodeToUse as string, startDateStr.split('T')[0]!, endDateStr.split('T')[0]!);
             } else {
                 attendancePromise = AttendanceService.getFarmAttendance(farmToUse!, startDateStr, endDateStr);
                 employeesPromise = EmployeeService.getEmployeesByFarm(farmToUse!);
+                leavesPromise = LeaveService.getLeavesByFarm(farmToUse!, startDateStr.split('T')[0]!, endDateStr.split('T')[0]!);
             }
 
-            const [attendanceRes, employeesRes] = await Promise.all([
+            const [attendanceRes, employeesRes, leavesRes] = await Promise.all([
                 attendancePromise,
-                employeesPromise
+                employeesPromise,
+                leavesPromise
             ]);
 
             setRecords(Array.isArray(attendanceRes.data) ? attendanceRes.data : []);
             setEmployees(Array.isArray(employeesRes.data) ? employeesRes.data : []);
+            setLeaves(Array.isArray(leavesRes.data) ? leavesRes.data : []);
 
         } catch (error: any) {
             console.error("Failed to fetch attendance data:", error);
@@ -137,78 +152,58 @@ const AttendanceLog = () => {
 
         if (viewMode === 'daily') {
             result = filteredEmployees.map(emp => {
-                // 해당 직원의 해당 날짜 기록들을 찾음
                 const userDayRecords = records.filter(r => {
                     const recordDate = format(new Date(r.timestamp), 'yyyy-MM-dd');
                     return r.userId === emp.userId && recordDate === dateStr;
                 });
 
+                const userDayLeaves = leaves.filter(l => {
+                    return l.userId === emp.userId && l.leaveDate === dateStr;
+                });
+
                 const d = new Date(dateStr);
+                let clockIn = null;
+                let clockOut = null;
+                let status: 'PRESENT' | 'LATE' | 'ABSENT' | 'LEAVE' | 'CLOCK_OUT' = 'ABSENT';
+                let latestRecord: any = null;
+                let weekInfo = `${getISOWeek(d)}주차 (${format(d, 'E', { locale: ko })})`;
+
                 if (userDayRecords.length > 0) {
-                    // 시간 역순 정렬 (최신순)
                     const sortedRecords = [...userDayRecords].sort(
                         (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
                     );
-
-                    const latestRecord = sortedRecords[0]!;
-                    const weekInfo = `${latestRecord.weekNumber || getISOWeek(d)}주차 ${latestRecord.workingDayIndex || 1}일차 (${format(d, 'E', { locale: ko })})`;
-
-                    let clockIn = null;
-                    let clockOut = null;
-                    let status: 'PRESENT' | 'LATE' | 'ABSENT' | 'LEAVE' | 'CLOCK_OUT' = 'ABSENT';
+                    latestRecord = sortedRecords[0]!;
+                    weekInfo = `${latestRecord.weekNumber || getISOWeek(d)}주차 ${latestRecord.workingDayIndex || 1}일차 (${format(d, 'E', { locale: ko })})`;
 
                     if (latestRecord.type === 'CLOCK_IN') {
-                        // 최신 기록이 출근이면: 퇴근은 아직 안 함 (표시 초기화)
                         clockIn = latestRecord;
                         clockOut = null;
                         status = 'PRESENT';
                     } else {
-                        // 최신 기록이 퇴근이면: 해당 퇴근과 매칭되는 가장 최근 출근 찾기
                         clockOut = latestRecord;
                         clockIn = sortedRecords.find(r => r.type === 'CLOCK_IN');
                         status = 'CLOCK_OUT';
                     }
-
-                    const clockInFarmName = clockIn ? (fields?.find(f => f.id === clockIn.farmId)?.name || '알 수 없음') : '-';
-                    const clockInFarmId = clockIn ? clockIn.farmId : null;
-                    const clockOutFarmName = clockOut ? (fields?.find(f => f.id === clockOut.farmId)?.name || '알 수 없음') : '-';
-                    const clockOutFarmId = clockOut ? clockOut.farmId : null;
-
-                    return {
-                        id: latestRecord.id || 0,
-                        userId: emp.userId,
-                        userName: emp.name,
-                        date: dateStr,
-                        clockInFarmName,
-                        clockInFarmId,
-                        clockOutFarmName,
-                        clockOutFarmId,
-                        weekInfo,
-                        checkInTime: clockIn ? format(new Date(clockIn.timestamp), 'HH:mm:ss') : null,
-                        checkOutTime: clockOut ? format(new Date(clockOut.timestamp), 'HH:mm:ss') : null,
-                        status: status,
-                        workDuration: (clockIn && clockOut)
-                            ? Math.floor((new Date(clockOut.timestamp).getTime() - new Date(clockIn.timestamp).getTime()) / 60000)
-                            : null
-                    };
+                } else if (userDayLeaves.length > 0) {
+                    status = 'LEAVE';
                 }
 
-                const absentWeekInfo = `${getISOWeek(d)}주차 (${format(d, 'E', { locale: ko })})`;
-
                 return {
-                    id: -(emp.id! || emp.userId! || Math.random()),
+                    id: (latestRecord && latestRecord.id) || -(emp.id! || emp.userId! || Math.random()),
                     userId: emp.userId,
                     userName: emp.name,
                     date: dateStr,
-                    clockInFarmName: '-',
-                    clockInFarmId: null,
-                    clockOutFarmName: '-',
-                    clockOutFarmId: null,
-                    weekInfo: absentWeekInfo,
-                    checkInTime: null,
-                    checkOutTime: null,
-                    status: 'ABSENT' as const,
-                    workDuration: null
+                    clockInFarmName: clockIn ? (fields?.find(f => f.id === clockIn.farmId)?.name || '알 수 없음') : '-',
+                    clockInFarmId: clockIn ? clockIn.farmId : null,
+                    clockOutFarmName: clockOut ? (fields?.find(f => f.id === clockOut.farmId)?.name || '알 수 없음') : '-',
+                    clockOutFarmId: clockOut ? clockOut.farmId : null,
+                    weekInfo,
+                    checkInTime: clockIn ? format(new Date(clockIn.timestamp), 'HH:mm:ss') : null,
+                    checkOutTime: clockOut ? format(new Date(clockOut.timestamp), 'HH:mm:ss') : null,
+                    status: status as any,
+                    workDuration: (clockIn && clockOut)
+                        ? Math.floor((new Date(clockOut.timestamp).getTime() - new Date(clockIn.timestamp).getTime()) / 60000)
+                        : null
                 };
             });
         } else {
@@ -250,7 +245,7 @@ const AttendanceLog = () => {
             const matchStatus = statusFilters.length === 0 || statusFilters.includes(r.status);
             return matchClockIn && matchClockOut && matchStatus;
         });
-    }, [records, employees, viewMode, currentDate, searchTerm, fields, clockInFilters, clockOutFilters, statusFilters, employmentTypeFilters]);
+    }, [records, employees, leaves, viewMode, currentDate, searchTerm, fields, clockInFilters, clockOutFilters, statusFilters, employmentTypeFilters]);
 
     const stats = useMemo(() => {
         const filteredEmployeesCount = employees.filter(emp => {
@@ -264,7 +259,7 @@ const AttendanceLog = () => {
         let leave = 0;
 
         if (viewMode === 'daily') {
-            present = processedData.filter(r => r.status === 'PRESENT' || r.status === 'LATE').length;
+            present = processedData.filter(r => r.status === 'PRESENT' || r.status === 'LATE' || r.status === 'CLOCK_OUT').length;
             leave = processedData.filter(r => r.status === 'ABSENT' || r.status === 'LEAVE').length;
         } else {
             const activeUserIds = new Set(processedData.map(r => r.userId));
@@ -278,10 +273,14 @@ const AttendanceLog = () => {
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'PRESENT': return 'bg-green-100 text-green-700';
+            case 'APPROVED_CLOCK_IN': return 'bg-emerald-50 text-emerald-700 border border-emerald-200';
             case 'LATE': return 'bg-yellow-100 text-yellow-700';
             case 'ABSENT': return 'bg-red-100 text-red-700';
             case 'LEAVE': return 'bg-blue-100 text-blue-700';
             case 'CLOCK_OUT': return 'bg-indigo-100 text-indigo-700';
+            case 'APPROVED_CLOCK_OUT': return 'bg-indigo-50 text-indigo-700 border border-indigo-200';
+            case 'PENDING': return 'bg-orange-100 text-orange-700';
+            case 'REJECTED': return 'bg-rose-100 text-rose-700';
             default: return 'bg-gray-100 text-gray-700';
         }
     };
@@ -289,10 +288,14 @@ const AttendanceLog = () => {
     const getStatusText = (status: string) => {
         switch (status) {
             case 'PRESENT': return '정상 출근';
+            case 'APPROVED_CLOCK_IN': return '정상 출근 (승인됨)';
             case 'LATE': return '지각';
             case 'ABSENT': return '결근';
-            case 'LEAVE': return '휴가';
+            case 'LEAVE': return '휴무';
             case 'CLOCK_OUT': return '퇴근 완료';
+            case 'APPROVED_CLOCK_OUT': return '정상 퇴근 (승인됨)';
+            case 'PENDING': return '승인 대기';
+            case 'REJECTED': return '승인 거절';
             default: return '미확인';
         }
     };

@@ -23,6 +23,10 @@ public class EmployeeService {
         private final EmployeeProfileRepository employeeProfileRepository;
         private final UserRepository userRepository;
         private final PasswordEncoder passwordEncoder;
+        private final com.farm.erp.core.attendance.repository.AttendanceRepository attendanceRepository;
+        private final com.farm.erp.core.attendance.repository.LeaveRepository leaveRepository;
+        private final com.farm.erp.core.board.repository.BoardRepository boardRepository;
+        private final com.farm.erp.core.auth.repository.RefreshTokenRepository refreshTokenRepository;
 
         @Transactional(readOnly = true)
         public List<EmployeeProfileResponse> getAllEmployees() {
@@ -83,7 +87,9 @@ public class EmployeeService {
                                 .phone(request.getPhoneNumber())
                                 .hireDate(request.getHireDate())
                                 .bankAccount(request.getBankAccount())
+                                .bankName(request.getBankName()) // 추가
                                 .accountHolder(request.getAccountHolder())
+                                .address(request.getAddress()) // 추가
                                 .paymentDate(request.getPaymentDate())
                                 .hourlyWage(
                                                 java.math.BigDecimal.valueOf(request.getHourlyWage() != null
@@ -107,7 +113,9 @@ public class EmployeeService {
                                 request.getPhone(),
                                 request.getHireDate(),
                                 request.getBankAccount(),
+                                request.getBankName(), // 추가
                                 request.getAccountHolder(),
+                                request.getAddress(), // 추가
                                 request.getPaymentDate(),
                                 request.getHourlyWage(),
                                 request.getEmploymentType());
@@ -126,6 +134,15 @@ public class EmployeeService {
                                 .orElseThrow(() -> new RuntimeException("Employee profile not found"));
 
                 User user = profile.getUser();
+                Long userId = user.getId();
+
+                // 1. 연관 데이터 선제 삭제 (외래 키 제약 해결)
+                attendanceRepository.deleteByUserId(userId);
+                leaveRepository.deleteByUserId(userId);
+                boardRepository.deleteByAuthorId(userId);
+                refreshTokenRepository.deleteByUser(user);
+
+                // 2. 프로필 및 사용자 삭제
                 employeeProfileRepository.delete(profile);
                 userRepository.delete(user);
         }
@@ -139,7 +156,9 @@ public class EmployeeService {
                                 .phone(profile.getPhone())
                                 .hireDate(profile.getHireDate())
                                 .bankAccount(profile.getBankAccount())
+                                .bankName(profile.getBankName()) // 추가
                                 .accountHolder(profile.getAccountHolder())
+                                .address(profile.getAddress()) // 추가
                                 .paymentDate(profile.getPaymentDate())
                                 .hourlyWage(profile.getHourlyWage())
                                 .employeeCode(profile.getEmployeeCode())
