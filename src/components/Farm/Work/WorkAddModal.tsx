@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { CultivationService, EmployeeService } from '../../../services/api';
+import { useAuth } from '../../../context/AuthContext';
 
 interface Props {
     isOpen: boolean;
@@ -8,6 +9,7 @@ interface Props {
 }
 
 const WorkAddModal: React.FC<Props> = ({ isOpen, onClose, farmId }) => {
+    const { user } = useAuth();
     const [keywords, setKeywords] = useState<any[]>([]);
     const [employees, setEmployees] = useState<any[]>([]); // 정규직 직원 목록
     // 복수 키워드 선택 지원
@@ -31,19 +33,35 @@ const WorkAddModal: React.FC<Props> = ({ isOpen, onClose, farmId }) => {
                 })
                 .catch(err => console.error(err));
 
-            // 정규직 직원 목록 불러오기
-            EmployeeService.getEmployeesByFarm(farmId)
-                .then(res => {
-                    const data = res.data.success ? res.data.data : (Array.isArray(res.data) ? res.data : []);
-                    // FULL_TIME 고용 유형만 필터링
-                    const regular = data.filter((e: any) =>
-                        !e.employmentType || e.employmentType === 'FULL_TIME'
-                    );
-                    setEmployees(regular);
-                })
-                .catch(err => console.error(err));
+            // 회사 전체 정규직 직원 목록 불러오기 (검색 범위 확대)
+            const companyCode = user?.companyCode;
+            if (companyCode) {
+                EmployeeService.getEmployeesByCompany(companyCode)
+                    .then(res => {
+                        const data = Array.isArray(res.data) ? res.data : (res.data.data || []);
+                        // FULL_TIME 고용 유형만 필터링 (대소문자 무시)
+                        const regular = data.filter((e: any) =>
+                            !e.employmentType || 
+                            String(e.employmentType).toUpperCase() === 'FULL_TIME'
+                        );
+                        setEmployees(regular);
+                    })
+                    .catch(err => console.error('Failed to fetch employees for search:', err));
+            } else {
+                // companyCode가 없는 경우 farmId로 시도
+                EmployeeService.getEmployeesByFarm(farmId)
+                    .then(res => {
+                        const data = Array.isArray(res.data) ? res.data : (res.data.data || []);
+                        const regular = data.filter((e: any) =>
+                            !e.employmentType || 
+                            String(e.employmentType).toUpperCase() === 'FULL_TIME'
+                        );
+                        setEmployees(regular);
+                    })
+                    .catch(err => console.error(err));
+            }
         }
-    }, [isOpen, farmId]);
+    }, [isOpen, farmId, user?.companyCode]);
 
     // body scroll lock
     useEffect(() => {
@@ -107,12 +125,43 @@ const WorkAddModal: React.FC<Props> = ({ isOpen, onClose, farmId }) => {
     // 추천 키워드: 아직 선택되지 않은 키워드만 표시
     const suggestedKeywords = keywords.filter(k => !selectedKeywordIds.includes(String(k.id))).slice(0, 6);
 
+    const [searchTerm, setSearchTerm] = useState('');
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const filteredEmployees = employees.filter(emp => {
+        if (!searchTerm) return true;
+        const nameMatch = emp.name && emp.name.toLowerCase().includes(searchTerm.toLowerCase());
+        const emailMatch = emp.email && emp.email.toLowerCase().includes(searchTerm.toLowerCase());
+        return nameMatch || emailMatch;
+    });
+
+    const handleSelectEmployee = (empName: string) => {
+        setForm(prev => ({ ...prev, manager: empName }));
+        setSearchTerm('');
+        setIsDropdownOpen(false);
+    };
+
     if (!isOpen) return null;
 
     return (
         <div
             ref={overlayRef}
-            onClick={(e) => { if (e.target === overlayRef.current) onClose(); }}
+            onClick={(e) => { 
+                if (e.target === overlayRef.current) {
+                    onClose(); 
+                }
+            }}
             className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4"
         >
             <div className="bg-white dark:bg-slate-950 w-full max-w-2xl rounded-3xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200">
@@ -229,22 +278,67 @@ const WorkAddModal: React.FC<Props> = ({ isOpen, onClose, farmId }) => {
                             </div>
                             <div className="space-y-2">
                                 <label className="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider ml-1">관리자</label>
-                                <div className="relative">
-                                    <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary">account_circle</span>
-                                    <select
-                                        name="manager"
-                                        value={form.manager}
-                                        onChange={handleChange}
-                                        className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl pl-12 pr-10 py-4 focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all font-semibold text-slate-900 dark:text-white appearance-none"
+                                <div className="relative" ref={dropdownRef}>
+                                    <div 
+                                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                        className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl pl-12 pr-10 py-4 focus-within:ring-4 focus-within:ring-primary/10 focus-within:border-primary transition-all font-semibold text-slate-900 dark:text-white cursor-pointer flex items-center min-h-[58px]"
                                     >
-                                        <option value="">관리자 선택</option>
-                                        {employees.map(emp => (
-                                            <option key={emp.id} value={emp.name}>
-                                                {emp.name}{emp.position ? ` (${emp.position})` : ''}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span>
+                                        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary">account_circle</span>
+                                        <span className={form.manager ? 'text-slate-900 dark:text-white' : 'text-slate-400'}>
+                                            {form.manager || '관리자 선택'}
+                                        </span>
+                                        <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                                            {isDropdownOpen ? 'expand_less' : 'expand_more'}
+                                        </span>
+                                    </div>
+
+                                    {/* 검색 가능한 드롭다운 메뉴 */}
+                                    {isDropdownOpen && (
+                                        <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl shadow-2xl z-[60] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                                            <div className="p-3 border-b border-slate-100 dark:border-slate-800">
+                                                <div className="relative">
+                                                    <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+                                                    <input 
+                                                        type="text"
+                                                        placeholder="이름 또는 직책 검색..."
+                                                        value={searchTerm}
+                                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                                        autoFocus
+                                                        className="w-full bg-slate-50 dark:bg-slate-900 border-none rounded-xl pl-9 pr-4 py-2 text-sm font-semibold focus:ring-2 focus:ring-primary/20"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="max-h-60 overflow-y-auto custom-scrollbar">
+                                                {filteredEmployees.length > 0 ? (
+                                                    filteredEmployees.map(emp => (
+                                                        <div 
+                                                            key={emp.id}
+                                                            onClick={() => handleSelectEmployee(emp.name)}
+                                                            className="px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-900 cursor-pointer flex items-center justify-between transition-colors group"
+                                                        >
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="size-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">
+                                                                    {emp.name.substring(0, 1)}
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-sm font-bold text-slate-900 dark:text-white">{emp.name}</p>
+                                                                    {emp.position && <p className="text-[10px] text-slate-500 font-bold uppercase">{emp.position}</p>}
+                                                                </div>
+                                                            </div>
+                                                            {form.manager === emp.name && (
+                                                                <span className="material-symbols-outlined text-primary text-sm">check_circle</span>
+                                                            )}
+                                                        </div>
+                                                    ))
+                                                ) : (
+                                                    <div className="px-4 py-8 text-center">
+                                                        <span className="material-symbols-outlined text-slate-300 text-4xl mb-2">person_search</span>
+                                                        <p className="text-xs font-bold text-slate-400 uppercase">검색 결과가 없습니다</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -269,13 +363,16 @@ const WorkAddModal: React.FC<Props> = ({ isOpen, onClose, farmId }) => {
                 <div className="px-8 py-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 flex items-center justify-end gap-4 shrink-0">
                     <button
                         type="button"
-                        onClick={onClose}
+                        onClick={(e) => {
+                            e.preventDefault();
+                            onClose();
+                        }}
                         className="px-8 py-4 text-slate-600 dark:text-slate-400 font-black hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all uppercase tracking-widest text-xs"
                     >
                         취소
                     </button>
                     <button
-                        type="submit"
+                        type="button"
                         onClick={handleSubmit}
                         className="px-10 py-4 bg-primary text-white font-black rounded-2xl shadow-xl shadow-primary/30 hover:scale-[1.02] active:scale-95 transition-all uppercase tracking-widest text-xs flex items-center gap-2"
                     >

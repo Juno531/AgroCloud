@@ -1,6 +1,7 @@
 package com.farm.erp.api.v1.dto;
 
 import com.farm.erp.core.hr.domain.EmploymentType;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -11,10 +12,14 @@ import java.util.List;
 @Getter
 @Setter
 public class AttendanceFilterRequest {
-    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+    @NotNull(message = "Start date is required")
+    // @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+    @DateTimeFormat(pattern = "yyyy-MM-ddTHH:mm:ss")
     private LocalDateTime startDate;
 
-    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+    @NotNull(message = "End date is required")
+    // @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+    @DateTimeFormat(pattern = "yyyy-MM-ddTHH:mm:ss")
     private LocalDateTime endDate;
 
     private List<EmploymentType> employmentTypes;

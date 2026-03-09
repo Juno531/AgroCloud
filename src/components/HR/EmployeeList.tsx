@@ -211,7 +211,7 @@ const EmployeeList = () => {
                                 whiteSpace: 'nowrap'
                             }}
                         >
-                            {type === 'ALL' ? '전체' : type === 'FULL_TIME' ? '정규직' : '비정규직(알바)'}
+                            {type === 'ALL' ? '전체' : type === 'FULL_TIME' ? '정규직' : '비정규직'}
                         </button>
                     ))}
                 </div>
@@ -316,7 +316,7 @@ const EmployeeList = () => {
                                                     color: employee.employmentType === 'PART_TIME' ? '#92400e' : '#1e40af',
                                                     border: `1px solid ${employee.employmentType === 'PART_TIME' ? '#fcd34d' : '#93c5fd'}`
                                                 }}>
-                                                    {employee.employmentType === 'PART_TIME' ? '⏰ 비정규직(알바)' : '🏢 정규직'}
+                                                    {employee.employmentType === 'PART_TIME' ? '⏰ 비정규직' : '🏢 정규직'}
                                                 </span>
                                             )}
                                         </div>
@@ -441,7 +441,7 @@ const EmployeeList = () => {
                                                                 whiteSpace: 'nowrap',
                                                                 flexShrink: 0
                                                             }}>
-                                                                {employee.employmentType === 'PART_TIME' ? '비정규직(알바)' : '정규직'}
+                                                                {employee.employmentType === 'PART_TIME' ? '비정규직' : '정규직'}
                                                             </span>
                                                         )}
                                                     </div>

@@ -32,6 +32,7 @@ const AttendanceExport = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<number[]>([]);
     const [selectedFarmIds, setSelectedFarmIds] = useState<number[]>([]);
+    const [selectedEmploymentTypes, setSelectedEmploymentTypes] = useState<string[]>(['FULL_TIME', 'PART_TIME']);
     const [includeLeaves, setIncludeLeaves] = useState(true);
 
     const [employees, setEmployees] = useState<EmployeeProfile[]>([]);
@@ -97,7 +98,7 @@ const AttendanceExport = () => {
         setErrorMessage('');
 
         try {
-            const fileName = `attendance_export_${format(new Date(), 'yyyyMMdd_HHmm')}.xlsx`;
+            const fileName = `출퇴근_기록_${format(new Date(), 'yyyyMMdd_HHmm')}.xlsx`;
             let fileHandle = null;
 
             if ('showSaveFilePicker' in window && window.isSecureContext) {
@@ -122,14 +123,15 @@ const AttendanceExport = () => {
                 companyCode: user?.companyCode,
                 startDate: startDate + 'T00:00:00',
                 endDate: endDate + 'T23:59:59',
-                employmentTypes: null,
-                clockInFarmIds: selectedFarmIds.length > 0 ? selectedFarmIds : null,
-                userIds: selectedEmployeeIds.length > 0 ? selectedEmployeeIds : null,
+                employmentTypes: selectedEmploymentTypes,
+                clockInFarmIds: selectedFarmIds.length > 0 ? selectedFarmIds : [],
+                userIds: selectedEmployeeIds.length > 0 ? selectedEmployeeIds : [],
                 searchTerm: searchTerm || null,
                 exportFields: exportFields,
                 includeLeaves: includeLeaves
             };
 
+            console.log('Export Request Payload:', filterRequest);
             const response = await AttendanceService.exportAttendance(filterRequest);
 
             if (response.data.type === 'application/json') {
@@ -181,6 +183,12 @@ const AttendanceExport = () => {
     const toggleFarm = (id: number) => {
         setSelectedFarmIds(prev =>
             prev.includes(id) ? prev.filter(fid => fid !== id) : [...prev, id]
+        );
+    };
+
+    const toggleEmploymentType = (type: string) => {
+        setSelectedEmploymentTypes(prev =>
+            prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
         );
     };
 
@@ -507,6 +515,31 @@ const AttendanceExport = () => {
                                     {farms.length === 0 && <p className="text-slate-400 text-xs italic">등록된 농장이 없습니다.</p>}
                                 </div>
                             </div>
+
+                            {/* Employment Type Filter */}
+                            <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 shadow-sm">
+                                <h2 className="text-lg font-bold mb-4 flex items-center gap-2 text-slate-800 dark:text-slate-200">
+                                    <UserIcon size={18} className="text-primary" />
+                                    고용 형태 필터
+                                </h2>
+                                <div className="flex gap-2">
+                                    {[
+                                        { id: 'FULL_TIME', label: '정규직' },
+                                        { id: 'PART_TIME', label: '비정규직' }
+                                    ].map(type => (
+                                        <button
+                                            key={type.id}
+                                            onClick={() => toggleEmploymentType(type.id)}
+                                            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${selectedEmploymentTypes.includes(type.id)
+                                                ? 'bg-primary text-white shadow-md shadow-primary/20'
+                                                : 'bg-slate-50 dark:bg-zinc-800 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-700'
+                                                }`}
+                                        >
+                                            {type.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
 
                         {/* Export Fields Selection */}
@@ -545,6 +578,9 @@ const AttendanceExport = () => {
                             </div>
                             <h3 className="text-xl font-bold mb-2">기록 생성 준비 완료</h3>
                             <p className="text-sm text-slate-500 dark:text-slate-400 mb-8 max-w-sm mx-auto">
+                                {selectedEmploymentTypes.length === 1
+                                    ? (selectedEmploymentTypes[0] === 'FULL_TIME' ? '정규직 ' : '비정규직 ')
+                                    : ''}
                                 {selectedEmployeeIds.length > 0
                                     ? `${selectedEmployeeIds.length}명의 직원을 포함하여 `
                                     : '전체 직원을 대상으로 '}

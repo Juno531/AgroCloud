@@ -23,7 +23,6 @@ public class WorkRecordRequest {
     @NotNull(message = "Work date is required")
     private LocalDate workDate;
 
-    @NotNull(message = "Work keyword ID is required")
     private Long keywordId;
 
     private WorkRecord.CompletionStatus completionStatus;

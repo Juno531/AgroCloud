@@ -160,9 +160,12 @@ public class CultivationService {
                                                         "Bed not found"));
                 }
 
-                WorkKeyword keyword = workKeywordRepository.findById(request.getKeywordId())
-                                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND,
-                                                "Work keyword not found"));
+                WorkKeyword keyword = null;
+                if (request.getKeywordId() != null) {
+                        keyword = workKeywordRepository.findById(request.getKeywordId())
+                                        .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND,
+                                                        "Work keyword not found"));
+                }
 
                 WorkRecord record = WorkRecord.builder()
                                 .farm(farm)

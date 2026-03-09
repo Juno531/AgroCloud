@@ -67,9 +67,9 @@ export const router = createBrowserRouter([
                         children: [
                             { path: '/', element: <SuspenseWrapper><Dashboard /></SuspenseWrapper> },
                             { path: '/farm/setting/add', element: <SuspenseWrapper><FarmAdd /></SuspenseWrapper> },
+                            { path: '/hr/attendance-export', element: <SuspenseWrapper><AttendanceExport /></SuspenseWrapper> },
                             { path: '/hr/*', element: <SuspenseWrapper><HRManagement /></SuspenseWrapper>, errorElement: <RouteErrorPage /> },
                             { path: '/hr/employees/:id', element: <SuspenseWrapper><EmployeeDetail /></SuspenseWrapper> },
-                            { path: '/hr/attendance-export', element: <SuspenseWrapper><AttendanceExport /></SuspenseWrapper> },
                         ]
                     }
                 ]

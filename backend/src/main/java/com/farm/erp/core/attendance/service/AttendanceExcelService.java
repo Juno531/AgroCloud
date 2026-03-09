@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -30,6 +31,7 @@ import java.util.stream.StreamSupport;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class AttendanceExcelService {
 
     private final AttendanceRepository attendanceRepository;
@@ -90,7 +92,7 @@ public class AttendanceExcelService {
                 if (request.getCompanyCode() != null) {
                     allLeaves = leaveRepository.findByLeaveDateBetween(
                             request.getStartDate().toLocalDate(), request.getEndDate().toLocalDate()).stream()
-                            .filter(l -> l.getUser().getCompany() != null
+                            .filter(l -> l.getUser() != null && l.getUser().getCompany() != null
                                     && l.getUser().getCompany().getCode().equals(request.getCompanyCode()))
                             .collect(Collectors.toList());
                 }

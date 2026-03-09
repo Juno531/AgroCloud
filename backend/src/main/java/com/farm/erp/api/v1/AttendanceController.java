@@ -200,7 +200,8 @@ public class AttendanceController {
     }
 
     @PostMapping("/export")
-    public ResponseEntity<byte[]> exportAttendance(@RequestBody AttendanceFilterRequest request) throws IOException {
+    public ResponseEntity<byte[]> exportAttendance(@Valid @RequestBody AttendanceFilterRequest request)
+            throws IOException {
         List<AttendanceRecord> records = attendanceExcelService.filterAttendance(request);
         byte[] excelContent = attendanceExcelService.generateAttendanceExcel(records, request);
 

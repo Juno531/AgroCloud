@@ -380,7 +380,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onClose, onSucces
                             </div>
 
                             <div>
-                                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>거주지 (거소)</label>
+                                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>주소</label>
                                 <div style={{ position: 'relative' }}>
                                     <input
                                         type="text"

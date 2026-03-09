@@ -95,7 +95,8 @@ public class EmployeeProfile {
     }
 
     public void updateProfile(String phone, LocalDate hireDate, String bankAccount, String bankName,
-            String accountHolder, String address, Integer paymentDate, BigDecimal hourlyWage, EmploymentType employmentType) {
+            String accountHolder, String address, Integer paymentDate, BigDecimal hourlyWage,
+            EmploymentType employmentType) {
         this.phone = phone;
         this.hireDate = hireDate;
         this.bankAccount = bankAccount;

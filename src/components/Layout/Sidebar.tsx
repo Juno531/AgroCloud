@@ -38,28 +38,28 @@ const Sidebar = () => {
             { to: '/super-admin/companies', label: '회사 관리', icon: 'business' },
             { to: '/super-admin/users', label: '사용자 관리', icon: 'people' },
             { to: '/super-admin/settings', label: '시스템 설정', icon: 'settings_suggest' },
-/* {
-    to: '/board',
-    label: '커뮤니티',
-    icon: 'forum',
-    children: [
-        { to: '/board', label: '게시판' }
-    ]
-}, */
+            /* {
+                to: '/board',
+                label: '커뮤니티',
+                icon: 'forum',
+                children: [
+                    { to: '/board', label: '게시판' }
+                ]
+            }, */
         ]
         : user?.role === 'USER'
             ? [
                 { to: '/hr/my-attendance', label: '근태 현황', icon: 'schedule' },
                 { to: '/hr/my-leave', label: '휴무 관리', icon: 'event_busy' },
                 { to: '/attendance', label: '출퇴근', icon: 'event' },
-/* {
-    to: '/board',
-    label: '커뮤니티',
-    icon: 'forum',
-    children: [
-        { to: '/board', label: '게시판' }
-    ]
-}, */
+                /* {
+                    to: '/board',
+                    label: '커뮤니티',
+                    icon: 'forum',
+                    children: [
+                        { to: '/board', label: '게시판' }
+                    ]
+                }, */
                 {
                     to: '/mypage/mysecurity',
                     label: '설정',
@@ -78,7 +78,7 @@ const Sidebar = () => {
                     icon: 'yard',
                     children: [
                         { to: '/farm/setting', label: '농장 설정' },
-                        // { to: '/farm/work-management', label: '작업 관리' },// 잠시 그닝 보류
+                        { to: '/farm/work-management', label: '작업 관리' },// 잠시 그닝 보류
                         // { to: '/farm/cultivation', label: '재배 관리' }, // 일단 잠시 기능 보류
                     ]
                 },
@@ -104,14 +104,14 @@ const Sidebar = () => {
                         { to: '/hr/my-leave', label: '내 휴무 관리' },
                     ]
                 },
-/* {
-    to: '/board',
-    label: '커뮤니티',
-    icon: 'forum',
-    children: [
-        { to: '/board', label: '게시판' }
-    ]
-}, */
+                /* {
+                    to: '/board',
+                    label: '커뮤니티',
+                    icon: 'forum',
+                    children: [
+                        { to: '/board', label: '게시판' }
+                    ]
+                }, */
                 {
                     to: '/mypage/mysecurity',
                     label: '설정',
