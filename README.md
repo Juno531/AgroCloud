@@ -24,6 +24,8 @@ AgroCloud는 농장 및 회사 내 임직원의 근태를 체계적으로 기록
 - **고급 필터링**: 날짜(기간), 고용 형태(정규직, 일용직 등), 직원명 등 다양한 검색 조건을 적용해 원하는 출퇴근 데이터만 필터링합니다.
 - **엑셀 내보내기 (Export)**: 조회된 출퇴근 내역을 검증된 엑셀(Excel) 파일 포맷으로 즉시 다운로드하여 급여 정산 및 외부 보고서 작성에 활용할 수 있습니다.
 
+https://github.com/Juno531/AgroCloud/issues/1#issue-4204343959
+
 ## 시스템 환경
 - **Frontend**: React (Vite), TypeScript, Tailwind CSS
 - **Backend**: Spring Boot (Java) 기반 마이크로서비스 아키텍처 적용 (도커 컨테이너화)
