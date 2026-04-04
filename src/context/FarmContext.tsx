@@ -16,6 +16,7 @@ interface Field {
     attendanceEndTime?: string | null;
     regularEmployeeStartTime?: string | null;
     partTimeEmployeeStartTime?: string | null;
+    breakTimeMinutes?: number;
     companyCode?: string;
 }
 
@@ -28,7 +29,7 @@ interface Crop {
 interface FarmContextType {
     fields: Field[];
     crops: Crop[];
-    addField: (field: { name: string; size: string; location?: string; latitude?: string; longitude?: string; attendanceRadius?: string; attendanceWifiSsid?: string; attendanceWifiBssid?: string; attendanceIpAddress?: string }) => Promise<void>;
+    addField: (field: { name: string; size: string; location?: string; latitude?: string; longitude?: string; attendanceRadius?: string; attendanceWifiSsid?: string; attendanceWifiBssid?: string; attendanceIpAddress?: string; breakTimeMinutes?: number }) => Promise<void>;
     removeField: (id: number) => Promise<void>;
     addCrop: (crop: { name: string; type?: string }) => Promise<void>;
     removeCrop: (id: number) => Promise<void>;
@@ -106,6 +107,7 @@ export const FarmProvider: React.FC<FarmProviderProps> = ({ children }) => {
                 attendanceEndTime: formatTime(f.attendanceEndTime),
                 regularEmployeeStartTime: formatTime(f.regularEmployeeStartTime),
                 partTimeEmployeeStartTime: formatTime(f.partTimeEmployeeStartTime),
+                breakTimeMinutes: f.breakTimeMinutes,
                 companyCode: f.companyCode
             })));
 
@@ -126,7 +128,7 @@ export const FarmProvider: React.FC<FarmProviderProps> = ({ children }) => {
         fetchData();
     }, [user]);
 
-    const addField = async (field: { name: string; size: string; location?: string; latitude?: string; longitude?: string; attendanceRadius?: string; attendanceWifiSsid?: string; attendanceWifiBssid?: string; attendanceIpAddress?: string }) => {
+    const addField = async (field: { name: string; size: string; location?: string; latitude?: string; longitude?: string; attendanceRadius?: string; attendanceWifiSsid?: string; attendanceWifiBssid?: string; attendanceIpAddress?: string; breakTimeMinutes?: number }) => {
         try {
             const sizeNum = parseFloat(field.size) || 0;
             const latNum = field.latitude ? parseFloat(field.latitude) : undefined;
@@ -143,6 +145,7 @@ export const FarmProvider: React.FC<FarmProviderProps> = ({ children }) => {
                 attendanceRadius: radiusNum,
                 attendanceWifiSsid: field.attendanceWifiSsid,
                 attendanceWifiBssid: field.attendanceWifiBssid,
+                breakTimeMinutes: field.breakTimeMinutes || 60,
             });
 
             // Use the real ID from backend response
@@ -161,6 +164,7 @@ export const FarmProvider: React.FC<FarmProviderProps> = ({ children }) => {
                 attendanceEndTime: formatTime(createdFarm.attendanceEndTime),
                 regularEmployeeStartTime: formatTime(createdFarm.regularEmployeeStartTime),
                 partTimeEmployeeStartTime: formatTime(createdFarm.partTimeEmployeeStartTime),
+                breakTimeMinutes: createdFarm.breakTimeMinutes,
                 companyCode: createdFarm.companyCode
             };
 

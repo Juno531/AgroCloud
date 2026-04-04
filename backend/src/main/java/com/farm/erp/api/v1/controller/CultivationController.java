@@ -150,6 +150,14 @@ public class CultivationController {
         return ResponseEntity.ok(cultivationService.updateWorkRecordStatus(id, status));
     }
 
+    @Operation(summary = "Update work record", description = "작업 기록 수정")
+    @PutMapping("/work-records/{id}")
+    public ResponseEntity<WorkRecordResponse> updateWorkRecord(
+            @PathVariable Long id,
+            @Valid @RequestBody WorkRecordRequest request) {
+        return ResponseEntity.ok(cultivationService.updateWorkRecord(id, request));
+    }
+
     @Operation(summary = "Delete work record", description = "작업 기록 삭제")
     @DeleteMapping("/work-records/{id}")
     public ResponseEntity<Void> deleteWorkRecord(@PathVariable Long id) {

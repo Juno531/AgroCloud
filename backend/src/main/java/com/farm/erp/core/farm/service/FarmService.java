@@ -98,6 +98,7 @@ public class FarmService {
                 .attendanceEndTime(
                         request.getAttendanceEndTime() != null ? LocalTime.parse(request.getAttendanceEndTime()) : null)
                 .status(FarmStatus.ACTIVE)
+                .breakTimeMinutes(request.getBreakTimeMinutes() != null ? request.getBreakTimeMinutes() : 60)
                 .userId(userId) // 현재 사용자 ID 설정
                 .build();
 
@@ -221,7 +222,8 @@ public class FarmService {
                 request.getRegularEmployeeStartTime() != null ? LocalTime.parse(request.getRegularEmployeeStartTime())
                         : null,
                 request.getPartTimeEmployeeStartTime() != null ? LocalTime.parse(request.getPartTimeEmployeeStartTime())
-                        : null);
+                        : null,
+                request.getBreakTimeMinutes());
 
         log.info("Updated farm: {} for user: {}", id, userId);
 

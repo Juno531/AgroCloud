@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { CultivationService } from '../../../services/api';
-import { ChevronLeft, ChevronRight, Plus, ClipboardList, CheckCircle, Clock, Timer, Users, User, CheckCheck } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, ClipboardList, CheckCircle, Clock, Timer, Users, User, CheckCheck, PlayCircle, Pencil, Trash2 } from 'lucide-react';
 
 interface Props {
     farmId: number;
     onAddClick: () => void;
+    onEditClick?: (record: any) => void;
+    refreshTrigger: number;
 }
 
-const DailyTasks: React.FC<Props> = ({ farmId, onAddClick }) => {
+const DailyTasks: React.FC<Props> = ({ farmId, onAddClick, onEditClick, refreshTrigger }) => {
     const [selectedDate, setSelectedDate] = useState<Date>(new Date());
     const [workRecords, setWorkRecords] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
@@ -16,15 +18,22 @@ const DailyTasks: React.FC<Props> = ({ farmId, onAddClick }) => {
 
     useEffect(() => {
         fetchDailyRecords();
-    }, [farmId, selectedDate]);
+    }, [farmId, selectedDate, refreshTrigger]);
 
     const fetchDailyRecords = async () => {
-        const dateStr = selectedDate.toISOString().substring(0, 10);
         setLoading(true);
         try {
-            const res = await CultivationService.getWorkRecordsByFarmAndDate(farmId, dateStr);
-            if (res.data.success) {
-                setWorkRecords(res.data.data);
+            const res = await CultivationService.getWorkRecordsByFarm(farmId);
+            // res.data가 배열이거나 { success, data } 형태일 때 모두 대응
+            const data = res.data.success ? res.data.data : (Array.isArray(res.data) ? res.data : []);
+            
+            if (data) {
+                const sorted = data.sort((a: any, b: any) => {
+                    const dateA = new Date(a.workDate || 0).getTime();
+                    const dateB = new Date(b.workDate || 0).getTime();
+                    return dateB - dateA;
+                });
+                setWorkRecords(sorted);
             }
         } catch (error) {
             console.error('Error fetching work records:', error);
@@ -33,12 +42,24 @@ const DailyTasks: React.FC<Props> = ({ farmId, onAddClick }) => {
         }
     };
 
-    const handleCompleteTask = async (id: number) => {
+    const updateTaskStatus = async (id: number, status: string) => {
         try {
-            await CultivationService.updateWorkRecordStatus(id, 'COMPLETED');
+            await CultivationService.updateWorkRecordStatus(id, status);
             fetchDailyRecords();
         } catch (err) {
             console.error(err);
+        }
+    };
+
+    const handleDeleteClick = async (id: number) => {
+        if (window.confirm('정말 이 작업을 삭제하시겠습니까?')) {
+            try {
+                await CultivationService.deleteWorkRecord(id);
+                fetchDailyRecords();
+            } catch (err) {
+                console.error(err);
+                alert('작업 삭제 중 오류가 발생했습니다.');
+            }
         }
     };
 
@@ -237,11 +258,11 @@ const DailyTasks: React.FC<Props> = ({ farmId, onAddClick }) => {
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6 mb-6 sm:mb-8">
                         <div>
                             <h2 className="text-2xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
-                                {selectedDate.getMonth() + 1}월 {selectedDate.getDate()}일, {formatDayName(selectedDate)}
+                                전체 작업 현황
                             </h2>
                             <p className="text-slate-500 dark:text-slate-400 text-sm sm:text-base font-semibold mt-1 flex items-center gap-2">
                                 <span className="w-2 h-2 rounded-full bg-primary animate-pulse min-w-[8px]"></span>
-                                {stats.inProgress + stats.planned} 개의 작업이 예정되어 있습니다
+                                총 {stats.total}개의 작업 중 {stats.inProgress + stats.planned}개가 예정/진행 중입니다
                             </p>
                         </div>
                         <button
@@ -313,26 +334,50 @@ const DailyTasks: React.FC<Props> = ({ farmId, onAddClick }) => {
                                         <div className={`flex sm:flex-col flex-row items-center justify-between sm:justify-center rounded-xl sm:rounded-2xl p-3 sm:p-4 sm:min-w-[100px] shrink-0
                                             ${isCompleted ? 'bg-slate-100 dark:bg-slate-800' : 'bg-slate-100 dark:bg-slate-800 text-primary'}
                                         `}>
-                                            <span className={`text-[10px] font-black uppercase tracking-widest ${isCompleted ? 'text-slate-400' : 'text-slate-400'}`}>시작</span>
+                                            <span className={`text-[10px] font-black uppercase tracking-widest ${isCompleted ? 'text-slate-400' : 'text-slate-400'}`}>
+                                                {record.workDate ? record.workDate.substring(5).replace('-', '/') : '날짜 없음'}
+                                            </span>
                                             <span className={`text-base font-black ${isCompleted ? 'text-slate-500' : 'text-slate-900 dark:text-white'}`}>
-                                                {record.startTime || '00:00'}
+                                                {record.startTime ? record.startTime.substring(0, 5) : '대기'}
                                             </span>
                                         </div>
 
                                         <div className="flex-1 min-w-0 w-full text-left">
-                                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 mb-2">
-                                                <h4 className={`text-lg sm:text-xl font-bold truncate w-full sm:w-auto ${isCompleted ? 'text-slate-400 line-through' : 'text-slate-900 dark:text-white'}`}>
-                                                    {record.notes || '이름 없는 작업'}
-                                                </h4>
+                                            <div className="flex justify-between items-start mb-2">
+                                                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+                                                    <h4 className={`text-lg sm:text-xl font-bold truncate ${isCompleted ? 'text-slate-400 line-through' : 'text-slate-900 dark:text-white'}`}>
+                                                        {record.notes || '이름 없는 작업'}
+                                                    </h4>
 
-                                                <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-tighter shrink-0
-                                                    ${isCompleted ? 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
-                                                        : record.completionStatus === 'IN_PROGRESS'
-                                                            ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400'
-                                                            : 'bg-primary/10 text-primary'}
-                                                `}>
-                                                    {record.completionStatusKorean}
-                                                </span>
+                                                    <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-tighter shrink-0
+                                                        ${isCompleted ? 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+                                                            : record.completionStatus === 'IN_PROGRESS'
+                                                                ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400'
+                                                                : 'bg-primary/10 text-primary'}
+                                                    `}>
+                                                        {record.completionStatusKorean}
+                                                    </span>
+                                                </div>
+
+                                                {/* Action Buttons */}
+                                                <div className="flex items-center gap-1 shrink-0 ml-4">
+                                                    {onEditClick && (
+                                                        <button 
+                                                            onClick={() => onEditClick(record)}
+                                                            className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+                                                            title="수정"
+                                                        >
+                                                            <Pencil size={16} />
+                                                        </button>
+                                                    )}
+                                                    <button 
+                                                        onClick={() => handleDeleteClick(record.id)}
+                                                        className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                                                        title="삭제"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </div>
                                             </div>
 
                                             <div className="flex flex-wrap items-center justify-start gap-x-4 sm:gap-x-8 gap-y-2 sm:mt-2">
@@ -363,9 +408,17 @@ const DailyTasks: React.FC<Props> = ({ farmId, onAddClick }) => {
                                                     <CheckCheck size={18} className="text-primary sm:w-5 sm:h-5" />
                                                     <span className="text-xs font-black text-slate-400 uppercase tracking-widest sm:block">완료됨</span>
                                                 </div>
+                                            ) : record.completionStatus === 'PLANNED' ? (
+                                                <button
+                                                    onClick={() => updateTaskStatus(record.id, 'IN_PROGRESS')}
+                                                    className="w-full sm:w-auto flex items-center justify-center gap-2 bg-emerald-50 dark:bg-emerald-900/30 hover:bg-emerald-500 hover:text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl font-black text-xs sm:text-sm text-emerald-600 dark:text-emerald-400 transition-all shadow-sm group-hover:bg-emerald-500 group-hover:text-white border border-emerald-200 dark:border-emerald-800/50 hover:border-transparent group-hover:border-transparent"
+                                                >
+                                                    <PlayCircle size={18} className="sm:w-5 sm:h-5" />
+                                                    <span>작업 시작</span>
+                                                </button>
                                             ) : (
                                                 <button
-                                                    onClick={() => handleCompleteTask(record.id)}
+                                                    onClick={() => updateTaskStatus(record.id, 'COMPLETED')}
                                                     className="w-full sm:w-auto flex items-center justify-center gap-2 bg-slate-50 dark:bg-slate-800 hover:bg-primary hover:text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl font-black text-xs sm:text-sm transition-all shadow-sm group-hover:bg-primary group-hover:text-white border border-slate-200 dark:border-slate-700 hover:border-transparent group-hover:border-transparent"
                                                 >
                                                     <CheckCircle size={18} className="sm:w-5 sm:h-5" />

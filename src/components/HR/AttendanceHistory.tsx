@@ -13,6 +13,7 @@ interface AttendanceRecord {
     timestamp: string;
     farmId: number;
     reason?: string | null;
+    workedHours?: number | null;
 }
 
 const AttendanceHistory = () => {
@@ -78,10 +79,12 @@ const AttendanceHistory = () => {
         }
     };
 
-    const calculateWorkDuration = (clockIn: Date, clockOut: Date) => {
+    const calculateWorkDuration = (clockIn: Date, clockOut: Date, breakMinutes: number = 60) => {
         const duration = clockOut.getTime() - clockIn.getTime();
-        const hours = Math.floor(duration / (1000 * 60 * 60));
-        const minutes = Math.floor((duration % (1000 * 60 * 60)) / (1000 * 60));
+        const totalMinutes = Math.floor(duration / (1000 * 60));
+        const workedMinutes = Math.max(0, totalMinutes - breakMinutes);
+        const hours = Math.floor(workedMinutes / 60);
+        const minutes = workedMinutes % 60;
         return `${hours}시간 ${minutes}분`;
     };
 
@@ -209,11 +212,10 @@ const AttendanceHistory = () => {
 
                             const clockInRecord = sortedRecords.find(r => r.type === 'CLOCK_IN');
                             const clockOutRecord = sortedRecords.find(r => r.type === 'CLOCK_OUT');
-                            const workDuration = clockInRecord && clockOutRecord
-                                ? calculateWorkDuration(
-                                    new Date(clockInRecord.timestamp),
-                                    new Date(clockOutRecord.timestamp)
-                                )
+                            const farm = farms?.find(f => f.id === Number(selectedFarmId));
+                            const breakMinutes = farm?.breakTimeMinutes ?? 60;
+                            const workDuration = clockOutRecord && clockOutRecord.workedHours !== undefined && clockOutRecord.workedHours !== null
+                                ? `${clockOutRecord.workedHours.toFixed(1)}시간`
                                 : null;
 
                             return (

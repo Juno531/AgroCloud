@@ -1,16 +1,29 @@
-# React + Vite
+# AgroCloud
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+농업회사(스마트팜 등)를 위한 전문 출퇴근 기록 서비스입니다. 임직원의 근태 관리를 통합적으로 지원하여 농장 운영의 효율성을 높일 수 있습니다.
 
-Currently, two official plugins are available:
+## 주요 기능 (출퇴근 관리)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+AgroCloud는 농장 및 회사 내 임직원의 근태를 체계적으로 기록하고 관리할 수 있는 강력한 기능을 제공합니다.
 
-## React Compiler
+### 1. 출퇴근 기록 및 상태 관리
+- **출/퇴근 체크**: 위치 정보(GPS)를 기반으로 농장 및 지정된 근무지 내에서의 정확한 출퇴근 기록을 지원합니다.
+- **예외 처리 (외근 등)**: 지정된 근무지 외부에서도 사유를 명시하여 외근 처리 등을 기록할 수 있습니다.
+- **현재 상태 조회**: 임직원 본인의 현재 출근, 퇴근 등 근무 상태를 실시간으로 확인할 수 있습니다.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 2. 근태 기록 수정 및 관리자 통제
+- **근태 상태 변경 및 승인**: 반려, 승인 대기 등의 출퇴근 기록에 대해 관리자가 상태를 변경(승인/거절)할 수 있습니다.
+- **기록 수정 및 수기 입력**: 오류가 있거나 누락된 직원의 출퇴근 시간 및 사유를 관리자가 직접 수정하거나 새롭게 생성할 수 있습니다.
+- **휴게 시간 및 단위 반올림 계산**: 총 근무 시간에서 휴게 시간을 공제하며, 규정에 맞춰 근무 시간을 30분 단위 등으로 계산/저장합니다.
 
-## Expanding the ESLint configuration
+### 3. 출퇴근 내역 조회 및 통계 (대시보드)
+- **다양한 기준의 조회**: 본인의 출퇴근 기록뿐만 아니라, 관리자 권한에 따라 특정 농장(Farm)이나 회사 소속 전체의 출퇴근 내역을 기간별로 조회할 수 있습니다.
+- **월별 요약 (Summary)**: 월 단위 등 특정 기간의 총 근무일수, 근태 상태 통계 등 요약 정보를 제공합니다.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### 4. 엑셀 다운로드 (데이터 추출)
+- **고급 필터링**: 날짜(기간), 고용 형태(정규직, 일용직 등), 직원명 등 다양한 검색 조건을 적용해 원하는 출퇴근 데이터만 필터링합니다.
+- **엑셀 내보내기 (Export)**: 조회된 출퇴근 내역을 검증된 엑셀(Excel) 파일 포맷으로 즉시 다운로드하여 급여 정산 및 외부 보고서 작성에 활용할 수 있습니다.
+
+## 시스템 환경
+- **Frontend**: React (Vite), TypeScript, Tailwind CSS
+- **Backend**: Spring Boot (Java) 기반 마이크로서비스 아키텍처 적용 (도커 컨테이너화)

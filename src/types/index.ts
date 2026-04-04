@@ -41,6 +41,7 @@ export interface Farm {
     address?: string;
     size?: number;
     userId: number;
+    breakTimeMinutes?: number;
 }
 
 export interface Crop {

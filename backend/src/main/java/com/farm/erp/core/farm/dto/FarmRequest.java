@@ -46,5 +46,7 @@ public class FarmRequest {
 
     private String partTimeEmployeeStartTime; // HH:mm format
 
+    private Integer breakTimeMinutes;
+
     private String companyCode;
 }

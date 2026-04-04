@@ -58,6 +58,10 @@ public class Farm {
     @Column(name = "part_time_employee_start_time")
     private LocalTime partTimeEmployeeStartTime;
 
+    @Column(name = "break_time_minutes")
+    @Builder.Default
+    private Integer breakTimeMinutes = 60;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     @Builder.Default
@@ -95,7 +99,8 @@ public class Farm {
             String ownerName, String contactNumber, BigDecimal latitude, BigDecimal longitude,
             Integer attendanceRadius,
             LocalTime attendanceStartTime, LocalTime attendanceEndTime,
-            LocalTime regularEmployeeStartTime, LocalTime partTimeEmployeeStartTime) {
+            LocalTime regularEmployeeStartTime, LocalTime partTimeEmployeeStartTime,
+            Integer breakTimeMinutes) {
         if (name != null)
             this.name = name;
         if (location != null)
@@ -119,6 +124,7 @@ public class Farm {
         this.attendanceEndTime = attendanceEndTime;
         this.regularEmployeeStartTime = regularEmployeeStartTime;
         this.partTimeEmployeeStartTime = partTimeEmployeeStartTime;
+        this.breakTimeMinutes = breakTimeMinutes != null ? breakTimeMinutes : 60;
     }
 
     /**

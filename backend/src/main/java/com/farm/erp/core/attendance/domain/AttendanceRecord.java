@@ -50,6 +50,9 @@ public class AttendanceRecord {
     @Column(length = 500)
     private String remarks;
 
+    @Column(name = "worked_hours")
+    private Double workedHours; // 근무 시간 (0.5 단위 라운딩된 값)
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -60,7 +63,8 @@ public class AttendanceRecord {
 
     @Builder
     public AttendanceRecord(User user, AttendanceType type, LocalDateTime timestamp, Long farmId, String companyCode,
-            Integer weekNumber, Integer workingDayIndex, RecordStatus status, String reason, String remarks) {
+            Integer weekNumber, Integer workingDayIndex, RecordStatus status, String reason, String remarks,
+            Double workedHours) {
         this.user = user;
         this.type = type;
         this.timestamp = timestamp;
@@ -71,6 +75,7 @@ public class AttendanceRecord {
         this.status = status != null ? status : RecordStatus.NORMAL;
         this.reason = reason;
         this.remarks = remarks;
+        this.workedHours = workedHours;
     }
 
     public void updateTimestamp(LocalDateTime timestamp) {

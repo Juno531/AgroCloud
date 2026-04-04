@@ -12,6 +12,18 @@ const WorkManagement = () => {
     const [selectedFarm, setSelectedFarm] = useState<number | null>(null);
     const [activeTab, setActiveTab] = useState<'tasks' | 'stats' | 'keywords'>('tasks');
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [editRecord, setEditRecord] = useState<any>(null);
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+    const handleOpenAddModal = () => {
+        setEditRecord(null);
+        setIsAddModalOpen(true);
+    };
+
+    const handleOpenEditModal = (record: any) => {
+        setEditRecord(record);
+        setIsAddModalOpen(true);
+    };
 
     useEffect(() => {
         setTitle('작업 관리'); // To match the Stitch design header if desired
@@ -31,7 +43,7 @@ const WorkManagement = () => {
                         className={`py-4 px-1 text-sm font-bold transition-all focus:outline-none whitespace-nowrap shrink-0 ${activeTab === 'tasks' ? 'text-primary font-black' : 'text-slate-500 hover:text-primary'}`}
                         onClick={() => setActiveTab('tasks')}
                     >
-                        일별 작업
+                        전체 작업
                     </button>
                     <button
                         className={`py-4 px-1 text-sm font-bold transition-all focus:outline-none whitespace-nowrap shrink-0 ${activeTab === 'stats' ? 'text-primary font-black' : 'text-slate-500 hover:text-primary'}`}
@@ -51,14 +63,23 @@ const WorkManagement = () => {
             <div className="flex-1 overflow-y-auto custom-scrollbar p-0">
                 {selectedFarm && (
                     <>
-                        {activeTab === 'tasks' && <DailyTasks farmId={selectedFarm} onAddClick={() => setIsAddModalOpen(true)} />}
+                        {activeTab === 'tasks' && <DailyTasks farmId={selectedFarm} onAddClick={handleOpenAddModal} onEditClick={handleOpenEditModal} refreshTrigger={refreshTrigger} />}
                         {activeTab === 'stats' && <WorkStatistics farmId={selectedFarm} />}
                         {activeTab === 'keywords' && <KeywordSettings farmId={selectedFarm} />}
 
                         <WorkAddModal
                             isOpen={isAddModalOpen}
-                            onClose={() => setIsAddModalOpen(false)}
+                            onClose={() => {
+                                setIsAddModalOpen(false);
+                                setEditRecord(null);
+                            }}
+                            onSuccess={() => {
+                                setRefreshTrigger(prev => prev + 1);
+                                setIsAddModalOpen(false);
+                                setEditRecord(null);
+                            }}
                             farmId={selectedFarm}
+                            initialData={editRecord}
                         />
                     </>
                 )}

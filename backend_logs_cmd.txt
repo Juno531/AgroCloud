@@ -1,0 +1,200 @@
+Processing Request: /api/v1/dashboard/pending-approvals
+Valid JWT found for user: sp@sp.sp
+Authentication set in SecurityContext for: sp@sp.sp
+Processing Request: /api/v1/dashboard/pending-approvals
+Valid JWT found for user: sp@sp.sp
+Authentication set in SecurityContext for: sp@sp.sp
+Processing Request: /api/v1/dashboard/pending-approvals
+Valid JWT found for user: sp@sp.sp
+Authentication set in SecurityContext for: sp@sp.sp
+Processing Request: /api/v1/dashboard/pending-approvals
+Valid JWT found for user: sp@sp.sp
+Authentication set in SecurityContext for: sp@sp.sp
+Processing Request: /api/v1/dashboard/pending-approvals
+Valid JWT found for user: sp@sp.sp
+Authentication set in SecurityContext for: sp@sp.sp
+Processing Request: /api/v1/dashboard/pending-approvals
+Valid JWT found for user: sp@sp.sp
+Authentication set in SecurityContext for: sp@sp.sp
+Processing Request: /api/v1/dashboard/pending-approvals
+Valid JWT found for user: sp@sp.sp
+Authentication set in SecurityContext for: sp@sp.sp
+Processing Request: /api/v1/dashboard/pending-approvals
+Valid JWT found for user: sp@sp.sp
+Authentication set in SecurityContext for: sp@sp.sp
+2026-03-11 23:21:51 - Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-03-11 23:21:51 - HikariPool-1 - Shutdown initiated...
+2026-03-11 23:21:51 - HikariPool-1 - Shutdown completed.
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.1)
+
+2026-03-22 19:59:51 - Starting AgroCloudApplication using Java 17.0.18 with PID 1 (/app/app.jar started by root in /app)
+2026-03-22 19:59:51 - The following 1 profile is active: "docker"
+2026-03-22 19:59:52 - Multiple Spring Data modules found, entering strict repository configuration mode
+2026-03-22 19:59:52 - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-03-22 19:59:52 - Finished Spring Data repository scanning in 149 ms. Found 25 JPA repository interfaces.
+2026-03-22 19:59:53 - Tomcat initialized with port 8080 (http)
+2026-03-22 19:59:53 - Starting service [Tomcat]
+2026-03-22 19:59:53 - Starting Servlet engine: [Apache Tomcat/10.1.17]
+2026-03-22 19:59:53 - Initializing Spring embedded WebApplicationContext
+2026-03-22 19:59:53 - Root WebApplicationContext: initialization completed in 2601 ms
+2026-03-22 19:59:54 - HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-03-22 19:59:54 - HHH000412: Hibernate ORM core version 6.4.1.Final
+2026-03-22 19:59:54 - HHH000026: Second-level cache disabled
+2026-03-22 19:59:55 - No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-03-22 19:59:55 - HikariPool-1 - Starting...
+2026-03-22 19:59:55 - HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@73dd3a46
+2026-03-22 19:59:55 - HikariPool-1 - Start completed.
+2026-03-22 19:59:55 - HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-03-22 19:59:56 - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-03-22 19:59:56 - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-03-22 19:59:57 - Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-03-22 19:59:59 - Exposing 3 endpoint(s) beneath base path '/actuator'
+2026-03-22 19:59:59 - Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@3c193a5a, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@7cd3c0c, org.springframework.security.web.context.SecurityContextHolderFilter@7060b10e, org.springframework.security.web.header.HeaderWriterFilter@67652cca, org.springframework.web.filter.CorsFilter@46d9c49, org.springframework.security.web.authentication.logout.LogoutFilter@2113c941, com.farm.erp.core.auth.security.JwtAuthenticationFilter@1ca2d595, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@23cfcd4a, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@17a394d2, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@66ee50b6, org.springframework.security.web.session.SessionManagementFilter@24fa2e1, org.springframework.security.web.access.ExceptionTranslationFilter@2224628d, org.springframework.security.web.access.intercept.AuthorizationFilter@4d8ee285]
+2026-03-22 20:00:00 - Tomcat started on port 8080 (http) with context path ''
+2026-03-22 20:00:00 - Started AgroCloudApplication in 9.642 seconds (process running for 10.285)
+2026-03-22 20:00:00 - Checking and updating database constraints...
+2026-03-22 20:00:00 - Updating 'users_role_check' constraint to include MASTER_ADMIN...
+2026-03-22 20:00:00 - Successfully updated 'users_role_check' constraint.
+2026-03-22 20:00:00 - Database constraints check completed.
+2026-03-22 20:00:00 - Super admin already exists: super@sp.sp
+2026-03-22 20:00:41 - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-03-22 20:00:41 - Initializing Servlet 'dispatcherServlet'
+2026-03-22 20:00:41 - Completed initialization in 2 ms
+Processing Request: /api/v1/farms
+Processing Request: /api/v1/dashboard/pending-approvals
+Processing Request: /api/v1/production/crops
+No valid JWT token found in request
+No valid JWT token found in request
+No valid JWT token found in request
+Processing Request: /api/v1/farms
+No valid JWT token found in request
+Processing Request: /api/v1/production/crops
+No valid JWT token found in request
+Processing Request: /api/v1/dashboard/pending-approvals
+No valid JWT token found in request
+Processing Request: /api/v1/auth/refresh
+No valid JWT token found in request
+Processing Request: /api/v1/auth/login
+No valid JWT token found in request
+2026-03-22 20:00:50 - Updating existing refresh token for user ID: 4
+2026-03-22 20:00:50 - Login succeeded for: sp@sp.sp
+2026-03-22 20:00:50 - User logged in successfully: sp@sp.sp
+2026-03-22 20:00:50 - Login logged for user: sp@sp.sp
+Processing Request: /api/v1/farms
+Processing Request: /api/v1/production/crops
+Valid JWT found for user: sp@sp.sp
+Valid JWT found for user: sp@sp.sp
+Authentication set in SecurityContext for: sp@sp.sp
+Authentication set in SecurityContext for: sp@sp.sp
+Processing Request: /api/v1/dashboard/pending-approvals
+Valid JWT found for user: sp@sp.sp
+Authentication set in SecurityContext for: sp@sp.sp
+Processing Request: /api/v1/dashboard/attendance-today
+Valid JWT found for user: sp@sp.sp
+Processing Request: /api/v1/dashboard/pending-approvals
+2026-03-22 20:00:50 - Fetching farms for company: SP888 for user: sp@sp.sp (role: MASTER_ADMIN)
+Valid JWT found for user: sp@sp.sp
+Authentication set in SecurityContext for: sp@sp.sp
+Authentication set in SecurityContext for: sp@sp.sp
+2026-03-22 20:00:50 - Found 1 farms for company code: SP888
+Processing Request: /api/v1/production/crops
+Valid JWT found for user: sp@sp.sp
+Authentication set in SecurityContext for: sp@sp.sp
+Processing Request: /api/v1/dashboard/pending-approvals
+Processing Request: /api/v1/dashboard/pending-approvals
+Valid JWT found for user: sp@sp.sp
+Valid JWT found for user: sp@sp.sp
+Authentication set in SecurityContext for: sp@sp.sp
+Authentication set in SecurityContext for: sp@sp.sp
+Processing Request: /api/v1/dashboard/attendance-today
+Processing Request: /api/v1/farms
+Valid JWT found for user: sp@sp.sp
+Valid JWT found for user: sp@sp.sp
+Authentication set in SecurityContext for: sp@sp.sp
+Authentication set in SecurityContext for: sp@sp.sp
+2026-03-22 20:00:50 - Fetching farms for company: SP888 for user: sp@sp.sp (role: MASTER_ADMIN)
+2026-03-22 20:00:50 - Found 1 farms for company code: SP888
+Processing Request: /api/v1/cultivation/work-records/farm/4/date/2026-03-22
+Valid JWT found for user: sp@sp.sp
+Authentication set in SecurityContext for: sp@sp.sp
+Processing Request: /api/v1/cultivation/work-records/farm/4/date/2026-03-22
+Valid JWT found for user: sp@sp.sp
+Authentication set in SecurityContext for: sp@sp.sp
+Processing Request: /api/v1/cultivation/work-records/farm/4/date/2026-04-22
+Valid JWT found for user: sp@sp.sp
+Authentication set in SecurityContext for: sp@sp.sp
+Processing Request: /api/v1/cultivation/work-records/farm/4/date/2026-05-22
+Valid JWT found for user: sp@sp.sp
+Authentication set in SecurityContext for: sp@sp.sp
+Processing Request: /api/v1/cultivation/work-records/farm/4/date/2026-04-22
+Valid JWT found for user: sp@sp.sp
+Authentication set in SecurityContext for: sp@sp.sp
+Processing Request: /api/v1/cultivation/work-records/farm/4/date/2026-03-22
+Valid JWT found for user: sp@sp.sp
+Authentication set in SecurityContext for: sp@sp.sp
+Processing Request: /api/v1/cultivation/work-records/farm/4/date/2026-03-23
+Valid JWT found for user: sp@sp.sp
+Authentication set in SecurityContext for: sp@sp.sp
+Processing Request: /api/v1/cultivation/work-records/farm/4/date/2026-03-24
+Valid JWT found for user: sp@sp.sp
+Authentication set in SecurityContext for: sp@sp.sp
+Processing Request: /api/v1/cultivation/work-records/farm/4/date/2026-03-23
+Valid JWT found for user: sp@sp.sp
+Authentication set in SecurityContext for: sp@sp.sp
+Processing Request: /api/v1/cultivation/work-records/farm/4/date/2026-03-22
+Valid JWT found for user: sp@sp.sp
+Authentication set in SecurityContext for: sp@sp.sp
+Processing Request: /api/v1/cultivation/work-records/farm/4/date/2026-03-22
+Valid JWT found for user: sp@sp.sp
+Authentication set in SecurityContext for: sp@sp.sp
+Processing Request: /api/v1/employees
+Processing Request: /api/v1/cultivation/work-keywords/farm/4
+Valid JWT found for user: sp@sp.sp
+Valid JWT found for user: sp@sp.sp
+Authentication set in SecurityContext for: sp@sp.sp
+Authentication set in SecurityContext for: sp@sp.sp
+Processing Request: /api/v1/cultivation/work-records
+Valid JWT found for user: sp@sp.sp
+Authentication set in SecurityContext for: sp@sp.sp
+2026-03-22 20:01:06 - SQL Error: 0, SQLState: 23502
+2026-03-22 20:01:06 - ERROR: null value in column "bed_id" of relation "work_records" violates not-null constraint
+  Detail: Failing row contains (12, PLANNED, 2026-03-22 20:01:06.354322, null, [작업명: 적엽], 2026-03-22, null, null, null, null, null, ss, null, null, 4, 2).
+2026-03-22 20:01:06 - Runtime exception: could not execute statement [ERROR: null value in column "bed_id" of relation "work_records" violates not-null constraint
+  Detail: Failing row contains (12, PLANNED, 2026-03-22 20:01:06.354322, null, [작업명: 적엽], 2026-03-22, null, null, null, null, null, ss, null, null, 4, 2).] [insert into work_records (bed_id,completion_status,created_at,daily_worker_count,duration_minutes,end_time,farm_id,manager,notes,regular_worker_count,start_time,work_date,keyword_id) values (?,?,?,?,?,?,?,?,?,?,?,?,?)]; SQL [insert into work_records (bed_id,completion_status,created_at,daily_worker_count,duration_minutes,end_time,farm_id,manager,notes,regular_worker_count,start_time,work_date,keyword_id) values (?,?,?,?,?,?,?,?,?,?,?,?,?)]; constraint [bed_id" of relation "work_records]
+Processing Request: /api/v1/dashboard/pending-approvals
+Valid JWT found for user: sp@sp.sp
+Authentication set in SecurityContext for: sp@sp.sp
+Processing Request: /api/v1/dashboard/pending-approvals
+Valid JWT found for user: sp@sp.sp
+Authentication set in SecurityContext for: sp@sp.sp
+Processing Request: /api/v1/dashboard/pending-approvals
+Valid JWT found for user: sp@sp.sp
+Authentication set in SecurityContext for: sp@sp.sp
+Processing Request: /api/v1/dashboard/pending-approvals
+Valid JWT found for user: sp@sp.sp
+Authentication set in SecurityContext for: sp@sp.sp
+Processing Request: /api/v1/dashboard/pending-approvals
+Valid JWT found for user: sp@sp.sp
+Authentication set in SecurityContext for: sp@sp.sp
+Processing Request: /api/v1/dashboard/pending-approvals
+Valid JWT found for user: sp@sp.sp
+Authentication set in SecurityContext for: sp@sp.sp
+Processing Request: /api/v1/dashboard/pending-approvals
+Valid JWT found for user: sp@sp.sp
+Authentication set in SecurityContext for: sp@sp.sp
+Processing Request: /api/v1/dashboard/pending-approvals
+Valid JWT found for user: sp@sp.sp
+Authentication set in SecurityContext for: sp@sp.sp
+Processing Request: /api/v1/dashboard/pending-approvals
+Valid JWT found for user: sp@sp.sp
+Authentication set in SecurityContext for: sp@sp.sp
+Processing Request: /api/v1/dashboard/pending-approvals
+Valid JWT found for user: sp@sp.sp
+Authentication set in SecurityContext for: sp@sp.sp

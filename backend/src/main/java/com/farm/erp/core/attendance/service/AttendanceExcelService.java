@@ -9,6 +9,8 @@ import com.farm.erp.core.attendance.repository.LeaveRepository;
 import com.farm.erp.core.hr.domain.EmployeeProfile;
 import com.farm.erp.core.hr.domain.QEmployeeProfile;
 import com.farm.erp.core.hr.repository.EmployeeProfileRepository;
+import com.farm.erp.core.farm.repository.FarmRepository;
+import com.farm.erp.core.farm.domain.Farm;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +40,7 @@ public class AttendanceExcelService {
     private final LeaveRepository leaveRepository;
     private final JPAQueryFactory queryFactory;
     private final EmployeeProfileRepository employeeProfileRepository;
+    private final FarmRepository farmRepository;
 
     public List<AttendanceRecord> filterAttendance(AttendanceFilterRequest request) {
         QAttendanceRecord attendance = QAttendanceRecord.attendanceRecord;
@@ -202,7 +205,7 @@ public class AttendanceExcelService {
 
                 for (ExportRowData rowData : combinedRows) {
                     writeUnifiedRow(sheet, rowIdx++, exportFields, userName, rowData, hourlyWage, dateTimeFormatter,
-                            dateFormatter);
+                            dateFormatter, profile);
                 }
 
                 for (int i = 0; i < colIdx; i++) {
@@ -264,7 +267,7 @@ public class AttendanceExcelService {
 
     private void writeUnifiedRow(Sheet sheet, int rowIdx, List<String> exportFields, String userName,
             ExportRowData rowData, BigDecimal hourlyWage, DateTimeFormatter dateTimeFormatter,
-            DateTimeFormatter dateFormatter) {
+            DateTimeFormatter dateFormatter, EmployeeProfile profile) {
         Row row = sheet.createRow(rowIdx);
         int colIdx = 0;
 
@@ -278,12 +281,38 @@ public class AttendanceExcelService {
                 : (clockIn != null ? clockIn.getTimestamp().toLocalDate() : clockOut.getTimestamp().toLocalDate());
 
         if (clockIn != null && clockOut != null) {
-            Duration duration = Duration.between(clockIn.getTimestamp(), clockOut.getTimestamp());
-            long minutes = duration.toMinutes();
-            workingHours = BigDecimal.valueOf(minutes).divide(BigDecimal.valueOf(60), 2, RoundingMode.HALF_UP);
-            long hours = minutes / 60;
-            long mins = minutes % 60;
-            workingHoursStr = String.format("%02d:%02d", hours, mins);
+            // Use stored workedHours if available (for CLOCK_OUT record)
+            if (clockOut.getWorkedHours() != null) {
+                workingHours = BigDecimal.valueOf(clockOut.getWorkedHours());
+                long totalMinutes = (long) (clockOut.getWorkedHours() * 60);
+                long hours = totalMinutes / 60;
+                long mins = totalMinutes % 60;
+                workingHoursStr = String.format("%02d:%02d", hours, mins);
+            } else {
+                Duration duration = Duration.between(clockIn.getTimestamp(), clockOut.getTimestamp());
+                long totalMinutes = duration.toMinutes();
+
+                // Get break time from farm
+                int breakMinutes = 0;
+                if (profile != null && profile.getFarm() != null) {
+                    breakMinutes = profile.getFarm().getBreakTimeMinutes() != null
+                            ? profile.getFarm().getBreakTimeMinutes()
+                            : 0;
+                } else if (clockIn.getFarmId() != null) {
+                    Optional<Farm> farmOpt = farmRepository.findById(clockIn.getFarmId());
+                    if (farmOpt.isPresent()) {
+                        breakMinutes = farmOpt.get().getBreakTimeMinutes() != null ? farmOpt.get().getBreakTimeMinutes()
+                                : 0;
+                    }
+                }
+
+                long workedMinutes = Math.max(0, totalMinutes - breakMinutes);
+                workingHours = BigDecimal.valueOf(workedMinutes).divide(BigDecimal.valueOf(60), 2,
+                        RoundingMode.HALF_UP);
+                long hours = workedMinutes / 60;
+                long mins = workedMinutes % 60;
+                workingHoursStr = String.format("%02d:%02d", hours, mins);
+            }
         }
 
         String reason = "";

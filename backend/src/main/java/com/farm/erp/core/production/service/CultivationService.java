@@ -219,8 +219,64 @@ public class CultivationService {
                                 .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND,
                                                 "Work record not found"));
 
+                // 상태에 따른 시간 자동 기록
+                if (status == WorkRecord.CompletionStatus.IN_PROGRESS && record.getStartTime() == null) {
+                        record.setStartTime(java.time.LocalTime.now());
+                } else if (status == WorkRecord.CompletionStatus.COMPLETED && record.getEndTime() == null) {
+                        record.setEndTime(java.time.LocalTime.now());
+                        
+                        if (record.getStartTime() != null) {
+                                int duration = (int) java.time.Duration.between(record.getStartTime(), record.getEndTime()).toMinutes();
+                                record.setDurationMinutes(duration);
+                        }
+                }
+
                 record.updateStatus(status);
                 log.info("Updated work record {} status to {}", id, status);
+                return WorkRecordResponse.from(record);
+        }
+
+        @Transactional
+        public WorkRecordResponse updateWorkRecord(Long id, WorkRecordRequest request) {
+                WorkRecord record = workRecordRepository.findById(id)
+                                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND,
+                                                "Work record not found"));
+
+                Farm farm = farmRepository.findById(request.getFarmId())
+                                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND,
+                                                "Farm not found"));
+
+                Bed bed = null;
+                if (request.getBedId() != null) {
+                        bed = bedRepository.findById(request.getBedId())
+                                        .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND,
+                                                        "Bed not found"));
+                }
+
+                WorkKeyword keyword = null;
+                if (request.getKeywordId() != null) {
+                        keyword = workKeywordRepository.findById(request.getKeywordId())
+                                        .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND,
+                                                        "Work keyword not found"));
+                }
+
+                record.setFarm(farm);
+                record.setBed(bed);
+                record.setWorkDate(request.getWorkDate());
+                record.setWorkKeyword(keyword);
+                record.setRegularWorkerCount(request.getRegularWorkerCount());
+                record.setDailyWorkerCount(request.getDailyWorkerCount());
+                record.setStartTime(request.getStartTime());
+                record.setEndTime(request.getEndTime());
+                record.setDurationMinutes(request.getDurationMinutes());
+                record.setManager(request.getManager());
+                record.setNotes(request.getNotes());
+
+                if (request.getCompletionStatus() != null) {
+                        record.updateStatus(request.getCompletionStatus());
+                }
+
+                log.info("Updated work record {}", id);
                 return WorkRecordResponse.from(record);
         }
 

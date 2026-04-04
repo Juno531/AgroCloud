@@ -18,6 +18,7 @@ interface AttendanceResponse {
     companyCode: string;
     weekNumber: number;
     workingDayIndex: number;
+    workedHours?: number | null;
 }
 
 interface LeaveRecordResponse {
@@ -201,9 +202,7 @@ const AttendanceLog = () => {
                     checkInTime: clockIn ? format(new Date(clockIn.timestamp), 'HH:mm:ss') : null,
                     checkOutTime: clockOut ? format(new Date(clockOut.timestamp), 'HH:mm:ss') : null,
                     status: status as any,
-                    workDuration: (clockIn && clockOut)
-                        ? Math.floor((new Date(clockOut.timestamp).getTime() - new Date(clockIn.timestamp).getTime()) / 60000)
-                        : null
+                    workDuration: clockOut && clockOut.workedHours !== undefined ? clockOut.workedHours : null
                 };
             });
         } else {
@@ -300,11 +299,9 @@ const AttendanceLog = () => {
         }
     };
 
-    const formatDuration = (minutes: number | null) => {
-        if (!minutes) return '-';
-        const hours = Math.floor(minutes / 60);
-        const mins = minutes % 60;
-        return `${hours}시간 ${mins}분`;
+    const formatDuration = (workedHours: number | null) => {
+        if (workedHours === null || workedHours === undefined) return '-';
+        return `${workedHours.toFixed(1)}시간`;
     };
 
     return (

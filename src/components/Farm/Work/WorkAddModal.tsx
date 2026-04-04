@@ -5,10 +5,12 @@ import { useAuth } from '../../../context/AuthContext';
 interface Props {
     isOpen: boolean;
     onClose: () => void;
+    onSuccess?: () => void;
     farmId: number | null;
+    initialData?: any;
 }
 
-const WorkAddModal: React.FC<Props> = ({ isOpen, onClose, farmId }) => {
+const WorkAddModal: React.FC<Props> = ({ isOpen, onClose, onSuccess, farmId, initialData }) => {
     const { user } = useAuth();
     const [keywords, setKeywords] = useState<any[]>([]);
     const [employees, setEmployees] = useState<any[]>([]); // 정규직 직원 목록
@@ -22,6 +24,48 @@ const WorkAddModal: React.FC<Props> = ({ isOpen, onClose, farmId }) => {
         notes: '',
         manager: ''
     });
+
+    useEffect(() => {
+        if (!isOpen) return;
+        if (initialData) {
+            let extractedTaskName = '';
+            let parsedNotes = initialData?.notes || '';
+            
+            if (parsedNotes.startsWith('[')) {
+                const endIdx = parsedNotes.indexOf(']');
+                if (endIdx > 0) {
+                    extractedTaskName = parsedNotes.substring(1, endIdx);
+                    parsedNotes = parsedNotes.substring(endIdx + 1).trim();
+                }
+            }
+            
+            const keywordRegex = /^관련 키워드:.*?\n?/;
+            parsedNotes = parsedNotes.replace(keywordRegex, '').trim();
+
+            setForm({
+                taskName: extractedTaskName,
+                workDate: initialData.workDate || new Date().toISOString().split('T')[0],
+                notes: parsedNotes,
+                manager: initialData.manager || ''
+            });
+
+            if (initialData.keywordId) {
+                setSelectedKeywordIds([String(initialData.keywordId)]);
+            } else if (initialData.workKeyword) {
+                setSelectedKeywordIds([String(initialData.workKeyword.id)]);
+            } else {
+                setSelectedKeywordIds([]);
+            }
+        } else {
+            setForm({
+                taskName: '',
+                workDate: new Date().toISOString().split('T')[0],
+                notes: '',
+                manager: ''
+            });
+            setSelectedKeywordIds([]);
+        }
+    }, [initialData, isOpen]);
 
     useEffect(() => {
         if (isOpen && farmId) {
@@ -102,20 +146,29 @@ const WorkAddModal: React.FC<Props> = ({ isOpen, onClose, farmId }) => {
                 form.notes
             ].filter(Boolean).join('\n');
 
-            await CultivationService.createWorkRecord({
+            const payload = {
                 farmId,
                 workDate: form.workDate,
                 keywordId: firstKeywordId ? Number(firstKeywordId) : undefined,
                 notes: combinedNotes,
-                completionStatus: 'PLANNED',
-                manager: form.manager || undefined
-            });
+                manager: form.manager,
+                completionStatus: initialData ? initialData.completionStatus : 'PLANNED',
+                startTime: initialData ? initialData.startTime : undefined,
+                endTime: initialData ? initialData.endTime : undefined,
+                durationMinutes: initialData ? initialData.durationMinutes : 0
+            };
+
+            if (initialData && initialData.id) {
+                await CultivationService.updateWorkRecord(initialData.id, payload);
+            } else {
+                await CultivationService.createWorkRecord(payload);
+            }
 
             onClose();
+            if (onSuccess) onSuccess();
             setForm({ taskName: '', workDate: new Date().toISOString().split('T')[0], notes: '', manager: '' });
             setSelectedKeywordIds([]);
             setEmployees([]);
-            window.location.reload();
         } catch (error) {
             console.error('Error creating work record:', error);
             alert('작업 등록 실패');
@@ -173,7 +226,9 @@ const WorkAddModal: React.FC<Props> = ({ isOpen, onClose, farmId }) => {
                             <span className="material-symbols-outlined text-3xl">add_task</span>
                         </div>
                         <div>
-                            <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">새 작업 생성</h2>
+                            <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                                {initialData ? '작업 내용 수정' : '새 작업 기록'}
+                            </h2>
                             <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">간단 작업 입력</p>
                         </div>
                     </div>

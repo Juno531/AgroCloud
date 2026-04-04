@@ -35,6 +35,7 @@ public class FarmResponse {
         private String attendanceEndTime;
         private String regularEmployeeStartTime;
         private String partTimeEmployeeStartTime;
+        private Integer breakTimeMinutes;
         private String companyCode;
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
@@ -71,6 +72,7 @@ public class FarmResponse {
                                                 ? farm.getPartTimeEmployeeStartTime()
                                                                 .format(DateTimeFormatter.ofPattern("HH:mm"))
                                                 : null)
+                                .breakTimeMinutes(farm.getBreakTimeMinutes())
                                 .companyCode(farm.getUser() != null && farm.getUser().getCompany() != null
                                                 ? farm.getUser().getCompany().getCode()
                                                 : null)

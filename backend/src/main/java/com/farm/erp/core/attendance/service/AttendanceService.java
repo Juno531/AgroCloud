@@ -174,6 +174,47 @@ public class AttendanceService {
                                 .remarks(remarks)
                                 .build();
 
+                // Calculate worked hours for CLOCK_OUT
+                if (type == AttendanceRecord.AttendanceType.CLOCK_OUT) {
+                        try {
+                                if (!recentRecords.isEmpty()) {
+                                        AttendanceRecord lastIn = recentRecords.stream()
+                                                        .filter(r -> r.getType() == AttendanceRecord.AttendanceType.CLOCK_IN)
+                                                        .findFirst().orElse(null);
+
+                                        if (lastIn != null) {
+                                                java.time.Duration duration = java.time.Duration
+                                                                .between(lastIn.getTimestamp(), record.getTimestamp());
+                                                long totalMinutes = duration.toMinutes();
+
+                                                int breakMinutes = farm.getBreakTimeMinutes() != null
+                                                                ? farm.getBreakTimeMinutes()
+                                                                : 60;
+                                                long workedMinutes = Math.max(0, totalMinutes - breakMinutes);
+
+                                                // 30분 단위 내림 (0.5 단위)
+                                                double roundedHours = Math.floor(workedMinutes / 30.0) * 0.5;
+                                                record = AttendanceRecord.builder()
+                                                                .user(record.getUser())
+                                                                .type(record.getType())
+                                                                .timestamp(record.getTimestamp())
+                                                                .farmId(record.getFarmId())
+                                                                .companyCode(record.getCompanyCode())
+                                                                .weekNumber(record.getWeekNumber())
+                                                                .workingDayIndex(record.getWorkingDayIndex())
+                                                                .status(record.getStatus())
+                                                                .reason(record.getReason())
+                                                                .remarks(record.getRemarks())
+                                                                .workedHours(roundedHours)
+                                                                .build();
+                                        }
+                                }
+                        } catch (Exception e) {
+                                // Error in calculation should not block record saving
+                                System.err.println("Error calculating worked hours: " + e.getMessage());
+                        }
+                }
+
                 return attendanceRepository.save(record);
         }
 

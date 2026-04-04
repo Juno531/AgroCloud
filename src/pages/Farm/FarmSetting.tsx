@@ -308,6 +308,8 @@ const FarmSetting: React.FC = () => {
                                             )}
                                         </div>
 
+
+
                                         {/* Farm Main Address Information (Visual Highlight) */}
                                         <div className="mb-8">
                                             <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">설정된 농장 주소</label>

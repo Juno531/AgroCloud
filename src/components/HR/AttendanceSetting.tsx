@@ -59,6 +59,7 @@ const AttendanceSetting: React.FC = () => {
                 attendanceEndTime: updated.attendanceEndTime ?? prev.attendanceEndTime,
                 regularEmployeeStartTime: updated.regularEmployeeStartTime ?? prev.regularEmployeeStartTime,
                 partTimeEmployeeStartTime: updated.partTimeEmployeeStartTime ?? prev.partTimeEmployeeStartTime,
+                breakTimeMinutes: updated.breakTimeMinutes ?? prev.breakTimeMinutes,
             }));
             await refreshData();
             setMessage({ type: 'success', text: `[${farmData.name}] 출퇴근 설정이 정상적으로 저장되었습니다.` });
@@ -453,6 +454,30 @@ const AttendanceSetting: React.FC = () => {
                                                         </select>
                                                         <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-xs font-bold">분</div>
                                                     </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Break Time Setting Column */}
+                                    <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 shadow-sm border border-slate-100 dark:border-zinc-800">
+                                        <div className="flex items-center gap-2 mb-4">
+                                            <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-500 shadow-sm"><Settings size={24} /></div>
+                                            <h4 className="text-lg font-bold text-slate-800 dark:text-slate-100 uppercase tracking-tight">기본 휴게 시간 설정</h4>
+                                        </div>
+                                        <p className="text-sm text-slate-500 mb-6 leading-relaxed">출퇴근 기록 및 엑셀 출력 시 차감될 기본 휴게 시간을 지정합니다.</p>
+
+                                        <div className="flex items-center gap-3 p-6 bg-slate-50/50 dark:bg-zinc-800/50 rounded-2xl border border-slate-100 dark:border-zinc-700">
+                                            <div className="flex flex-col gap-2 flex-1">
+                                                <label className="text-xs font-black uppercase tracking-widest text-slate-400">휴게 시간 (분)</label>
+                                                <div className="flex items-center gap-3">
+                                                    <input
+                                                        type="number"
+                                                        value={farmData.breakTimeMinutes ?? 60}
+                                                        onChange={(e) => setFarmData({ ...farmData, breakTimeMinutes: parseInt(e.target.value) || 0 })}
+                                                        className="w-32 px-4 py-3 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-primary transition-all"
+                                                    />
+                                                    <span className="text-sm font-bold text-slate-500">분</span>
                                                 </div>
                                             </div>
                                         </div>

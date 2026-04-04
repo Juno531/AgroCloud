@@ -21,6 +21,7 @@ public class AttendanceResponse {
     private String status;
     private String reason;
     private String remarks;
+    private Double workedHours;
 
     public static AttendanceResponse from(AttendanceRecord record) {
         return AttendanceResponse.builder()
@@ -36,6 +37,7 @@ public class AttendanceResponse {
                 .status(record.getStatus().name())
                 .reason(record.getReason())
                 .remarks(record.getRemarks())
+                .workedHours(record.getWorkedHours())
                 .build();
     }
 }

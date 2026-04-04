@@ -221,6 +221,7 @@ export const CultivationService = {
     getWorkRecordsByDate: (workDate: string) => api.get(`/cultivation/work-records/date/${workDate}`),
     getWorkRecordsByFarm: (farmId: number) => api.get(`/cultivation/work-records/farm/${farmId}`),
     getWorkRecordsByFarmAndDate: (farmId: number, workDate: string) => api.get(`/cultivation/work-records/farm/${farmId}/date/${workDate}`),
+    updateWorkRecord: (id: number, data: any) => api.put(`/cultivation/work-records/${id}`, data),
     updateWorkRecordStatus: (id: number, status: string) => api.patch(`/cultivation/work-records/${id}/status`, null, { params: { status } }),
     deleteWorkRecord: (id: number) => api.delete(`/cultivation/work-records/${id}`),
 
