@@ -114,21 +114,21 @@ springdoc:
   default-produces-media-type: application/json
 
 jwt:
-  secret: ${JWT_SECRET:agrocloud-secret-key-change-this-in-production-must-be-at-least-256-bits-long}
+  secret: ${JWT_SECRET}
   expiration: 86400000  # 24 hours in milliseconds
   refresh-expiration: 604800000  # 7 days in milliseconds
 
 # Invite Codes Configuration
 app:
   invite-codes:
-    admin: ${ADMIN_INVITE_CODE:ADMIN123}
-    farm: ${FARM_INVITE_CODE:FARM123}
+    admin: ${ADMIN_INVITE_CODE}
+    farm: ${FARM_INVITE_CODE}
   super-admin:
-    email: ${SUPER_ADMIN_EMAIL:super@agro.com}
-    password: ${SUPER_ADMIN_PASSWORD:1234}
-    name: ${SUPER_ADMIN_NAME:Super Administrator}
+    email: ${SUPER_ADMIN_EMAIL}
+    password: ${SUPER_ADMIN_PASSWORD}
+    name: ${SUPER_ADMIN_NAME}
   cors:
-    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:*,http://127.0.0.1:*,http://192.168.*.*:*,http://10.*.*.*:*,http://172.*.*.*:*,https://localhost:*,https://127.0.0.1:*,https://192.168.*.*:*,https://10.*.*.*:*,https://172.*.*.*:*,https://*.up.railway.app,https://192.168.45.117:5173}
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:*,http://127.0.0.1:*,https://localhost:*}
 
 # Logging Configuration
 logging:
